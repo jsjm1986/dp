@@ -27,6 +27,7 @@ model User {
   comments  DynamicComment[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  userCoupons UserCoupon[]
 }
 
 model Partner {
@@ -87,6 +88,9 @@ model Order {
   address      String?
   remark       String?
   totalAmount  Decimal
+  discount     Decimal    @default(0)
+  userCouponId String?
+  payMethod    String?
   status       String    @default("pending_payment")
   cancelReason String?
   urgedAt      DateTime?
@@ -204,4 +208,33 @@ model Message {
 
   @@index([senderId, receiverId, createdAt])
   @@index([receiverId, readAt])
+}
+
+// ---------- 优惠券 ----------
+model Coupon {
+  id        String   @id @default(cuid())
+  title     String
+  amount    Decimal
+  minSpend  Decimal  @default(0)
+  total     Int      @default(-1)
+  claimed   Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userCoupons UserCoupon[]
+}
+
+model UserCoupon {
+  id        String    @id @default(cuid())
+  userId    String
+  couponId  String
+  used      Boolean   @default(false)
+  orderId   String?
+  claimedAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user   User   @relation(fields: [userId], references: [id])
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@unique([userId, couponId])
 }

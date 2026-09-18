@@ -106,3 +106,13 @@ export type SmsCode = Prisma.SmsCodeModel
  * 
  */
 export type Message = Prisma.MessageModel
+/**
+ * Model Coupon
+ * 
+ */
+export type Coupon = Prisma.CouponModel
+/**
+ * Model UserCoupon
+ * 
+ */
+export type UserCoupon = Prisma.UserCouponModel

@@ -409,7 +409,9 @@ export const ModelName = {
   Follow: 'Follow',
   Banner: 'Banner',
   SmsCode: 'SmsCode',
-  Message: 'Message'
+  Message: 'Message',
+  Coupon: 'Coupon',
+  UserCoupon: 'UserCoupon'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -425,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message"
+    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message" | "coupon" | "userCoupon"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1391,6 +1393,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Coupon: {
+      payload: Prisma.$CouponPayload<ExtArgs>
+      fields: Prisma.CouponFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CouponFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CouponFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        findFirst: {
+          args: Prisma.CouponFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CouponFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        findMany: {
+          args: Prisma.CouponFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        create: {
+          args: Prisma.CouponCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        createMany: {
+          args: Prisma.CouponCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CouponCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        delete: {
+          args: Prisma.CouponDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        update: {
+          args: Prisma.CouponUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        deleteMany: {
+          args: Prisma.CouponDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CouponUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CouponUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>[]
+        }
+        upsert: {
+          args: Prisma.CouponUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CouponPayload>
+        }
+        aggregate: {
+          args: Prisma.CouponAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCoupon>
+        }
+        groupBy: {
+          args: Prisma.CouponGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CouponCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CouponCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserCoupon: {
+      payload: Prisma.$UserCouponPayload<ExtArgs>
+      fields: Prisma.UserCouponFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserCouponFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserCouponFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        findFirst: {
+          args: Prisma.UserCouponFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserCouponFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        findMany: {
+          args: Prisma.UserCouponFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>[]
+        }
+        create: {
+          args: Prisma.UserCouponCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        createMany: {
+          args: Prisma.UserCouponCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserCouponCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>[]
+        }
+        delete: {
+          args: Prisma.UserCouponDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        update: {
+          args: Prisma.UserCouponUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserCouponDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserCouponUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserCouponUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserCouponUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCouponPayload>
+        }
+        aggregate: {
+          args: Prisma.UserCouponAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserCoupon>
+        }
+        groupBy: {
+          args: Prisma.UserCouponGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserCouponGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserCouponCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserCouponCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1494,6 +1644,9 @@ export const OrderScalarFieldEnum = {
   address: 'address',
   remark: 'remark',
   totalAmount: 'totalAmount',
+  discount: 'discount',
+  userCouponId: 'userCouponId',
+  payMethod: 'payMethod',
   status: 'status',
   cancelReason: 'cancelReason',
   urgedAt: 'urgedAt',
@@ -1611,6 +1764,33 @@ export const MessageScalarFieldEnum = {
 } as const
 
 export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const CouponScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  amount: 'amount',
+  minSpend: 'minSpend',
+  total: 'total',
+  claimed: 'claimed',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CouponScalarFieldEnum = (typeof CouponScalarFieldEnum)[keyof typeof CouponScalarFieldEnum]
+
+
+export const UserCouponScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  couponId: 'couponId',
+  used: 'used',
+  orderId: 'orderId',
+  claimedAt: 'claimedAt',
+  usedAt: 'usedAt'
+} as const
+
+export type UserCouponScalarFieldEnum = (typeof UserCouponScalarFieldEnum)[keyof typeof UserCouponScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1840,6 +2020,8 @@ export type GlobalOmitConfig = {
   banner?: Prisma.BannerOmit
   smsCode?: Prisma.SmsCodeOmit
   message?: Prisma.MessageOmit
+  coupon?: Prisma.CouponOmit
+  userCoupon?: Prisma.UserCouponOmit
 }
 
 /* Types for Logging */

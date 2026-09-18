@@ -11,6 +11,21 @@ const editing = ref(false);
 const nickname = ref('');
 const uploadingAvatar = ref(false);
 const unread = ref(0);
+const showRecharge = ref(false);
+const rechargeAmount = ref(100);
+const recharging = ref(false);
+
+async function recharge() {
+  recharging.value = true;
+  try {
+    const res = await api.recharge(rechargeAmount.value);
+    if (store.user) store.user.balance = res.balance;
+    showRecharge.value = false;
+    showToast('充值成功');
+  } finally {
+    recharging.value = false;
+  }
+}
 
 async function uploadAvatar(file: File) {
   uploadingAvatar.value = true;
@@ -66,9 +81,9 @@ async function logout() {
     </div>
 
     <div class="card mine__wallet">
-      <div class="mine__wallet-item">
+      <div class="mine__wallet-item" @click="showRecharge = true">
         <div class="mine__wallet-num">¥{{ (store.user?.balance ?? 0).toFixed(2) }}</div>
-        <div class="muted">余额</div>
+        <div class="muted">余额 · 点我充值</div>
       </div>
       <div class="mine__wallet-item" @click="router.push('/follows')">
         <div class="mine__wallet-num">❤</div>
@@ -102,6 +117,7 @@ async function logout() {
         </template>
       </van-cell>
       <van-cell title="我的关注" is-link icon="like-o" @click="router.push('/follows')" />
+      <van-cell title="优惠券" is-link icon="coupon-o" @click="router.push('/coupons')" />
       <van-cell title="全部订单" is-link icon="orders-o" @click="router.push('/orders')" />
       <van-cell title="发动态" is-link icon="edit" @click="router.push('/dynamic/publish')" />
       <van-cell v-if="store.user?.role === 'admin'" title="管理后台" is-link icon="setting-o" @click="router.push('/admin')" />
@@ -115,6 +131,20 @@ async function logout() {
 
     <van-dialog v-model:show="editing" title="修改昵称" show-cancel-button @confirm="saveName">
       <van-field v-model="nickname" placeholder="输入新昵称" maxlength="30" />
+    </van-dialog>
+
+    <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button :confirm-button-loading="recharging" @confirm="recharge">
+      <div class="mine__recharge">
+        <div
+          v-for="a in [50, 100, 200, 500]"
+          :key="a"
+          class="mine__recharge-opt"
+          :class="{ 'mine__recharge-opt--on': rechargeAmount === a }"
+          @click="rechargeAmount = a"
+        >
+          ¥{{ a }}
+        </div>
+      </div>
     </van-dialog>
   </div>
 </template>
@@ -176,6 +206,24 @@ async function logout() {
 .mine__unread {
   margin-right: 6px;
   align-self: center;
+}
+.mine__recharge {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+.mine__recharge-opt {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  text-align: center;
+  padding: 12px;
+  font-weight: 600;
+}
+.mine__recharge-opt--on {
+  border-color: #ff5a5f;
+  color: #ff5a5f;
+  background: #fff5f5;
 }
 .mine__logout {
   margin: 24px 16px;

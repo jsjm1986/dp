@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { AuthService } from '../auth/auth.service.js';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -39,6 +39,17 @@ export class UsersController {
       include: { partner: { select: { id: true } } },
     });
     return { ...this.auth.toProfile(user), partnerId: user.partner?.id ?? null };
+  }
+
+  /** 模拟充值 */
+  @Post('recharge')
+  async recharge(@CurrentUser() userId: string, @Body() dto: { amount: number }) {
+    const amount = Math.min(Math.max(Number(dto.amount) || 0, 1), 10000);
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { balance: { increment: amount } },
+    });
+    return { balance: Number(user.balance) };
   }
 
   @Put('profile')

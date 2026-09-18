@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { CancelOrderDto, CreateOrderDto, ReviewDto } from './dto.js';
+import { CancelOrderDto, CreateOrderDto, PayOrderDto, ReviewDto } from './dto.js';
 
 export const ORDER_STATUS = {
   PENDING_PAYMENT: 'pending_payment',
@@ -59,7 +59,26 @@ export class OrdersService {
         subtotal: Number(svc.price) * it.num,
       };
     });
-    const totalAmount = items.reduce((sum, i) => sum + i.subtotal, 0);
+    const goodsAmount = items.reduce((sum, i) => sum + i.subtotal, 0);
+
+    // 优惠券抵扣
+    let discount = 0;
+    let userCouponId: string | undefined;
+    if (dto.userCouponId) {
+      const uc = await this.prisma.userCoupon.findUnique({
+        where: { id: dto.userCouponId },
+        include: { coupon: true },
+      });
+      if (!uc || uc.userId !== userId) throw new BadRequestException('优惠券不存在');
+      if (uc.used) throw new BadRequestException('优惠券已使用');
+      if (uc.coupon.expiresAt < new Date()) throw new BadRequestException('优惠券已过期');
+      if (goodsAmount < Number(uc.coupon.minSpend)) {
+        throw new BadRequestException(`满 ¥${Number(uc.coupon.minSpend)} 可用该券`);
+      }
+      discount = Math.min(Number(uc.coupon.amount), goodsAmount);
+      userCouponId = uc.id;
+    }
+    const totalAmount = goodsAmount - discount;
 
     const order = await this.prisma.order.create({
       data: {
@@ -70,10 +89,18 @@ export class OrdersService {
         address: dto.address,
         remark: dto.remark,
         totalAmount,
+        discount,
+        userCouponId,
         items: { create: items },
       },
       include: ORDER_INCLUDE,
     });
+    if (userCouponId) {
+      await this.prisma.userCoupon.update({
+        where: { id: userCouponId },
+        data: { used: true, usedAt: new Date(), orderId: order.id },
+      });
+    }
     return this.toDto(order);
   }
 
@@ -102,13 +129,36 @@ export class OrdersService {
     return this.toDto(order);
   }
 
-  /** 支付（演示：直接成功） */
-  async pay(userId: string, id: string) {
+  /** 支付：balance 余额扣款 / mock 模拟第三方支付 */
+  async pay(userId: string, id: string, dto: PayOrderDto) {
     const order = await this.mustOwn(userId, id);
     this.mustBe(order.status, ORDER_STATUS.PENDING_PAYMENT, '订单状态不可支付');
+    const method = dto.method === 'balance' ? 'balance' : 'mock';
+
+    if (method === 'balance') {
+      const total = Number(order.totalAmount);
+      const [, updated] = await this.prisma.$transaction(async (tx) => {
+        const res = await tx.user.updateMany({
+          where: { id: userId, balance: { gte: total } },
+          data: { balance: { decrement: total } },
+        });
+        if (!res.count) throw new BadRequestException('余额不足');
+        return [
+          res,
+          await tx.order.update({
+            where: { id },
+            data: { status: ORDER_STATUS.PENDING_ACCEPT, paidAt: new Date(), payMethod: 'balance' },
+            include: ORDER_INCLUDE,
+          }),
+        ];
+      });
+      if (DEMO_AUTO_FLOW) this.scheduleAutoFlow(id);
+      return this.toDto(updated);
+    }
+
     const updated = await this.prisma.order.update({
       where: { id },
-      data: { status: ORDER_STATUS.PENDING_ACCEPT, paidAt: new Date() },
+      data: { status: ORDER_STATUS.PENDING_ACCEPT, paidAt: new Date(), payMethod: 'mock' },
       include: ORDER_INCLUDE,
     });
     if (DEMO_AUTO_FLOW) this.scheduleAutoFlow(id);
@@ -117,23 +167,41 @@ export class OrdersService {
 
   async cancel(userId: string, id: string, dto: CancelOrderDto) {
     const order = await this.mustOwn(userId, id);
-    const freeCancel = [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PENDING_ACCEPT];
-    const refundCancel = [ORDER_STATUS.PENDING_SERVICE];
+    const freeCancel = [ORDER_STATUS.PENDING_PAYMENT];
+    const refundCancel = [ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE];
     if (freeCancel.includes(order.status as never)) {
       const updated = await this.prisma.order.update({
         where: { id },
         data: { status: ORDER_STATUS.CANCELLED, cancelReason: dto.reason },
         include: ORDER_INCLUDE,
       });
+      // 未支付取消：退还优惠券
+      if (!order.paidAt && order.userCouponId) {
+        await this.prisma.userCoupon.update({
+          where: { id: order.userCouponId },
+          data: { used: false, usedAt: null, orderId: null },
+        });
+      }
       return this.toDto(updated);
     }
     if (refundCancel.includes(order.status as never)) {
-      // 已支付：演示环境直接退款
-      const updated = await this.prisma.order.update({
-        where: { id },
-        data: { status: ORDER_STATUS.REFUNDED, cancelReason: dto.reason },
-        include: ORDER_INCLUDE,
-      });
+      // 已支付：退款；余额支付原路退回
+      const ops: any[] = [
+        this.prisma.order.update({
+          where: { id },
+          data: { status: ORDER_STATUS.REFUNDED, cancelReason: dto.reason },
+          include: ORDER_INCLUDE,
+        }),
+      ];
+      if (order.payMethod === 'balance') {
+        ops.push(
+          this.prisma.user.update({
+            where: { id: userId },
+            data: { balance: { increment: order.totalAmount } },
+          }),
+        );
+      }
+      const [updated] = await this.prisma.$transaction(ops);
       return this.toDto(updated);
     }
     throw new BadRequestException('当前状态不可取消');
@@ -300,6 +368,8 @@ export class OrdersService {
     items: Array<{ id: string; serviceId: string; name: string; price: unknown; unit: string; num: number; subtotal: unknown }>;
     partner: { id: string; city: string; userId: string; user: { nickname: string; avatar: string | null } };
     review: { id: string } | null;
+    discount: unknown;
+    payMethod: string | null;
   }) {
     return {
       id: o.id,
@@ -325,6 +395,8 @@ export class OrdersService {
       address: o.address,
       remark: o.remark,
       totalAmount: Number(o.totalAmount),
+      discount: Number(o.discount),
+      payMethod: o.payMethod,
       status: o.status,
       cancelReason: o.cancelReason,
       urgedAt: o.urgedAt,

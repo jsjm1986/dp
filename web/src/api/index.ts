@@ -84,6 +84,8 @@ export interface Order {
   address: string | null;
   remark: string | null;
   totalAmount: number;
+  discount: number;
+  payMethod: string | null;
   status: string;
   cancelReason: string | null;
   urgedAt: string | null;
@@ -170,12 +172,12 @@ export const api = {
   follow: (id: string) => http.post<{ followed: boolean }>(`/partners/${id}/follow`),
   unfollow: (id: string) => http.delete<{ followed: boolean }>(`/partners/${id}/follow`),
 
-  createOrder: (data: { partnerId: string; items: Array<{ serviceId: string; num: number }>; appointAt: string; address?: string; remark?: string }) =>
+  createOrder: (data: { partnerId: string; items: Array<{ serviceId: string; num: number }>; appointAt: string; address?: string; remark?: string; userCouponId?: string }) =>
     http.post<Order>('/orders', data),
   orders: (status?: string, page = 1) =>
     http.get<{ total: number; items: Order[] }>('/orders', { params: { status, page } }),
   order: (id: string) => http.get<Order>(`/orders/${id}`),
-  payOrder: (id: string) => http.post<Order>(`/orders/${id}/pay`),
+  payOrder: (id: string, method: 'balance' | 'mock' = 'mock') => http.post<Order>(`/orders/${id}/pay`, { method }),
   cancelOrder: (id: string, reason?: string) => http.post<Order>(`/orders/${id}/cancel`, { reason }),
   urgeOrder: (id: string) => http.post(`/orders/${id}/urge`),
   reviewOrder: (id: string, rating: number, content?: string) => http.post(`/orders/${id}/review`, { rating, content }),
@@ -207,6 +209,14 @@ export const api = {
   sendMessage: (data: { peerId: string; content: string; orderId?: string }) =>
     http.post<{ id: string }>('/chat/send', data),
   unreadCount: () => http.get<{ count: number }>('/chat/unread'),
+
+  /* 优惠券 & 钱包 */
+  claimableCoupons: () =>
+    http.get<Array<{ id: string; title: string; amount: number; minSpend: number; expiresAt: string; left: number; claimed: boolean }>>('/coupons/claimable'),
+  claimCoupon: (id: string) => http.post<{ id: string }>(`/coupons/${id}/claim`),
+  myCoupons: (amount?: number) =>
+    http.get<Array<{ id: string; title: string; amount: number; minSpend: number; expiresAt: string; used: boolean; expired: boolean; usable: boolean }>>('/coupons/mine', { params: { amount } }),
+  recharge: (amount: number) => http.post<{ balance: number }>('/user/recharge', { amount }),
 
   /* 管理后台 */
   adminDashboard: () =>

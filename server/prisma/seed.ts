@@ -121,6 +121,13 @@ async function main() {
     data: { mobile: '13800138000', nickname: '平台管理员', role: 'admin' },
   });
 
+  await prisma.coupon.createMany({
+    data: [
+      { title: '新人立减券', amount: 20, minSpend: 100, expiresAt: new Date(Date.now() + 30 * 86400e3) },
+      { title: '无门槛体验券', amount: 5, minSpend: 0, expiresAt: new Date(Date.now() + 30 * 86400e3) },
+    ],
+  });
+
   const dynamicUsers = await prisma.user.findMany({ include: { partner: true } });
   for (const d of DYNAMICS) {
     const u = dynamicUsers[d.idx];

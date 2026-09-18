@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import { CancelOrderDto, CreateOrderDto, ReviewDto } from './dto.js';
+import { CancelOrderDto, CreateOrderDto, PayOrderDto, ReviewDto } from './dto.js';
 import { OrdersService } from './orders.service.js';
 
 @Controller()
@@ -37,8 +37,8 @@ export class OrdersController {
   }
 
   @Post('orders/:id/pay')
-  pay(@CurrentUser() userId: string, @Param('id') id: string) {
-    return this.orders.pay(userId, id);
+  pay(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: PayOrderDto) {
+    return this.orders.pay(userId, id, dto);
   }
 
   @Post('orders/:id/cancel')

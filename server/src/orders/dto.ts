@@ -44,6 +44,15 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(200)
   remark?: string;
+
+  @IsOptional()
+  @IsString()
+  userCouponId?: string;
+}
+
+export class PayOrderDto {
+  @IsString()
+  method: 'balance' | 'mock';
 }
 
 export class CancelOrderDto {

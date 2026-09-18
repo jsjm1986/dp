@@ -3,14 +3,17 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showConfirmDialog, showToast } from 'vant';
 import { api, type Order } from '../api';
+import { useUserStore } from '../stores/user';
 import { ORDER_STATUS_TEXT } from '../utils/order';
 
 const route = useRoute();
 const router = useRouter();
 const id = route.params.id as string;
+const store = useUserStore();
 const order = ref<Order | null>(null);
 const paying = ref(false);
 const showPay = ref(false);
+const payMethod = ref<'balance' | 'mock'>('mock');
 let poller: ReturnType<typeof setInterval> | null = null;
 
 async function load() {
@@ -20,7 +23,7 @@ async function load() {
 async function pay() {
   paying.value = true;
   try {
-    order.value = await api.payOrder(id);
+    order.value = await api.payOrder(id, payMethod.value);
     showPay.value = false;
     showToast('支付成功，等待玩伴接单');
   } finally {
@@ -114,6 +117,10 @@ onUnmounted(() => poller && clearInterval(poller));
         <span>¥{{ i.subtotal }}</span>
       </div>
       <van-divider />
+      <div v-if="order.discount > 0" class="od__fee">
+        <span>优惠抵扣</span>
+        <span class="price">-¥{{ order.discount.toFixed(0) }}</span>
+      </div>
       <div class="od__fee od__fee--total">
         <span>实付</span>
         <span class="price">¥{{ order.totalAmount.toFixed(0) }}</span>
@@ -149,12 +156,17 @@ onUnmounted(() => poller && clearInterval(poller));
 
     <van-dialog v-model:show="showPay" title="选择支付方式" show-cancel-button :confirm-button-loading="paying" confirm-button-text="确认支付" @confirm="pay">
       <div class="od__pay">
-        <van-radio-group model-value="wechat">
-          <van-cell title="微信支付" icon="wechat-pay" clickable :border="false"><template #right-icon><van-radio name="wechat" checked-color="#07c160" /></template></van-cell>
-          <van-cell title="支付宝" icon="alipay" clickable :border="false"><template #right-icon><van-radio name="alipay" checked-color="#1677ff" /></template></van-cell>
+        <van-radio-group v-model="payMethod">
+          <van-cell clickable :border="false" :disabled="(store.user?.balance ?? 0) < order.totalAmount" @click="payMethod = 'balance'">
+            <template #title>余额支付 <span class="muted">(¥{{ (store.user?.balance ?? 0).toFixed(0) }})</span></template>
+            <template #right-icon><van-radio name="balance" checked-color="#ff5a5f" /></template>
+          </van-cell>
+          <van-cell title="微信支付（模拟）" icon="wechat-pay" clickable :border="false" @click="payMethod = 'mock'">
+            <template #right-icon><van-radio name="mock" checked-color="#07c160" /></template>
+          </van-cell>
         </van-radio-group>
         <div class="od__pay-amount">支付 <span class="price">¥{{ order.totalAmount.toFixed(0) }}</span></div>
-        <div class="muted od__pay-hint">演示环境为模拟支付</div>
+        <div class="muted od__pay-hint">余额支付即时扣款；微信支付为模拟</div>
       </div>
     </van-dialog>
   </div>

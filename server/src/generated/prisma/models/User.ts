@@ -257,6 +257,7 @@ export type UserWhereInput = {
   comments?: Prisma.DynamicCommentListRelationFilter
   sentMessages?: Prisma.MessageListRelationFilter
   receivedMessages?: Prisma.MessageListRelationFilter
+  userCoupons?: Prisma.UserCouponListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -278,6 +279,7 @@ export type UserOrderByWithRelationInput = {
   comments?: Prisma.DynamicCommentOrderByRelationAggregateInput
   sentMessages?: Prisma.MessageOrderByRelationAggregateInput
   receivedMessages?: Prisma.MessageOrderByRelationAggregateInput
+  userCoupons?: Prisma.UserCouponOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -302,6 +304,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   comments?: Prisma.DynamicCommentListRelationFilter
   sentMessages?: Prisma.MessageListRelationFilter
   receivedMessages?: Prisma.MessageListRelationFilter
+  userCoupons?: Prisma.UserCouponListRelationFilter
 }, "id" | "mobile">
 
 export type UserOrderByWithAggregationInput = {
@@ -355,6 +358,7 @@ export type UserCreateInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -376,6 +380,7 @@ export type UserUncheckedCreateInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -397,6 +402,7 @@ export type UserUpdateInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -418,6 +424,7 @@ export type UserUncheckedUpdateInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -651,6 +658,20 @@ export type UserUpdateOneRequiredWithoutReceivedMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReceivedMessagesInput, Prisma.UserUpdateWithoutReceivedMessagesInput>, Prisma.UserUncheckedUpdateWithoutReceivedMessagesInput>
 }
 
+export type UserCreateNestedOneWithoutUserCouponsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserCouponsInput, Prisma.UserUncheckedCreateWithoutUserCouponsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserCouponsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutUserCouponsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserCouponsInput, Prisma.UserUncheckedCreateWithoutUserCouponsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserCouponsInput
+  upsert?: Prisma.UserUpsertWithoutUserCouponsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserCouponsInput, Prisma.UserUpdateWithoutUserCouponsInput>, Prisma.UserUncheckedUpdateWithoutUserCouponsInput>
+}
+
 export type UserCreateWithoutPartnerInput = {
   id?: string
   mobile: string
@@ -669,6 +690,7 @@ export type UserCreateWithoutPartnerInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPartnerInput = {
@@ -689,6 +711,7 @@ export type UserUncheckedCreateWithoutPartnerInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPartnerInput = {
@@ -725,6 +748,7 @@ export type UserUpdateWithoutPartnerInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPartnerInput = {
@@ -745,6 +769,7 @@ export type UserUncheckedUpdateWithoutPartnerInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -765,6 +790,7 @@ export type UserCreateWithoutOrdersInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -785,6 +811,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -821,6 +848,7 @@ export type UserUpdateWithoutOrdersInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -841,6 +869,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -861,6 +890,7 @@ export type UserCreateWithoutReviewsInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -881,6 +911,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -917,6 +948,7 @@ export type UserUpdateWithoutReviewsInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -937,6 +969,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutDynamicsInput = {
@@ -957,6 +990,7 @@ export type UserCreateWithoutDynamicsInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutDynamicsInput = {
@@ -977,6 +1011,7 @@ export type UserUncheckedCreateWithoutDynamicsInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutDynamicsInput = {
@@ -1013,6 +1048,7 @@ export type UserUpdateWithoutDynamicsInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDynamicsInput = {
@@ -1033,6 +1069,7 @@ export type UserUncheckedUpdateWithoutDynamicsInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLikesInput = {
@@ -1053,6 +1090,7 @@ export type UserCreateWithoutLikesInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLikesInput = {
@@ -1073,6 +1111,7 @@ export type UserUncheckedCreateWithoutLikesInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLikesInput = {
@@ -1109,6 +1148,7 @@ export type UserUpdateWithoutLikesInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLikesInput = {
@@ -1129,6 +1169,7 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -1149,6 +1190,7 @@ export type UserCreateWithoutCommentsInput = {
   likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -1169,6 +1211,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -1205,6 +1248,7 @@ export type UserUpdateWithoutCommentsInput = {
   likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -1225,6 +1269,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFollowsInput = {
@@ -1245,6 +1290,7 @@ export type UserCreateWithoutFollowsInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowsInput = {
@@ -1265,6 +1311,7 @@ export type UserUncheckedCreateWithoutFollowsInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowsInput = {
@@ -1301,6 +1348,7 @@ export type UserUpdateWithoutFollowsInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowsInput = {
@@ -1321,6 +1369,7 @@ export type UserUncheckedUpdateWithoutFollowsInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSentMessagesInput = {
@@ -1341,6 +1390,7 @@ export type UserCreateWithoutSentMessagesInput = {
   likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -1361,6 +1411,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -1386,6 +1437,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReceivedMessagesInput = {
@@ -1406,6 +1458,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReceivedMessagesInput = {
@@ -1442,6 +1495,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -1462,6 +1516,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutReceivedMessagesInput = {
@@ -1493,6 +1548,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
@@ -1513,6 +1569,107 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutUserCouponsInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  createdAt?: Date | string
+  partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+}
+
+export type UserUncheckedCreateWithoutUserCouponsInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  createdAt?: Date | string
+  partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowUncheckedCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+}
+
+export type UserCreateOrConnectWithoutUserCouponsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserCouponsInput, Prisma.UserUncheckedCreateWithoutUserCouponsInput>
+}
+
+export type UserUpsertWithoutUserCouponsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUserCouponsInput, Prisma.UserUncheckedUpdateWithoutUserCouponsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserCouponsInput, Prisma.UserUncheckedCreateWithoutUserCouponsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUserCouponsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUserCouponsInput, Prisma.UserUncheckedUpdateWithoutUserCouponsInput>
+}
+
+export type UserUpdateWithoutUserCouponsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUserCouponsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUncheckedUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
 }
 
 
@@ -1529,6 +1686,7 @@ export type UserCountOutputType = {
   comments: number
   sentMessages: number
   receivedMessages: number
+  userCoupons: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1540,6 +1698,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   comments?: boolean | UserCountOutputTypeCountCommentsArgs
   sentMessages?: boolean | UserCountOutputTypeCountSentMessagesArgs
   receivedMessages?: boolean | UserCountOutputTypeCountReceivedMessagesArgs
+  userCoupons?: boolean | UserCountOutputTypeCountUserCouponsArgs
 }
 
 /**
@@ -1608,6 +1767,13 @@ export type UserCountOutputTypeCountReceivedMessagesArgs<ExtArgs extends runtime
   where?: Prisma.MessageWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUserCouponsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserCouponWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1628,6 +1794,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   sentMessages?: boolean | Prisma.User$sentMessagesArgs<ExtArgs>
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
+  userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1678,6 +1845,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   sentMessages?: boolean | Prisma.User$sentMessagesArgs<ExtArgs>
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
+  userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1695,6 +1863,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     comments: Prisma.$DynamicCommentPayload<ExtArgs>[]
     sentMessages: Prisma.$MessagePayload<ExtArgs>[]
     receivedMessages: Prisma.$MessagePayload<ExtArgs>[]
+    userCoupons: Prisma.$UserCouponPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2109,6 +2278,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   comments<T extends Prisma.User$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DynamicCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sentMessages<T extends Prisma.User$sentMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   receivedMessages<T extends Prisma.User$receivedMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  userCoupons<T extends Prisma.User$userCouponsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userCouponsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2746,6 +2916,30 @@ export type User$receivedMessagesArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.MessageScalarFieldEnum | Prisma.MessageScalarFieldEnum[]
+}
+
+/**
+ * User.userCoupons
+ */
+export type User$userCouponsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserCoupon
+   */
+  select?: Prisma.UserCouponSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserCoupon
+   */
+  omit?: Prisma.UserCouponOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserCouponInclude<ExtArgs> | null
+  where?: Prisma.UserCouponWhereInput
+  orderBy?: Prisma.UserCouponOrderByWithRelationInput | Prisma.UserCouponOrderByWithRelationInput[]
+  cursor?: Prisma.UserCouponWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserCouponScalarFieldEnum | Prisma.UserCouponScalarFieldEnum[]
 }
 
 /**

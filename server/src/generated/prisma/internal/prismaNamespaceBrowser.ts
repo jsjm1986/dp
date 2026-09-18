@@ -63,7 +63,9 @@ export const ModelName = {
   Follow: 'Follow',
   Banner: 'Banner',
   SmsCode: 'SmsCode',
-  Message: 'Message'
+  Message: 'Message',
+  Coupon: 'Coupon',
+  UserCoupon: 'UserCoupon'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -146,6 +148,9 @@ export const OrderScalarFieldEnum = {
   address: 'address',
   remark: 'remark',
   totalAmount: 'totalAmount',
+  discount: 'discount',
+  userCouponId: 'userCouponId',
+  payMethod: 'payMethod',
   status: 'status',
   cancelReason: 'cancelReason',
   urgedAt: 'urgedAt',
@@ -263,6 +268,33 @@ export const MessageScalarFieldEnum = {
 } as const
 
 export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const CouponScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  amount: 'amount',
+  minSpend: 'minSpend',
+  total: 'total',
+  claimed: 'claimed',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CouponScalarFieldEnum = (typeof CouponScalarFieldEnum)[keyof typeof CouponScalarFieldEnum]
+
+
+export const UserCouponScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  couponId: 'couponId',
+  used: 'used',
+  orderId: 'orderId',
+  claimedAt: 'claimedAt',
+  usedAt: 'usedAt'
+} as const
+
+export type UserCouponScalarFieldEnum = (typeof UserCouponScalarFieldEnum)[keyof typeof UserCouponScalarFieldEnum]
 
 
 export const SortOrder = {

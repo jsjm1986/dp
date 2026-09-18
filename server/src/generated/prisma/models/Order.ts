@@ -28,10 +28,12 @@ export type AggregateOrder = {
 
 export type OrderAvgAggregateOutputType = {
   totalAmount: runtime.Decimal | null
+  discount: runtime.Decimal | null
 }
 
 export type OrderSumAggregateOutputType = {
   totalAmount: runtime.Decimal | null
+  discount: runtime.Decimal | null
 }
 
 export type OrderMinAggregateOutputType = {
@@ -43,6 +45,9 @@ export type OrderMinAggregateOutputType = {
   address: string | null
   remark: string | null
   totalAmount: runtime.Decimal | null
+  discount: runtime.Decimal | null
+  userCouponId: string | null
+  payMethod: string | null
   status: string | null
   cancelReason: string | null
   urgedAt: Date | null
@@ -62,6 +67,9 @@ export type OrderMaxAggregateOutputType = {
   address: string | null
   remark: string | null
   totalAmount: runtime.Decimal | null
+  discount: runtime.Decimal | null
+  userCouponId: string | null
+  payMethod: string | null
   status: string | null
   cancelReason: string | null
   urgedAt: Date | null
@@ -81,6 +89,9 @@ export type OrderCountAggregateOutputType = {
   address: number
   remark: number
   totalAmount: number
+  discount: number
+  userCouponId: number
+  payMethod: number
   status: number
   cancelReason: number
   urgedAt: number
@@ -95,10 +106,12 @@ export type OrderCountAggregateOutputType = {
 
 export type OrderAvgAggregateInputType = {
   totalAmount?: true
+  discount?: true
 }
 
 export type OrderSumAggregateInputType = {
   totalAmount?: true
+  discount?: true
 }
 
 export type OrderMinAggregateInputType = {
@@ -110,6 +123,9 @@ export type OrderMinAggregateInputType = {
   address?: true
   remark?: true
   totalAmount?: true
+  discount?: true
+  userCouponId?: true
+  payMethod?: true
   status?: true
   cancelReason?: true
   urgedAt?: true
@@ -129,6 +145,9 @@ export type OrderMaxAggregateInputType = {
   address?: true
   remark?: true
   totalAmount?: true
+  discount?: true
+  userCouponId?: true
+  payMethod?: true
   status?: true
   cancelReason?: true
   urgedAt?: true
@@ -148,6 +167,9 @@ export type OrderCountAggregateInputType = {
   address?: true
   remark?: true
   totalAmount?: true
+  discount?: true
+  userCouponId?: true
+  payMethod?: true
   status?: true
   cancelReason?: true
   urgedAt?: true
@@ -254,6 +276,9 @@ export type OrderGroupByOutputType = {
   address: string | null
   remark: string | null
   totalAmount: runtime.Decimal
+  discount: runtime.Decimal
+  userCouponId: string | null
+  payMethod: string | null
   status: string
   cancelReason: string | null
   urgedAt: Date | null
@@ -296,6 +321,9 @@ export type OrderWhereInput = {
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   remark?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.StringNullableFilter<"Order"> | string | null
+  payMethod?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   urgedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -320,6 +348,9 @@ export type OrderOrderByWithRelationInput = {
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
+  userCouponId?: Prisma.SortOrderInput | Prisma.SortOrder
+  payMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   urgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -347,6 +378,9 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   remark?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.StringNullableFilter<"Order"> | string | null
+  payMethod?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   urgedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -371,6 +405,9 @@ export type OrderOrderByWithAggregationInput = {
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
+  userCouponId?: Prisma.SortOrderInput | Prisma.SortOrder
+  payMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   urgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -398,6 +435,9 @@ export type OrderScalarWhereWithAggregatesInput = {
   address?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   remark?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalWithAggregatesFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalWithAggregatesFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  payMethod?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Order"> | string
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   urgedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
@@ -415,6 +455,9 @@ export type OrderCreateInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -439,6 +482,9 @@ export type OrderUncheckedCreateInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -459,6 +505,9 @@ export type OrderUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -483,6 +532,9 @@ export type OrderUncheckedUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -505,6 +557,9 @@ export type OrderCreateManyInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -522,6 +577,9 @@ export type OrderUpdateManyMutationInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -541,6 +599,9 @@ export type OrderUncheckedUpdateManyInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -570,6 +631,9 @@ export type OrderCountOrderByAggregateInput = {
   address?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
+  userCouponId?: Prisma.SortOrder
+  payMethod?: Prisma.SortOrder
   status?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   urgedAt?: Prisma.SortOrder
@@ -582,6 +646,7 @@ export type OrderCountOrderByAggregateInput = {
 
 export type OrderAvgOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
 }
 
 export type OrderMaxOrderByAggregateInput = {
@@ -593,6 +658,9 @@ export type OrderMaxOrderByAggregateInput = {
   address?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
+  userCouponId?: Prisma.SortOrder
+  payMethod?: Prisma.SortOrder
   status?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   urgedAt?: Prisma.SortOrder
@@ -612,6 +680,9 @@ export type OrderMinOrderByAggregateInput = {
   address?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
+  userCouponId?: Prisma.SortOrder
+  payMethod?: Prisma.SortOrder
   status?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   urgedAt?: Prisma.SortOrder
@@ -624,6 +695,7 @@ export type OrderMinOrderByAggregateInput = {
 
 export type OrderSumOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
 }
 
 export type OrderScalarRelationFilter = {
@@ -775,6 +847,9 @@ export type OrderCreateWithoutUserInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -797,6 +872,9 @@ export type OrderUncheckedCreateWithoutUserInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -847,6 +925,9 @@ export type OrderScalarWhereInput = {
   address?: Prisma.StringNullableFilter<"Order"> | string | null
   remark?: Prisma.StringNullableFilter<"Order"> | string | null
   totalAmount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFilter<"Order"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.StringNullableFilter<"Order"> | string | null
+  payMethod?: Prisma.StringNullableFilter<"Order"> | string | null
   status?: Prisma.StringFilter<"Order"> | string
   cancelReason?: Prisma.StringNullableFilter<"Order"> | string | null
   urgedAt?: Prisma.DateTimeNullableFilter<"Order"> | Date | string | null
@@ -864,6 +945,9 @@ export type OrderCreateWithoutPartnerInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -886,6 +970,9 @@ export type OrderUncheckedCreateWithoutPartnerInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -931,6 +1018,9 @@ export type OrderCreateWithoutItemsInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -954,6 +1044,9 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -989,6 +1082,9 @@ export type OrderUpdateWithoutItemsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1012,6 +1108,9 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1031,6 +1130,9 @@ export type OrderCreateWithoutReviewInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1054,6 +1156,9 @@ export type OrderUncheckedCreateWithoutReviewInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1089,6 +1194,9 @@ export type OrderUpdateWithoutReviewInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1112,6 +1220,9 @@ export type OrderUncheckedUpdateWithoutReviewInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1131,6 +1242,9 @@ export type OrderCreateWithoutMessagesInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1154,6 +1268,9 @@ export type OrderUncheckedCreateWithoutMessagesInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1189,6 +1306,9 @@ export type OrderUpdateWithoutMessagesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1212,6 +1332,9 @@ export type OrderUncheckedUpdateWithoutMessagesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1232,6 +1355,9 @@ export type OrderCreateManyUserInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1249,6 +1375,9 @@ export type OrderUpdateWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1271,6 +1400,9 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1292,6 +1424,9 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1310,6 +1445,9 @@ export type OrderCreateManyPartnerInput = {
   address?: string | null
   remark?: string | null
   totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: string | null
+  payMethod?: string | null
   status?: string
   cancelReason?: string | null
   urgedAt?: Date | string | null
@@ -1327,6 +1465,9 @@ export type OrderUpdateWithoutPartnerInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1349,6 +1490,9 @@ export type OrderUncheckedUpdateWithoutPartnerInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1370,6 +1514,9 @@ export type OrderUncheckedUpdateManyWithoutPartnerInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  userCouponId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   urgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1429,6 +1576,9 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   address?: boolean
   remark?: boolean
   totalAmount?: boolean
+  discount?: boolean
+  userCouponId?: boolean
+  payMethod?: boolean
   status?: boolean
   cancelReason?: boolean
   urgedAt?: boolean
@@ -1454,6 +1604,9 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   address?: boolean
   remark?: boolean
   totalAmount?: boolean
+  discount?: boolean
+  userCouponId?: boolean
+  payMethod?: boolean
   status?: boolean
   cancelReason?: boolean
   urgedAt?: boolean
@@ -1475,6 +1628,9 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   address?: boolean
   remark?: boolean
   totalAmount?: boolean
+  discount?: boolean
+  userCouponId?: boolean
+  payMethod?: boolean
   status?: boolean
   cancelReason?: boolean
   urgedAt?: boolean
@@ -1496,6 +1652,9 @@ export type OrderSelectScalar = {
   address?: boolean
   remark?: boolean
   totalAmount?: boolean
+  discount?: boolean
+  userCouponId?: boolean
+  payMethod?: boolean
   status?: boolean
   cancelReason?: boolean
   urgedAt?: boolean
@@ -1506,7 +1665,7 @@ export type OrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNo" | "userId" | "partnerId" | "appointAt" | "address" | "remark" | "totalAmount" | "status" | "cancelReason" | "urgedAt" | "paidAt" | "acceptedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNo" | "userId" | "partnerId" | "appointAt" | "address" | "remark" | "totalAmount" | "discount" | "userCouponId" | "payMethod" | "status" | "cancelReason" | "urgedAt" | "paidAt" | "acceptedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   partner?: boolean | Prisma.PartnerDefaultArgs<ExtArgs>
@@ -1542,6 +1701,9 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     address: string | null
     remark: string | null
     totalAmount: runtime.Decimal
+    discount: runtime.Decimal
+    userCouponId: string | null
+    payMethod: string | null
     status: string
     cancelReason: string | null
     urgedAt: Date | null
@@ -1986,6 +2148,9 @@ export interface OrderFieldRefs {
   readonly address: Prisma.FieldRef<"Order", 'String'>
   readonly remark: Prisma.FieldRef<"Order", 'String'>
   readonly totalAmount: Prisma.FieldRef<"Order", 'Decimal'>
+  readonly discount: Prisma.FieldRef<"Order", 'Decimal'>
+  readonly userCouponId: Prisma.FieldRef<"Order", 'String'>
+  readonly payMethod: Prisma.FieldRef<"Order", 'String'>
   readonly status: Prisma.FieldRef<"Order", 'String'>
   readonly cancelReason: Prisma.FieldRef<"Order", 'String'>
   readonly urgedAt: Prisma.FieldRef<"Order", 'DateTime'>

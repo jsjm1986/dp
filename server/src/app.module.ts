@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AdminController } from './admin/admin.controller.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ChatController } from './chat/chat.controller.js';
+import { CouponsController } from './coupons/coupons.controller.js';
 import { DynamicsController } from './dynamics/dynamics.controller.js';
 import { MiscController } from './misc/misc.controller.js';
 import { OrdersController } from './orders/orders.controller.js';
@@ -21,6 +22,7 @@ import { UsersController } from './users/users.controller.js';
     PartnerSelfController,
     OrdersController,
     ChatController,
+    CouponsController,
     DynamicsController,
     MiscController,
   ],

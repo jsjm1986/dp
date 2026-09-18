@@ -15,6 +15,9 @@ const address = ref('');
 const remark = ref('');
 const agreed = ref(false);
 const submitting = ref(false);
+const showCoupons = ref(false);
+const coupons = ref<Awaited<ReturnType<typeof api.myCoupons>>>([]);
+const pickedCoupon = ref<Awaited<ReturnType<typeof api.myCoupons>>[number] | null>(null);
 
 const chosen = computed(() =>
   (p.value?.services ?? [])
@@ -22,6 +25,23 @@ const chosen = computed(() =>
     .map((s) => ({ ...s, num: qty.value[s.id] })),
 );
 const total = computed(() => chosen.value.reduce((sum, s) => sum + s.price * s.num, 0));
+const discount = computed(() => {
+  const c = pickedCoupon.value;
+  if (!c || total.value < c.minSpend) return 0;
+  return Math.min(c.amount, total.value);
+});
+const payable = computed(() => total.value - discount.value);
+const usableCount = computed(() => coupons.value.filter((c) => c.usable).length);
+
+async function openCoupons() {
+  coupons.value = await api.myCoupons(total.value);
+  showCoupons.value = true;
+}
+
+function pickCoupon(c: (typeof coupons.value)[number] | null) {
+  pickedCoupon.value = c;
+  showCoupons.value = false;
+}
 const minDate = new Date();
 const maxDate = new Date(Date.now() + 30 * 86400_000);
 
@@ -46,6 +66,7 @@ async function submit() {
       appointAt: new Date(`${appointAt.value}T10:00:00`).toISOString(),
       address: address.value || undefined,
       remark: remark.value || undefined,
+      userCouponId: pickedCoupon.value && discount.value > 0 ? pickedCoupon.value.id : undefined,
     });
     showToast('下单成功，请支付');
     router.replace(`/order/${order.id}`);
@@ -107,10 +128,22 @@ onMounted(async () => {
         <span class="muted">{{ s.name }} ×{{ s.num }}</span>
         <span>¥{{ (s.price * s.num).toFixed(0) }}</span>
       </div>
+      <van-cell
+        :title="pickedCoupon && discount > 0 ? pickedCoupon.title : '优惠券'"
+        :value="pickedCoupon && discount > 0 ? `-¥${discount.toFixed(0)}` : usableCount ? `${usableCount}张可用` : '暂无可用'"
+        is-link
+        :border="false"
+        class="oc__coupon"
+        @click="openCoupons"
+      />
       <van-divider v-if="chosen.length" />
+      <div v-if="discount > 0" class="oc__fee">
+        <span class="muted">优惠抵扣</span>
+        <span class="oc__discount">-¥{{ discount.toFixed(0) }}</span>
+      </div>
       <div class="oc__fee oc__fee--total">
         <span>合计</span>
-        <span class="price">¥{{ total.toFixed(0) }}</span>
+        <span class="price">¥{{ payable.toFixed(0) }}</span>
       </div>
     </div>
 
@@ -122,7 +155,7 @@ onMounted(async () => {
     <div class="oc__bar safe-bottom">
       <div class="oc__bar-price">
         <span class="muted">合计</span>
-        <span class="price oc__bar-num">¥{{ total.toFixed(0) }}</span>
+        <span class="price oc__bar-num">¥{{ payable.toFixed(0) }}</span>
       </div>
       <van-button round type="primary" :loading="submitting" class="oc__bar-btn" @click="submit">
         提交订单
@@ -135,6 +168,29 @@ onMounted(async () => {
       :max-date="maxDate"
       @confirm="onCalendarConfirm"
     />
+
+    <van-popup v-model:show="showCoupons" position="bottom" round class="oc__coupon-pop">
+      <div class="oc__coupon-title">选择优惠券</div>
+      <div class="oc__coupon-list">
+        <div
+          v-for="c in coupons.filter((x) => !x.used && !x.expired)"
+          :key="c.id"
+          class="oc__coupon-item"
+          :class="{ 'oc__coupon-item--disabled': !c.usable }"
+          @click="c.usable && pickCoupon(c)"
+        >
+          <div class="oc__coupon-amount"><i>¥</i>{{ c.amount }}</div>
+          <div class="oc__coupon-info">
+            <div>{{ c.title }}</div>
+            <div class="muted">{{ c.minSpend > 0 ? `满${c.minSpend}可用` : '无门槛' }}</div>
+          </div>
+          <van-tag v-if="!c.usable" plain>未达门槛</van-tag>
+          <van-icon v-else-if="pickedCoupon?.id === c.id" name="checked" color="#ff5a5f" size="20" />
+        </div>
+        <van-empty v-if="!coupons.filter((x) => !x.used && !x.expired).length" description="暂无优惠券" image-size="70" />
+      </div>
+      <van-button block plain round class="oc__coupon-none" @click="pickCoupon(null)">不使用优惠券</van-button>
+    </van-popup>
   </div>
 </template>
 
@@ -202,5 +258,51 @@ onMounted(async () => {
 }
 .oc__bar-btn {
   width: 140px;
+}
+.oc__coupon {
+  padding: 0;
+}
+.oc__coupon-pop {
+  padding: 16px 16px 32px;
+}
+.oc__coupon-title {
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.oc__coupon-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.oc__coupon-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff5f5;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.oc__coupon-item--disabled {
+  background: #f5f6f8;
+  opacity: 0.6;
+}
+.oc__coupon-amount {
+  color: #ff5a5f;
+  font-size: 26px;
+  font-weight: 800;
+}
+.oc__coupon-amount i {
+  font-size: 14px;
+  font-style: normal;
+}
+.oc__coupon-info {
+  flex: 1;
+}
+.oc__coupon-none {
+  margin-top: 8px;
+}
+.oc__discount {
+  color: #ff5a5f;
 }
 </style>

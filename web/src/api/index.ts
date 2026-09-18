@@ -123,6 +123,7 @@ export interface PartnerApplyPayload {
 export interface PartnerProfile extends PartnerApplyPayload {
   id: string;
   status: string;
+  auditStatus: string;
   rating: number;
   serviceCount: number;
   viewCount: number;
@@ -136,6 +137,7 @@ export interface PartnerStats {
   followers: number;
   rating: number;
   status: string;
+  auditStatus: string;
 }
 
 export interface UserProfile {
@@ -146,6 +148,7 @@ export interface UserProfile {
   gender: string | null;
   city: string | null;
   balance: number;
+  role: string;
   partnerId: string | null;
 }
 
@@ -204,6 +207,26 @@ export const api = {
   sendMessage: (data: { peerId: string; content: string; orderId?: string }) =>
     http.post<{ id: string }>('/chat/send', data),
   unreadCount: () => http.get<{ count: number }>('/chat/unread'),
+
+  /* 管理后台 */
+  adminDashboard: () =>
+    http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number }>('/admin/dashboard'),
+  adminUsers: (page = 1, keyword?: string) =>
+    http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
+  adminPartners: (auditStatus = 'pending', page = 1) =>
+    http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; rating: number; serviceCount: number; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
+  adminApprove: (id: string) => http.post(`/admin/partners/${id}/approve`),
+  adminReject: (id: string) => http.post(`/admin/partners/${id}/reject`),
+  adminVerify: (id: string, verified: boolean) => http.put(`/admin/partners/${id}/verify`, { verified }),
+  adminOrders: (page = 1, status?: string) =>
+    http.get<{ total: number; items: Array<{ id: string; orderNo: string; customer: string; customerMobile: string; partner: string; city: string; totalAmount: number; status: string; createdAt: string }> }>('/admin/orders', { params: { page, status } }),
+  adminDynamics: (page = 1) =>
+    http.get<{ total: number; items: Array<{ id: string; content: string; images: string[]; city: string | null; likeCount: number; commentCount: number; createdAt: string; author: string; avatar: string | null }> }>('/admin/dynamics', { params: { page } }),
+  adminDeleteDynamic: (id: string) => http.delete(`/admin/dynamics/${id}`),
+  adminBanners: () => http.get<Array<{ id: string; image: string; link: string | null; sort: number }>>('/admin/banners'),
+  adminSaveBanner: (data: { id?: string; image: string; link?: string; sort?: number }) =>
+    data.id ? http.put(`/admin/banners/${data.id}`, data) : http.post('/admin/banners', data),
+  adminDeleteBanner: (id: string) => http.delete(`/admin/banners/${id}`),
 
   upload: (file: File) => {
     const fd = new FormData();

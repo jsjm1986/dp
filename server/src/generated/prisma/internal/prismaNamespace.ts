@@ -1435,6 +1435,7 @@ export const UserScalarFieldEnum = {
   gender: 'gender',
   city: 'city',
   balance: 'balance',
+  role: 'role',
   createdAt: 'createdAt'
 } as const
 
@@ -1458,6 +1459,7 @@ export const PartnerScalarFieldEnum = {
   latitude: 'latitude',
   longitude: 'longitude',
   status: 'status',
+  auditStatus: 'auditStatus',
   verified: 'verified',
   serviceCount: 'serviceCount',
   viewCount: 'viewCount',

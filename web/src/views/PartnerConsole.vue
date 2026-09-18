@@ -89,6 +89,21 @@ onUnmounted(() => poller && clearInterval(poller));
       </template>
     </van-nav-bar>
 
+    <van-notice-bar
+      v-if="stats?.auditStatus === 'pending'"
+      left-icon="info-o"
+      text="入驻资料审核中，通过后才会展示给用户"
+      wrapable
+    />
+    <van-notice-bar
+      v-else-if="stats?.auditStatus === 'rejected'"
+      left-icon="warning-o"
+      color="#ee0a24"
+      background="#ffe1e1"
+      text="入驻申请被拒绝，请修改资料后重新提交"
+      wrapable
+    />
+
     <div class="pc__hero">
       <div class="pc__status">
         <div>

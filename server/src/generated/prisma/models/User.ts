@@ -42,6 +42,7 @@ export type UserMinAggregateOutputType = {
   gender: string | null
   city: string | null
   balance: runtime.Decimal | null
+  role: string | null
   createdAt: Date | null
 }
 
@@ -53,6 +54,7 @@ export type UserMaxAggregateOutputType = {
   gender: string | null
   city: string | null
   balance: runtime.Decimal | null
+  role: string | null
   createdAt: Date | null
 }
 
@@ -64,6 +66,7 @@ export type UserCountAggregateOutputType = {
   gender: number
   city: number
   balance: number
+  role: number
   createdAt: number
   _all: number
 }
@@ -85,6 +88,7 @@ export type UserMinAggregateInputType = {
   gender?: true
   city?: true
   balance?: true
+  role?: true
   createdAt?: true
 }
 
@@ -96,6 +100,7 @@ export type UserMaxAggregateInputType = {
   gender?: true
   city?: true
   balance?: true
+  role?: true
   createdAt?: true
 }
 
@@ -107,6 +112,7 @@ export type UserCountAggregateInputType = {
   gender?: true
   city?: true
   balance?: true
+  role?: true
   createdAt?: true
   _all?: true
 }
@@ -205,6 +211,7 @@ export type UserGroupByOutputType = {
   gender: string | null
   city: string | null
   balance: runtime.Decimal
+  role: string
   createdAt: Date
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
@@ -239,6 +246,7 @@ export type UserWhereInput = {
   gender?: Prisma.StringNullableFilter<"User"> | string | null
   city?: Prisma.StringNullableFilter<"User"> | string | null
   balance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -259,6 +267,7 @@ export type UserOrderByWithRelationInput = {
   gender?: Prisma.SortOrderInput | Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   partner?: Prisma.PartnerOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
@@ -282,6 +291,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   gender?: Prisma.StringNullableFilter<"User"> | string | null
   city?: Prisma.StringNullableFilter<"User"> | string | null
   balance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -302,6 +312,7 @@ export type UserOrderByWithAggregationInput = {
   gender?: Prisma.SortOrderInput | Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
@@ -321,6 +332,7 @@ export type UserScalarWhereWithAggregatesInput = {
   gender?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   city?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   balance?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringWithAggregatesFilter<"User"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
@@ -332,6 +344,7 @@ export type UserCreateInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -352,6 +365,7 @@ export type UserUncheckedCreateInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -372,6 +386,7 @@ export type UserUpdateInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -392,6 +407,7 @@ export type UserUncheckedUpdateInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -412,6 +428,7 @@ export type UserCreateManyInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
 }
 
@@ -423,6 +440,7 @@ export type UserUpdateManyMutationInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -434,6 +452,7 @@ export type UserUncheckedUpdateManyInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -445,6 +464,7 @@ export type UserCountOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -460,6 +480,7 @@ export type UserMaxOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -471,6 +492,7 @@ export type UserMinOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -637,6 +659,7 @@ export type UserCreateWithoutPartnerInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
   dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
@@ -656,6 +679,7 @@ export type UserUncheckedCreateWithoutPartnerInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
   dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
@@ -691,6 +715,7 @@ export type UserUpdateWithoutPartnerInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
   dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
@@ -710,6 +735,7 @@ export type UserUncheckedUpdateWithoutPartnerInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
   dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
@@ -729,6 +755,7 @@ export type UserCreateWithoutOrdersInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
@@ -748,6 +775,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
@@ -783,6 +811,7 @@ export type UserUpdateWithoutOrdersInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
@@ -802,6 +831,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
@@ -821,6 +851,7 @@ export type UserCreateWithoutReviewsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -840,6 +871,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -875,6 +907,7 @@ export type UserUpdateWithoutReviewsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -894,6 +927,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -913,6 +947,7 @@ export type UserCreateWithoutDynamicsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -932,6 +967,7 @@ export type UserUncheckedCreateWithoutDynamicsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -967,6 +1003,7 @@ export type UserUpdateWithoutDynamicsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -986,6 +1023,7 @@ export type UserUncheckedUpdateWithoutDynamicsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1005,6 +1043,7 @@ export type UserCreateWithoutLikesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1024,6 +1063,7 @@ export type UserUncheckedCreateWithoutLikesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1059,6 +1099,7 @@ export type UserUpdateWithoutLikesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1078,6 +1119,7 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1097,6 +1139,7 @@ export type UserCreateWithoutCommentsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1116,6 +1159,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1151,6 +1195,7 @@ export type UserUpdateWithoutCommentsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1170,6 +1215,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1189,6 +1235,7 @@ export type UserCreateWithoutFollowsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1208,6 +1255,7 @@ export type UserUncheckedCreateWithoutFollowsInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1243,6 +1291,7 @@ export type UserUpdateWithoutFollowsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1262,6 +1311,7 @@ export type UserUncheckedUpdateWithoutFollowsInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1281,6 +1331,7 @@ export type UserCreateWithoutSentMessagesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1300,6 +1351,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1324,6 +1376,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1343,6 +1396,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   gender?: string | null
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1378,6 +1432,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1397,6 +1452,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1427,6 +1483,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1446,6 +1503,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1559,6 +1617,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   gender?: boolean
   city?: boolean
   balance?: boolean
+  role?: boolean
   createdAt?: boolean
   partner?: boolean | Prisma.User$partnerArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
@@ -1580,6 +1639,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   gender?: boolean
   city?: boolean
   balance?: boolean
+  role?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -1591,6 +1651,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   gender?: boolean
   city?: boolean
   balance?: boolean
+  role?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -1602,10 +1663,11 @@ export type UserSelectScalar = {
   gender?: boolean
   city?: boolean
   balance?: boolean
+  role?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mobile" | "nickname" | "avatar" | "gender" | "city" | "balance" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mobile" | "nickname" | "avatar" | "gender" | "city" | "balance" | "role" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   partner?: boolean | Prisma.User$partnerArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
@@ -1642,6 +1704,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     gender: string | null
     city: string | null
     balance: runtime.Decimal
+    role: string
     createdAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
@@ -2082,6 +2145,7 @@ export interface UserFieldRefs {
   readonly gender: Prisma.FieldRef<"User", 'String'>
   readonly city: Prisma.FieldRef<"User", 'String'>
   readonly balance: Prisma.FieldRef<"User", 'Decimal'>
+  readonly role: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     

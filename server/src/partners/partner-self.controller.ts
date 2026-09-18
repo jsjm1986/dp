@@ -97,7 +97,7 @@ class StatusDto {
 export class PartnerSelfController {
   constructor(private prisma: PrismaService) {}
 
-  /** 申请成为玩伴（演示直接通过） */
+  /** 申请成为玩伴（提交后待平台审核） */
   @Post('apply')
   async apply(@CurrentUser() userId: string, @Body() dto: ApplyDto) {
     const exists = await this.prisma.partner.findUnique({ where: { userId } });
@@ -140,6 +140,7 @@ export class PartnerSelfController {
       tags: JSON.parse(full.tags) as string[],
       photos: JSON.parse(full.photos) as string[],
       status: full.status,
+      auditStatus: full.auditStatus,
       rating: full.rating,
       serviceCount: full.serviceCount,
       viewCount: full.viewCount,
@@ -211,6 +212,7 @@ export class PartnerSelfController {
       followers,
       rating: p.rating,
       status: p.status,
+      auditStatus: p.auditStatus,
     };
   }
 

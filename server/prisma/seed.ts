@@ -102,6 +102,7 @@ async function main() {
         latitude: p.lat,
         longitude: p.lng,
         status: 'available',
+        auditStatus: 'approved',
         verified: true,
         serviceCount: 20 + Math.floor(Math.random() * 180),
         viewCount: 100 + Math.floor(Math.random() * 2000),
@@ -115,6 +116,10 @@ async function main() {
       },
     });
   }
+
+  await prisma.user.create({
+    data: { mobile: '13800138000', nickname: '平台管理员', role: 'admin' },
+  });
 
   const dynamicUsers = await prisma.user.findMany({ include: { partner: true } });
   for (const d of DYNAMICS) {

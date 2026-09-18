@@ -15,6 +15,7 @@ model User {
   gender    String?
   city      String?
   balance   Decimal  @default(0)
+  role      String   @default("user")
   createdAt DateTime @default(now())
 
   partner   Partner?
@@ -46,6 +47,7 @@ model Partner {
   latitude      Float?
   longitude     Float?
   status        String   @default("available")
+  auditStatus   String   @default("pending")
   verified      Boolean  @default(false)
   serviceCount  Int      @default(0)
   viewCount     Int      @default(0)

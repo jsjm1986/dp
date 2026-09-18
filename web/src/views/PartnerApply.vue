@@ -73,7 +73,7 @@ async function submit() {
       router.back();
     } else {
       await api.partnerApply(payload);
-      showToast('入驻成功，去接单吧');
+      showToast('已提交，等待平台审核');
       await store.refresh();
       router.replace('/partner/console');
     }

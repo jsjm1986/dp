@@ -37,7 +37,7 @@ export class PartnersService {
     const page = Math.max(1, q.page ?? 1);
     const pageSize = Math.min(50, q.pageSize ?? 10);
 
-    const where: Prisma.PartnerWhereInput = {};
+    const where: Prisma.PartnerWhereInput = { auditStatus: 'approved' };
     if (q.city) where.city = { contains: q.city };
     if (q.keyword) {
       where.OR = [

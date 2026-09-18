@@ -65,6 +65,7 @@ export type PartnerMinAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   status: string | null
+  auditStatus: string | null
   verified: boolean | null
   serviceCount: number | null
   viewCount: number | null
@@ -90,6 +91,7 @@ export type PartnerMaxAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   status: string | null
+  auditStatus: string | null
   verified: boolean | null
   serviceCount: number | null
   viewCount: number | null
@@ -115,6 +117,7 @@ export type PartnerCountAggregateOutputType = {
   latitude: number
   longitude: number
   status: number
+  auditStatus: number
   verified: number
   serviceCount: number
   viewCount: number
@@ -164,6 +167,7 @@ export type PartnerMinAggregateInputType = {
   latitude?: true
   longitude?: true
   status?: true
+  auditStatus?: true
   verified?: true
   serviceCount?: true
   viewCount?: true
@@ -189,6 +193,7 @@ export type PartnerMaxAggregateInputType = {
   latitude?: true
   longitude?: true
   status?: true
+  auditStatus?: true
   verified?: true
   serviceCount?: true
   viewCount?: true
@@ -214,6 +219,7 @@ export type PartnerCountAggregateInputType = {
   latitude?: true
   longitude?: true
   status?: true
+  auditStatus?: true
   verified?: true
   serviceCount?: true
   viewCount?: true
@@ -326,6 +332,7 @@ export type PartnerGroupByOutputType = {
   latitude: number | null
   longitude: number | null
   status: string
+  auditStatus: string
   verified: boolean
   serviceCount: number
   viewCount: number
@@ -374,6 +381,7 @@ export type PartnerWhereInput = {
   latitude?: Prisma.FloatNullableFilter<"Partner"> | number | null
   longitude?: Prisma.FloatNullableFilter<"Partner"> | number | null
   status?: Prisma.StringFilter<"Partner"> | string
+  auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
@@ -404,6 +412,7 @@ export type PartnerOrderByWithRelationInput = {
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -437,6 +446,7 @@ export type PartnerWhereUniqueInput = Prisma.AtLeast<{
   latitude?: Prisma.FloatNullableFilter<"Partner"> | number | null
   longitude?: Prisma.FloatNullableFilter<"Partner"> | number | null
   status?: Prisma.StringFilter<"Partner"> | string
+  auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
@@ -467,6 +477,7 @@ export type PartnerOrderByWithAggregationInput = {
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -500,6 +511,7 @@ export type PartnerScalarWhereWithAggregatesInput = {
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"Partner"> | number | null
   longitude?: Prisma.FloatNullableWithAggregatesFilter<"Partner"> | number | null
   status?: Prisma.StringWithAggregatesFilter<"Partner"> | string
+  auditStatus?: Prisma.StringWithAggregatesFilter<"Partner"> | string
   verified?: Prisma.BoolWithAggregatesFilter<"Partner"> | boolean
   serviceCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
   viewCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
@@ -524,6 +536,7 @@ export type PartnerCreateInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -554,6 +567,7 @@ export type PartnerUncheckedCreateInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -582,6 +596,7 @@ export type PartnerUpdateInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -612,6 +627,7 @@ export type PartnerUncheckedUpdateInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -641,6 +657,7 @@ export type PartnerCreateManyInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -665,6 +682,7 @@ export type PartnerUpdateManyMutationInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -690,6 +708,7 @@ export type PartnerUncheckedUpdateManyInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -720,6 +739,7 @@ export type PartnerCountOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -756,6 +776,7 @@ export type PartnerMaxOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -781,6 +802,7 @@ export type PartnerMinOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -945,6 +967,7 @@ export type PartnerCreateWithoutUserInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -973,6 +996,7 @@ export type PartnerUncheckedCreateWithoutUserInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1017,6 +1041,7 @@ export type PartnerUpdateWithoutUserInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1045,6 +1070,7 @@ export type PartnerUncheckedUpdateWithoutUserInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1073,6 +1099,7 @@ export type PartnerCreateWithoutServicesInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1102,6 +1129,7 @@ export type PartnerUncheckedCreateWithoutServicesInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1145,6 +1173,7 @@ export type PartnerUpdateWithoutServicesInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1174,6 +1203,7 @@ export type PartnerUncheckedUpdateWithoutServicesInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1201,6 +1231,7 @@ export type PartnerCreateWithoutOrdersInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1230,6 +1261,7 @@ export type PartnerUncheckedCreateWithoutOrdersInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1273,6 +1305,7 @@ export type PartnerUpdateWithoutOrdersInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1302,6 +1335,7 @@ export type PartnerUncheckedUpdateWithoutOrdersInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1329,6 +1363,7 @@ export type PartnerCreateWithoutReviewsInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1358,6 +1393,7 @@ export type PartnerUncheckedCreateWithoutReviewsInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1401,6 +1437,7 @@ export type PartnerUpdateWithoutReviewsInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1430,6 +1467,7 @@ export type PartnerUncheckedUpdateWithoutReviewsInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1457,6 +1495,7 @@ export type PartnerCreateWithoutFollowsInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1486,6 +1525,7 @@ export type PartnerUncheckedCreateWithoutFollowsInput = {
   latitude?: number | null
   longitude?: number | null
   status?: string
+  auditStatus?: string
   verified?: boolean
   serviceCount?: number
   viewCount?: number
@@ -1529,6 +1569,7 @@ export type PartnerUpdateWithoutFollowsInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1558,6 +1599,7 @@ export type PartnerUncheckedUpdateWithoutFollowsInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1644,6 +1686,7 @@ export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   latitude?: boolean
   longitude?: boolean
   status?: boolean
+  auditStatus?: boolean
   verified?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -1675,6 +1718,7 @@ export type PartnerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   latitude?: boolean
   longitude?: boolean
   status?: boolean
+  auditStatus?: boolean
   verified?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -1701,6 +1745,7 @@ export type PartnerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   latitude?: boolean
   longitude?: boolean
   status?: boolean
+  auditStatus?: boolean
   verified?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -1727,6 +1772,7 @@ export type PartnerSelectScalar = {
   latitude?: boolean
   longitude?: boolean
   status?: boolean
+  auditStatus?: boolean
   verified?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -1735,7 +1781,7 @@ export type PartnerSelectScalar = {
   createdAt?: boolean
 }
 
-export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "verified" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
+export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "auditStatus" | "verified" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
 export type PartnerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   services?: boolean | Prisma.Partner$servicesArgs<ExtArgs>
@@ -1777,6 +1823,7 @@ export type $PartnerPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     latitude: number | null
     longitude: number | null
     status: string
+    auditStatus: string
     verified: boolean
     serviceCount: number
     viewCount: number
@@ -2227,6 +2274,7 @@ export interface PartnerFieldRefs {
   readonly latitude: Prisma.FieldRef<"Partner", 'Float'>
   readonly longitude: Prisma.FieldRef<"Partner", 'Float'>
   readonly status: Prisma.FieldRef<"Partner", 'String'>
+  readonly auditStatus: Prisma.FieldRef<"Partner", 'String'>
   readonly verified: Prisma.FieldRef<"Partner", 'Boolean'>
   readonly serviceCount: Prisma.FieldRef<"Partner", 'Int'>
   readonly viewCount: Prisma.FieldRef<"Partner", 'Int'>

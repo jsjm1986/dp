@@ -27,11 +27,13 @@ export class MiscController {
     const [banners, recommend, newest] = await this.prisma.$transaction([
       this.prisma.banner.findMany({ orderBy: { sort: 'asc' } }),
       this.prisma.partner.findMany({
+        where: { auditStatus: 'approved' },
         orderBy: [{ rating: 'desc' }, { serviceCount: 'desc' }],
         take: 6,
         include: { user: { select: { nickname: true, avatar: true, gender: true } } },
       }),
       this.prisma.partner.findMany({
+        where: { auditStatus: 'approved' },
         orderBy: { createdAt: 'desc' },
         take: 6,
         include: { user: { select: { nickname: true, avatar: true, gender: true } } },

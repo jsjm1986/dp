@@ -52,6 +52,7 @@ export class AuthService {
     gender: string | null;
     city: string | null;
     balance: unknown;
+    role?: string;
   }) {
     return {
       id: user.id,
@@ -61,6 +62,7 @@ export class AuthService {
       gender: user.gender,
       city: user.city,
       balance: Number(user.balance),
+      role: user.role ?? 'user',
     };
   }
 }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminController } from './admin/admin.controller.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ChatController } from './chat/chat.controller.js';
 import { DynamicsController } from './dynamics/dynamics.controller.js';
@@ -14,6 +15,7 @@ import { UsersController } from './users/users.controller.js';
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
+    AdminController,
     UsersController,
     PartnersController,
     PartnerSelfController,

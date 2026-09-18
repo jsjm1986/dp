@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module.js';
+import { ChatController } from './chat/chat.controller.js';
 import { DynamicsController } from './dynamics/dynamics.controller.js';
 import { MiscController } from './misc/misc.controller.js';
 import { OrdersController } from './orders/orders.controller.js';
@@ -17,6 +18,7 @@ import { UsersController } from './users/users.controller.js';
     PartnersController,
     PartnerSelfController,
     OrdersController,
+    ChatController,
     DynamicsController,
     MiscController,
   ],

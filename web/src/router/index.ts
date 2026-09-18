@@ -19,6 +19,8 @@ const router = createRouter({
     { path: '/follows', component: () => import('../views/Follows.vue'), meta: { auth: true } },
     { path: '/partner/apply', component: () => import('../views/PartnerApply.vue'), meta: { auth: true } },
     { path: '/partner/console', component: () => import('../views/PartnerConsole.vue'), meta: { auth: true } },
+    { path: '/chats', component: () => import('../views/Chats.vue'), meta: { auth: true } },
+    { path: '/chat/:peerId', component: () => import('../views/Chat.vue'), meta: { auth: true } },
   ],
 });
 

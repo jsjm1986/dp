@@ -77,3 +77,8 @@ export type Banner = Prisma.BannerModel
  * 
  */
 export type SmsCode = Prisma.SmsCodeModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel

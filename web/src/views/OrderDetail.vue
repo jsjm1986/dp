@@ -52,6 +52,10 @@ function review() {
   router.push(`/review/${id}`);
 }
 
+function chat() {
+  router.push(`/chat/${order.value!.partner.userId}?orderId=${id}`);
+}
+
 function fmt(iso: string | null) {
   if (!iso) return '-';
   const d = new Date(iso);
@@ -124,6 +128,7 @@ onUnmounted(() => poller && clearInterval(poller));
     </div>
 
     <div class="od__bar safe-bottom">
+      <van-button v-if="order.status !== 'cancelled'" round plain icon="chat-o" @click="chat">联系玩伴</van-button>
       <template v-if="order.status === 'pending_payment'">
         <van-button round plain @click="cancel">取消订单</van-button>
         <van-button round type="primary" class="od__bar-main" @click="showPay = true">立即支付</van-button>

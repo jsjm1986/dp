@@ -106,6 +106,7 @@ export class PartnersService {
 
     return {
       id: p.id,
+      userId: p.userId,
       nickname: p.user.nickname,
       avatar: p.user.avatar,
       gender: p.user.gender,

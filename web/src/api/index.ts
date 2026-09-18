@@ -59,6 +59,7 @@ export interface PartnerCard {
 }
 
 export interface PartnerDetail extends Omit<PartnerCard, 'cover' | 'distance'> {
+  userId: string;
   photos: string[];
   voiceIntro: string | null;
   bio: string | null;
@@ -77,7 +78,7 @@ export interface Order {
   id: string;
   orderNo: string;
   partnerId: string;
-  partner: { id: string; nickname: string; avatar: string | null; city: string };
+  partner: { id: string; userId: string; nickname: string; avatar: string | null; city: string };
   items: Array<{ id: string; serviceId: string; name: string; price: number; unit: string; num: number; subtotal: number }>;
   appointAt: string;
   address: string | null;
@@ -194,6 +195,15 @@ export const api = {
   comments: (id: string) => http.get<CommentRow[]>(`/dynamics/${id}/comments`),
   comment: (id: string, content: string) =>
     http.post<CommentRow & { commentCount: number }>(`/dynamics/${id}/comments`, { content }),
+
+  /* 聊天 */
+  conversations: () =>
+    http.get<Array<{ peer: { id: string; nickname: string; avatar: string | null }; lastMessage: { content: string; createdAt: string; fromMe: boolean }; unread: number }>>('/chat/conversations'),
+  chatMessages: (peerId: string, before?: string) =>
+    http.get<{ peer: { id: string; nickname: string; avatar: string | null }; items: Array<{ id: string; senderId: string; content: string; createdAt: string }> }>('/chat/messages', { params: { peerId, before } }),
+  sendMessage: (data: { peerId: string; content: string; orderId?: string }) =>
+    http.post<{ id: string }>('/chat/send', data),
+  unreadCount: () => http.get<{ count: number }>('/chat/unread'),
 
   upload: (file: File) => {
     const fd = new FormData();

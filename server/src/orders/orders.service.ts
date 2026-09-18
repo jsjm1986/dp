@@ -298,7 +298,7 @@ export class OrdersService {
     paidAt: Date | null;
     createdAt: Date;
     items: Array<{ id: string; serviceId: string; name: string; price: unknown; unit: string; num: number; subtotal: unknown }>;
-    partner: { id: string; city: string; user: { nickname: string; avatar: string | null } };
+    partner: { id: string; city: string; userId: string; user: { nickname: string; avatar: string | null } };
     review: { id: string } | null;
   }) {
     return {
@@ -307,6 +307,7 @@ export class OrdersService {
       partnerId: o.partnerId,
       partner: {
         id: o.partner.id,
+        userId: o.partner.userId,
         nickname: o.partner.user.nickname,
         avatar: o.partner.user.avatar,
         city: o.partner.city,

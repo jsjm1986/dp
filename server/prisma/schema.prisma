@@ -24,6 +24,8 @@ model User {
   follows   Follow[]
   likes     DynamicLike[]
   comments  DynamicComment[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 model Partner {
@@ -92,7 +94,8 @@ model Order {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  review Review?
+  review   Review?
+  messages Message[]
 }
 
 model OrderItem {
@@ -181,4 +184,22 @@ model SmsCode {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// ---------- 私信聊天 ----------
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  orderId    String?
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  order    Order? @relation(fields: [orderId], references: [id])
+
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, readAt])
 }

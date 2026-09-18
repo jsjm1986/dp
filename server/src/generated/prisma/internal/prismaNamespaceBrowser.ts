@@ -62,7 +62,8 @@ export const ModelName = {
   DynamicComment: 'DynamicComment',
   Follow: 'Follow',
   Banner: 'Banner',
-  SmsCode: 'SmsCode'
+  SmsCode: 'SmsCode',
+  Message: 'Message'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -247,6 +248,19 @@ export const SmsCodeScalarFieldEnum = {
 } as const
 
 export type SmsCodeScalarFieldEnum = (typeof SmsCodeScalarFieldEnum)[keyof typeof SmsCodeScalarFieldEnum]
+
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  senderId: 'senderId',
+  receiverId: 'receiverId',
+  orderId: 'orderId',
+  content: 'content',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -38,12 +38,28 @@ async function toggleFollow() {
   showToast(res.followed ? '已关注' : '已取消关注');
 }
 
+const showContact = ref(false);
+const contactActions = [
+  { name: '站内私信', icon: 'chat-o' },
+  { name: '解锁微信号', icon: 'wechat' },
+];
+
 function contact() {
-  showConfirmDialog({ title: '解锁微信号', message: '解锁后可查看Ta的微信号并添加好友（演示免费）' })
-    .then(() => {
-      showPhone.value = true;
-    })
-    .catch(() => {});
+  if (!store.loggedIn) return router.push({ path: '/login', query: { redirect: route.fullPath } });
+  showContact.value = true;
+}
+
+function onContactSelect(action: { name: string }) {
+  showContact.value = false;
+  if (action.name === '站内私信') {
+    router.push(`/chat/${p.value!.userId}`);
+  } else {
+    showConfirmDialog({ title: '解锁微信号', message: '解锁后可查看Ta的微信号并添加好友（演示免费）' })
+      .then(() => {
+        showPhone.value = true;
+      })
+      .catch(() => {});
+  }
 }
 
 function book() {
@@ -156,6 +172,8 @@ onMounted(load);
         {{ p.status === 'rest' ? '休息中' : '立即预约' }}
       </van-button>
     </div>
+
+    <van-action-sheet v-model:show="showContact" :actions="contactActions" cancel-text="取消" @select="onContactSelect" />
 
     <van-dialog v-model:show="showPhone" title="Ta的微信号" confirm-button-text="一键复制" @confirm="copyWx">
       <div class="detail__wx">{{ p.wechatId || '对方暂未设置' }}</div>

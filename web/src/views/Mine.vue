@@ -10,6 +10,7 @@ const router = useRouter();
 const editing = ref(false);
 const nickname = ref('');
 const uploadingAvatar = ref(false);
+const unread = ref(0);
 
 async function uploadAvatar(file: File) {
   uploadingAvatar.value = true;
@@ -21,7 +22,10 @@ async function uploadAvatar(file: File) {
   }
 }
 
-onMounted(() => store.refresh().catch(() => {}));
+onMounted(() => {
+  store.refresh().catch(() => {});
+  api.unreadCount().then((r) => (unread.value = r.count)).catch(() => {});
+});
 
 function openEdit() {
   nickname.value = store.user?.nickname ?? '';
@@ -91,6 +95,12 @@ async function logout() {
         icon="vip-card-o"
         @click="router.push('/partner/apply')"
       />
+      <van-cell title="消息" is-link icon="chat-o" @click="router.push('/chats')">
+        <template #right-icon>
+          <van-badge v-if="unread" :content="unread" class="mine__unread" />
+          <van-icon name="arrow" class="van-cell__right-icon" />
+        </template>
+      </van-cell>
       <van-cell title="我的关注" is-link icon="like-o" @click="router.push('/follows')" />
       <van-cell title="全部订单" is-link icon="orders-o" @click="router.push('/orders')" />
       <van-cell title="发动态" is-link icon="edit" @click="router.push('/dynamic/publish')" />
@@ -161,6 +171,10 @@ async function logout() {
 .mine__menu {
   margin: 12px;
   overflow: hidden;
+}
+.mine__unread {
+  margin-right: 6px;
+  align-self: center;
 }
 .mine__logout {
   margin: 24px 16px;

@@ -5,7 +5,7 @@ import { showConfirmDialog, showToast } from 'vant';
 import { api, type Order, type PartnerStats } from '../api';
 import { ORDER_STATUS_TEXT } from '../utils/order';
 
-type PartnerOrder = Order & { customer: { nickname: string; avatar: string | null; mobile: string } };
+type PartnerOrder = Order & { customer: { id: string; nickname: string; avatar: string | null; mobile: string } };
 
 const router = useRouter();
 const stats = ref<PartnerStats | null>(null);
@@ -168,6 +168,7 @@ onUnmounted(() => poller && clearInterval(poller));
           <div class="porder__foot">
             <span class="price">¥{{ o.totalAmount.toFixed(0) }}</span>
             <div class="porder__actions">
+              <van-button size="small" round plain icon="chat-o" @click="router.push(`/chat/${o.customer.id}?orderId=${o.id}`)" />
               <template v-if="o.status === 'pending_accept'">
                 <van-button size="small" round plain :loading="acting === o.id" @click="act(o, 'reject')">拒绝</van-button>
                 <van-button size="small" round type="primary" :loading="acting === o.id" @click="act(o, 'accept')">接单</van-button>

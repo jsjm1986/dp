@@ -250,7 +250,7 @@ export class OrdersService {
         items: true,
         partner: { include: { user: { select: { nickname: true, avatar: true } } } },
         review: true,
-        user: { select: { nickname: true, avatar: true, mobile: true } },
+        user: { select: { id: true, nickname: true, avatar: true, mobile: true } },
       },
       take: 50,
     });

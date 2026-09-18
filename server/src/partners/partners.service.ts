@@ -147,6 +147,20 @@ export class PartnersService {
         user: r.user,
       })),
       reviewCount: p._count.reviews,
+      dynamics: await this.prisma.dynamic.findMany({
+        where: { userId: p.userId },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      }).then((ds) =>
+        ds.map((d) => ({
+          id: d.id,
+          content: d.content,
+          images: JSON.parse(d.images) as string[],
+          likeCount: d.likeCount,
+          commentCount: d.commentCount,
+          createdAt: d.createdAt,
+        })),
+      ),
     };
   }
 

@@ -141,6 +141,21 @@ onMounted(load);
         </div>
       </div>
 
+      <div v-if="p.dynamics?.length" class="card detail__block">
+        <div class="detail__block-title">TA的动态</div>
+        <div class="detail__dynamics">
+          <div v-for="d in p.dynamics" :key="d.id" class="detail__dyn">
+            <van-image
+              v-if="d.images[0]"
+              width="100%" height="90" radius="8" fit="cover" :src="d.images[0]"
+              @click="showImagePreview({ images: d.images })"
+            />
+            <div class="detail__dyn-content">{{ d.content }}</div>
+            <div class="muted detail__dyn-meta">❤ {{ d.likeCount }} · 💬 {{ d.commentCount }}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card detail__block">
         <div class="detail__block-title">评价（{{ p.reviewCount }}）</div>
         <template v-if="p.reviews.length">
@@ -347,5 +362,23 @@ onMounted(load);
   text-align: center;
   font-size: 18px;
   font-weight: 700;
+}
+.detail__dynamics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.detail__dyn-content {
+  font-size: 11px;
+  color: #555;
+  margin-top: 4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.detail__dyn-meta {
+  font-size: 10px;
+  margin-top: 2px;
 }
 </style>

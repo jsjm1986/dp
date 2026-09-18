@@ -72,6 +72,7 @@ export interface PartnerDetail extends Omit<PartnerCard, 'cover' | 'distance'> {
   services: Array<{ id: string; name: string; desc: string | null; price: number; unit: string; miniNum: number }>;
   reviews: Array<{ id: string; rating: number; content: string | null; createdAt: string; user: { nickname: string; avatar: string | null } }>;
   reviewCount: number;
+  dynamics: Array<{ id: string; content: string; images: string[]; likeCount: number; commentCount: number; createdAt: string }>;
 }
 
 export interface Order {
@@ -189,7 +190,7 @@ export const api = {
   setPartnerStatus: (status: 'available' | 'rest') => http.put<{ status: string }>('/partner/status', { status }),
   partnerStats: () => http.get<PartnerStats>('/partner/stats'),
   partnerOrders: (status?: string) =>
-    http.get<Array<Order & { customer: { nickname: string; avatar: string | null; mobile: string } }>>('/partner/orders', { params: { status } }),
+    http.get<Array<Order & { customer: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/partner/orders', { params: { status } }),
   partnerOrderAct: (id: string, action: 'accept' | 'reject' | 'start' | 'finish') =>
     http.post<Order>(`/partner/orders/${id}/${action}`),
 
@@ -217,6 +218,7 @@ export const api = {
   myCoupons: (amount?: number) =>
     http.get<Array<{ id: string; title: string; amount: number; minSpend: number; expiresAt: string; used: boolean; expired: boolean; usable: boolean }>>('/coupons/mine', { params: { amount } }),
   recharge: (amount: number) => http.post<{ balance: number }>('/user/recharge', { amount }),
+  service: () => http.get<{ id: string; nickname: string; avatar: string | null }>('/user/service'),
 
   /* 管理后台 */
   adminDashboard: () =>

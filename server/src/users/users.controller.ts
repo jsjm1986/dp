@@ -41,6 +41,16 @@ export class UsersController {
     return { ...this.auth.toProfile(user), partnerId: user.partner?.id ?? null };
   }
 
+  /** 客服账号（第一个管理员） */
+  @Get('service')
+  async service() {
+    const admin = await this.prisma.user.findFirst({
+      where: { role: 'admin' },
+      select: { id: true, nickname: true, avatar: true },
+    });
+    return admin;
+  }
+
   /** 模拟充值 */
   @Post('recharge')
   async recharge(@CurrentUser() userId: string, @Body() dto: { amount: number }) {

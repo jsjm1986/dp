@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -91,6 +93,38 @@ export class DynamicsController {
       data: { userId, content: dto.content, images: JSON.stringify(dto.images ?? []), city: dto.city },
     });
     return { id: d.id };
+  }
+
+  /** 我的动态 */
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  async mine(@CurrentUser() userId: string) {
+    const rows = await this.prisma.dynamic.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((d) => ({
+      id: d.id,
+      content: d.content,
+      images: JSON.parse(d.images) as string[],
+      city: d.city,
+      likeCount: d.likeCount,
+      commentCount: d.commentCount,
+      createdAt: d.createdAt,
+    }));
+  }
+
+  /** 删除自己的动态（管理员走 /admin/dynamics） */
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async remove(@CurrentUser() userId: string, @Param('id') id: string) {
+    const d = await this.prisma.dynamic.findUnique({ where: { id } });
+    if (!d) throw new NotFoundException('动态不存在');
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (d.userId !== userId && me?.role !== 'admin') throw new ForbiddenException('只能删除自己的动态');
+    await this.prisma.dynamic.delete({ where: { id } });
+    return { ok: true };
   }
 
   @Post(':id/like')

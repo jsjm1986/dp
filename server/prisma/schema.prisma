@@ -91,6 +91,7 @@ model Order {
   discount     Decimal    @default(0)
   userCouponId String?
   payMethod    String?
+  parentId     String?
   status       String    @default("pending_payment")
   cancelReason String?
   urgedAt      DateTime?

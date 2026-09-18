@@ -14,6 +14,10 @@ const order = ref<Order | null>(null);
 const paying = ref(false);
 const showPay = ref(false);
 const payMethod = ref<'balance' | 'mock'>('mock');
+const showExtend = ref(false);
+const extendServices = ref<Array<{ id: string; name: string; price: number; unit: string; miniNum: number }>>([]);
+const extendQty = ref<Record<string, number>>({});
+const extending = ref(false);
 let poller: ReturnType<typeof setInterval> | null = null;
 
 async function load() {
@@ -57,6 +61,33 @@ function review() {
 
 function chat() {
   router.push(`/chat/${order.value!.partner.userId}?orderId=${id}`);
+}
+
+async function openExtend() {
+  const p = await api.partner(order.value!.partnerId);
+  extendServices.value = p.services;
+  extendQty.value = {};
+  showExtend.value = true;
+}
+
+async function submitExtend() {
+  const items = Object.entries(extendQty.value)
+    .filter(([, n]) => n > 0)
+    .map(([serviceId, num]) => ({ serviceId, num }));
+  if (!items.length) return showToast('请选择加钟项目');
+  extending.value = true;
+  try {
+    const child = await api.extendOrder(id, items);
+    showExtend.value = false;
+    showToast('加钟订单已创建，请支付');
+    router.push(`/order/${child.id}`);
+  } finally {
+    extending.value = false;
+  }
+}
+
+function reorder() {
+  router.push(`/order/create/${order.value!.partnerId}`);
 }
 
 function fmt(iso: string | null) {
@@ -127,6 +158,17 @@ onUnmounted(() => poller && clearInterval(poller));
       </div>
     </div>
 
+    <div v-if="order.children?.length" class="card od__block">
+      <div class="od__title">加钟订单</div>
+      <van-cell
+        v-for="c in order.children" :key="c.id"
+        :title="c.items.map((i) => `${i.name}×${i.num}`).join(' + ')"
+        :label="`¥${c.totalAmount.toFixed(0)} · ${ORDER_STATUS_TEXT[c.status] || c.status}`"
+        is-link
+        @click="router.push(`/order/${c.id}`)"
+      />
+    </div>
+
     <div class="card od__block">
       <div class="od__title">订单信息</div>
       <van-cell title="订单编号" :value="order.orderNo" :border="false" />
@@ -141,18 +183,39 @@ onUnmounted(() => poller && clearInterval(poller));
         <van-button round type="primary" class="od__bar-main" @click="showPay = true">立即支付</van-button>
       </template>
       <template v-else-if="['pending_accept', 'pending_service'].includes(order.status)">
+        <van-button v-if="order.status === 'pending_service'" round plain @click="openExtend">加钟</van-button>
         <van-button round plain @click="cancel">申请退款</van-button>
         <van-button round type="primary" class="od__bar-main" :disabled="!!order.urgedAt" @click="urge">
           {{ order.urgedAt ? '已催单' : '催服务' }}
         </van-button>
       </template>
+      <template v-else-if="order.status === 'serving'">
+        <van-button round plain @click="openExtend">加钟</van-button>
+      </template>
       <template v-else-if="order.status === 'done' && !order.reviewed">
+        <van-button round plain @click="reorder">再来一单</van-button>
         <van-button round type="primary" class="od__bar-main" @click="review">评价订单</van-button>
       </template>
       <template v-else-if="order.status === 'done'">
-        <van-button round plain block>已评价</van-button>
+        <van-button round plain @click="reorder">再来一单</van-button>
+        <van-button round plain>已评价</van-button>
       </template>
     </div>
+
+    <van-popup v-model:show="showExtend" position="bottom" round class="od__extend">
+      <div class="od__extend-title">选择加钟项目</div>
+      <div v-for="s in extendServices" :key="s.id" class="od__extend-svc">
+        <div>
+          <div>{{ s.name }}</div>
+          <div class="muted">¥{{ s.price }}/{{ s.unit }}</div>
+        </div>
+        <van-stepper
+          :model-value="extendQty[s.id] ?? 0" min="0" :max="10" theme="round" button-size="22"
+          @update:model-value="(v: number) => (extendQty[s.id] = v)"
+        />
+      </div>
+      <van-button block round type="primary" :loading="extending" @click="submitExtend">提交加钟订单</van-button>
+    </van-popup>
 
     <van-dialog v-model:show="showPay" title="选择支付方式" show-cancel-button :confirm-button-loading="paying" confirm-button-text="确认支付" @confirm="pay">
       <div class="od__pay">
@@ -244,5 +307,19 @@ onUnmounted(() => poller && clearInterval(poller));
 .od__pay-hint {
   text-align: center;
   margin-top: 4px;
+}
+.od__extend {
+  padding: 20px 16px 32px;
+}
+.od__extend-title {
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.od__extend-svc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
 }
 </style>

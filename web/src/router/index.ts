@@ -23,6 +23,7 @@ const router = createRouter({
     { path: '/chat/:peerId', component: () => import('../views/Chat.vue'), meta: { auth: true } },
     { path: '/admin', component: () => import('../views/Admin.vue'), meta: { auth: true } },
     { path: '/coupons', component: () => import('../views/Coupons.vue'), meta: { auth: true } },
+    { path: '/my-dynamics', component: () => import('../views/MyDynamics.vue'), meta: { auth: true } },
   ],
 });
 

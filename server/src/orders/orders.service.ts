@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { CancelOrderDto, CreateOrderDto, PayOrderDto, ReviewDto } from './dto.js';
+import { CancelOrderDto, CreateOrderDto, OrderItemDto, PayOrderDto, ReviewDto } from './dto.js';
 
 export const ORDER_STATUS = {
   PENDING_PAYMENT: 'pending_payment',
@@ -126,7 +126,22 @@ export class OrdersService {
       const partner = await this.prisma.partner.findUnique({ where: { userId } });
       if (partner?.id !== order.partnerId) throw new ForbiddenException('无权查看');
     }
-    return this.toDto(order);
+    const children = await this.prisma.order.findMany({
+      where: { parentId: id },
+      orderBy: { createdAt: 'asc' },
+      include: { items: true },
+    });
+    return {
+      ...this.toDto(order),
+      children: children.map((c) => ({
+        id: c.id,
+        orderNo: c.orderNo,
+        status: c.status,
+        totalAmount: Number(c.totalAmount),
+        items: c.items.map((i) => ({ name: i.name, num: i.num })),
+        createdAt: c.createdAt,
+      })),
+    };
   }
 
   /** 支付：balance 余额扣款 / mock 模拟第三方支付 */
@@ -205,6 +220,48 @@ export class OrdersService {
       return this.toDto(updated);
     }
     throw new BadRequestException('当前状态不可取消');
+  }
+
+  /** 加钟：服务中追加项目，生成关联子订单走正常支付 */
+  async extend(userId: string, id: string, dto: { items: OrderItemDto[] }) {
+    const order = await this.mustOwn(userId, id);
+    if (![ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING].includes(order.status as never)) {
+      throw new BadRequestException('仅待服务或服务中的订单可以加钟');
+    }
+    const partner = await this.prisma.partner.findUniqueOrThrow({
+      where: { id: order.partnerId },
+      include: { services: true },
+    });
+    const svcMap = new Map(partner.services.map((s) => [s.id, s]));
+    const items = dto.items.map((it) => {
+      const svc = svcMap.get(it.serviceId);
+      if (!svc) throw new BadRequestException('服务项目不存在');
+      return {
+        serviceId: svc.id,
+        name: svc.name,
+        price: svc.price,
+        unit: svc.unit,
+        num: it.num,
+        subtotal: Number(svc.price) * it.num,
+      };
+    });
+    if (!items.length) throw new BadRequestException('请选择加钟项目');
+    const totalAmount = items.reduce((sum, i) => sum + i.subtotal, 0);
+    const child = await this.prisma.order.create({
+      data: {
+        orderNo: genOrderNo(),
+        userId,
+        partnerId: order.partnerId,
+        appointAt: order.appointAt,
+        address: order.address,
+        remark: `加钟（关联订单 ${order.orderNo}）`,
+        totalAmount,
+        parentId: order.id,
+        items: { create: items },
+      },
+      include: ORDER_INCLUDE,
+    });
+    return this.toDto(child);
   }
 
   /** 催服务 */
@@ -370,6 +427,7 @@ export class OrdersService {
     review: { id: string } | null;
     discount: unknown;
     payMethod: string | null;
+    parentId: string | null;
   }) {
     return {
       id: o.id,
@@ -397,6 +455,7 @@ export class OrdersService {
       totalAmount: Number(o.totalAmount),
       discount: Number(o.discount),
       payMethod: o.payMethod,
+      parentId: o.parentId,
       status: o.status,
       cancelReason: o.cancelReason,
       urgedAt: o.urgedAt,

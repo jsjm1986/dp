@@ -87,12 +87,14 @@ export interface Order {
   totalAmount: number;
   discount: number;
   payMethod: string | null;
+  parentId: string | null;
   status: string;
   cancelReason: string | null;
   urgedAt: string | null;
   paidAt: string | null;
   reviewed: boolean;
   createdAt: string;
+  children?: Array<{ id: string; orderNo: string; status: string; totalAmount: number; items: Array<{ name: string; num: number }>; createdAt: string }>;
 }
 
 export interface Dynamic {
@@ -181,6 +183,8 @@ export const api = {
   payOrder: (id: string, method: 'balance' | 'mock' = 'mock') => http.post<Order>(`/orders/${id}/pay`, { method }),
   cancelOrder: (id: string, reason?: string) => http.post<Order>(`/orders/${id}/cancel`, { reason }),
   urgeOrder: (id: string) => http.post(`/orders/${id}/urge`),
+  extendOrder: (id: string, items: Array<{ serviceId: string; num: number }>) =>
+    http.post<Order>(`/orders/${id}/extend`, { items }),
   reviewOrder: (id: string, rating: number, content?: string) => http.post(`/orders/${id}/review`, { rating, content }),
 
   /* 玩伴端 */
@@ -201,6 +205,9 @@ export const api = {
   comments: (id: string) => http.get<CommentRow[]>(`/dynamics/${id}/comments`),
   comment: (id: string, content: string) =>
     http.post<CommentRow & { commentCount: number }>(`/dynamics/${id}/comments`, { content }),
+  myDynamics: () =>
+    http.get<Array<{ id: string; content: string; images: string[]; city: string | null; likeCount: number; commentCount: number; createdAt: string }>>('/dynamics/mine'),
+  deleteDynamic: (id: string) => http.delete(`/dynamics/${id}`),
 
   /* 聊天 */
   conversations: () =>

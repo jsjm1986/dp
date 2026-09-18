@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import { CancelOrderDto, CreateOrderDto, PayOrderDto, ReviewDto } from './dto.js';
+import { CancelOrderDto, CreateOrderDto, OrderItemDto, PayOrderDto, ReviewDto } from './dto.js';
 import { OrdersService } from './orders.service.js';
 
 @Controller()
@@ -44,6 +44,12 @@ export class OrdersController {
   @Post('orders/:id/cancel')
   cancel(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CancelOrderDto) {
     return this.orders.cancel(userId, id, dto);
+  }
+
+  /** 加钟 */
+  @Post('orders/:id/extend')
+  extend(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: { items: OrderItemDto[] }) {
+    return this.orders.extend(userId, id, dto);
   }
 
   @Post('orders/:id/urge')

@@ -126,6 +126,7 @@ async function logout() {
       <van-cell title="优惠券" is-link icon="coupon-o" @click="router.push('/coupons')" />
       <van-cell title="全部订单" is-link icon="orders-o" @click="router.push('/orders')" />
       <van-cell title="发动态" is-link icon="edit" @click="router.push('/dynamic/publish')" />
+      <van-cell title="我的动态" is-link icon="photo-o" @click="router.push('/my-dynamics')" />
       <van-cell v-if="store.user?.role === 'admin'" title="管理后台" is-link icon="setting-o" @click="router.push('/admin')" />
       <van-cell title="联系客服" is-link icon="service-o" @click="contactService" />
       <van-cell title="平台规则" is-link icon="description" @click="showToast('绿色服务 · 平台担保 · 爽约包退')" />

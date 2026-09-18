@@ -194,6 +194,7 @@ export class UsersController {
       tags: JSON.parse(f.partner.tags) as string[],
       status: f.partner.status,
       verified: f.partner.verified,
+      recommended: f.partner.recommended,
       rating: f.partner.rating,
       serviceCount: f.partner.serviceCount,
       cover: (JSON.parse(f.partner.photos) as string[])[0] ?? null,

@@ -49,6 +49,7 @@ export interface PartnerCard {
   tags: string[];
   status: string;
   verified: boolean;
+  recommended?: boolean;
   serviceCount: number;
   rating: number;
   cover: string | null;
@@ -239,16 +240,34 @@ export const api = {
 
   /* 管理后台 */
   adminDashboard: () =>
-    http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number }>('/admin/dashboard'),
+    http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number; pendingWithdrawals: number; pendingWithdrawalAmount: number; commissionTotal: number; commissionCount: number; couponClaimed: number; reviewCount: number; disabledUsers: number }>('/admin/dashboard'),
   adminUsers: (page = 1, keyword?: string) =>
     http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; disabled: boolean; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
   adminPartners: (auditStatus = 'pending', page = 1) =>
-    http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; rating: number; serviceCount: number; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
+    http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; recommended: boolean; rating: number; serviceCount: number; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
   adminApprove: (id: string) => http.post(`/admin/partners/${id}/approve`),
   adminReject: (id: string) => http.post(`/admin/partners/${id}/reject`),
   adminVerify: (id: string, verified: boolean) => http.put(`/admin/partners/${id}/verify`, { verified }),
-  adminOrders: (page = 1, status?: string) =>
-    http.get<{ total: number; items: Array<{ id: string; orderNo: string; customer: string; customerMobile: string; partner: string; city: string; totalAmount: number; status: string; createdAt: string }> }>('/admin/orders', { params: { page, status } }),
+  adminOrders: (page = 1, status?: string, keyword?: string) =>
+    http.get<{ total: number; items: Array<{ id: string; orderNo: string; customer: string; customerMobile: string; partner: string; city: string; totalAmount: number; status: string; createdAt: string }> }>('/admin/orders', { params: { page, status, keyword } }),
+  adminCancelOrder: (id: string, reason?: string) => http.post(`/admin/orders/${id}/cancel`, { reason }),
+  adminReviews: (page = 1) =>
+    http.get<{ total: number; items: Array<{ id: string; rating: number; content: string | null; reply: string | null; createdAt: string; author: string; avatar: string | null; partner: string; orderNo: string }> }>('/admin/reviews', { params: { page } }),
+  adminDeleteReview: (id: string) => http.delete(`/admin/reviews/${id}`),
+  adminRecommend: (id: string, recommended: boolean) => http.put(`/admin/partners/${id}/recommend`, { recommended }),
+  adminPartnerStatus: (id: string, status: string) => http.put(`/admin/partners/${id}/status`, { status }),
+  adminSetRole: (id: string, role: string) => http.put(`/admin/users/${id}/role`, { role }),
+  adminAdjustBalance: (id: string, amount: number, remark?: string) =>
+    http.post<{ balance: number }>(`/admin/users/${id}/balance`, { amount, remark }),
+  adminUserDetail: (id: string) =>
+    http.get<{
+      id: string; mobile: string; nickname: string; avatar: string | null; gender: string | null; city: string | null;
+      role: string; disabled: boolean; balance: number; inviteCode: string | null; inviterId: string | null; createdAt: string;
+      partner: { id: string; auditStatus: string; status: string; serviceCount: number; rating: number; balance: number } | null;
+      orderCount: number;
+      recentOrders: Array<{ id: string; orderNo: string; totalAmount: number; status: string; createdAt: string }>;
+      commissions: Array<{ id: string; amount: number; rate: number; createdAt: string }>;
+    }>(`/admin/users/${id}`),
   adminDynamics: (page = 1) =>
     http.get<{ total: number; items: Array<{ id: string; content: string; images: string[]; city: string | null; likeCount: number; commentCount: number; createdAt: string; author: string; avatar: string | null }> }>('/admin/dynamics', { params: { page } }),
   adminDeleteDynamic: (id: string) => http.delete(`/admin/dynamics/${id}`),

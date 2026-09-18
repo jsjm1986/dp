@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
-import { AdminGuard, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -69,6 +69,7 @@ export class AdminController {
     const [
       userCount, partnerApproved, partnerPending, orderCount, todayOrders,
       doneAgg, dynamicCount, messageCount, pendingAccept, serving,
+      pendingWithdrawalAgg, commissionAgg, couponClaimed, reviewCount, disabledUsers,
     ] = await this.prisma.$transaction([
       this.prisma.user.count(),
       this.prisma.partner.count({ where: { auditStatus: 'approved' } }),
@@ -80,6 +81,11 @@ export class AdminController {
       this.prisma.message.count(),
       this.prisma.order.count({ where: { status: 'pending_accept' } }),
       this.prisma.order.count({ where: { status: 'serving' } }),
+      this.prisma.withdrawal.aggregate({ where: { status: 'pending' }, _sum: { amount: true }, _count: true }),
+      this.prisma.commission.aggregate({ _sum: { amount: true }, _count: true }),
+      this.prisma.userCoupon.count({ where: { used: true } }),
+      this.prisma.review.count(),
+      this.prisma.user.count({ where: { disabled: true } }),
     ]);
     return {
       userCount,
@@ -93,6 +99,13 @@ export class AdminController {
       messageCount,
       pendingAccept,
       serving,
+      pendingWithdrawals: pendingWithdrawalAgg._count,
+      pendingWithdrawalAmount: Number(pendingWithdrawalAgg._sum.amount ?? 0),
+      commissionTotal: Number(commissionAgg._sum.amount ?? 0),
+      commissionCount: commissionAgg._count,
+      couponClaimed,
+      reviewCount,
+      disabledUsers,
     };
   }
 
@@ -159,6 +172,7 @@ export class AdminController {
         auditStatus: p.auditStatus,
         status: p.status,
         verified: p.verified,
+        recommended: p.recommended,
         rating: p.rating,
         serviceCount: p.serviceCount,
         createdAt: p.createdAt,
@@ -187,8 +201,14 @@ export class AdminController {
 
   /** 全部订单 */
   @Get('orders')
-  async orders(@Query('page') page = '1', @Query('status') status?: string) {
-    const where: any = status ? { status } : {};
+  async orders(
+    @Query('page') page = '1',
+    @Query('status') status?: string,
+    @Query('keyword') keyword?: string,
+  ) {
+    const where: any = {};
+    if (status) where.status = status;
+    if (keyword) where.orderNo = { contains: keyword };
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.order.count({ where }),
       this.prisma.order.findMany({
@@ -448,6 +468,188 @@ export class AdminController {
     if (!user) throw new BadRequestException('用户不存在');
     if (user.role === 'admin') throw new BadRequestException('不能禁用管理员');
     await this.prisma.user.update({ where: { id }, data: { disabled: !!body.disabled } });
+    return { ok: true };
+  }
+
+  /** 用户角色变更（不能改自己） */
+  @Put('users/:id/role')
+  async setUserRole(@CurrentUser() adminId: string, @Param('id') id: string, @Body() body: { role: string }) {
+    if (id === adminId) throw new BadRequestException('不能修改自己的角色');
+    if (!['user', 'admin'].includes(body.role)) throw new BadRequestException('非法角色');
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new BadRequestException('用户不存在');
+    await this.prisma.user.update({ where: { id }, data: { role: body.role } });
+    return { ok: true };
+  }
+
+  /** 余额调整（正负均可，调整后不得低于 0） */
+  @Post('users/:id/balance')
+  async adjustBalance(@Param('id') id: string, @Body() body: { amount: number; remark?: string }) {
+    const amount = Math.round(Number(body.amount) * 100) / 100;
+    if (!amount || Math.abs(amount) > 100000) throw new BadRequestException('金额无效');
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new BadRequestException('用户不存在');
+    if (Number(user.balance) + amount < 0) throw new BadRequestException('扣减后余额不能为负');
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { balance: { increment: amount } },
+    });
+    return { balance: Number(updated.balance) };
+  }
+
+  /** 用户详情：资料 + 玩伴信息 + 近期订单 */
+  @Get('users/:id')
+  async userDetail(@Param('id') id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        partner: { select: { id: true, auditStatus: true, status: true, serviceCount: true, rating: true, balance: true } },
+      },
+    });
+    if (!user) throw new BadRequestException('用户不存在');
+    const [orders, orderCount, commissions] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { id: true, orderNo: true, totalAmount: true, status: true, createdAt: true },
+      }),
+      this.prisma.order.count({ where: { userId: id } }),
+      this.prisma.commission.findMany({
+        where: { inviterId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+    return {
+      id: user.id,
+      mobile: user.mobile,
+      nickname: user.nickname,
+      avatar: user.avatar,
+      gender: user.gender,
+      city: user.city,
+      role: user.role,
+      disabled: user.disabled,
+      balance: Number(user.balance),
+      inviteCode: user.inviteCode,
+      inviterId: user.inviterId,
+      createdAt: user.createdAt,
+      partner: user.partner
+        ? { ...user.partner, balance: Number(user.partner.balance) }
+        : null,
+      orderCount,
+      recentOrders: orders.map((o) => ({ ...o, totalAmount: Number(o.totalAmount) })),
+      commissions: commissions.map((c) => ({ ...c, amount: Number(c.amount) })),
+    };
+  }
+
+  /** 管理员强制取消订单：已支付则退款 */
+  @Post('orders/:id/cancel')
+  async forceCancelOrder(@Param('id') id: string, @Body() body: { reason?: string }) {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) throw new BadRequestException('订单不存在');
+    if (order.status === 'pending_payment') {
+      await this.prisma.order.update({
+        where: { id },
+        data: { status: 'cancelled', cancelReason: body.reason ?? '管理员取消' },
+      });
+      if (order.userCouponId) {
+        await this.prisma.userCoupon.update({
+          where: { id: order.userCouponId },
+          data: { used: false, usedAt: null, orderId: null },
+        });
+      }
+      return { ok: true, status: 'cancelled' };
+    }
+    if (['pending_accept', 'pending_service'].includes(order.status)) {
+      const ops: any[] = [
+        this.prisma.order.update({
+          where: { id },
+          data: { status: 'refunded', cancelReason: body.reason ?? '管理员取消' },
+        }),
+      ];
+      if (order.payMethod === 'balance') {
+        ops.push(
+          this.prisma.user.update({
+            where: { id: order.userId },
+            data: { balance: { increment: order.totalAmount } },
+          }),
+        );
+      }
+      if (order.userCouponId) {
+        ops.push(
+          this.prisma.userCoupon.update({
+            where: { id: order.userCouponId },
+            data: { used: false, usedAt: null, orderId: null },
+          }),
+        );
+      }
+      await this.prisma.$transaction(ops);
+      return { ok: true, status: 'refunded' };
+    }
+    throw new BadRequestException('该状态不可取消（服务中/已完成请联系客服处理）');
+  }
+
+  /** ---------- 评价管理 ---------- */
+  @Get('reviews')
+  async reviews(@Query('page') page = '1') {
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.review.count(),
+      this.prisma.review.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (Math.max(1, +page) - 1) * 20,
+        take: 20,
+        include: {
+          user: { select: { nickname: true, avatar: true } },
+          partner: { include: { user: { select: { nickname: true } } } },
+          order: { select: { orderNo: true } },
+        },
+      }),
+    ]);
+    return {
+      total,
+      items: rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        content: r.content,
+        reply: r.reply,
+        createdAt: r.createdAt,
+        author: r.user.nickname,
+        avatar: r.user.avatar,
+        partner: r.partner.user.nickname,
+        orderNo: r.order.orderNo,
+      })),
+    };
+  }
+
+  /** 删除违规评价并重算玩伴评分 */
+  @Delete('reviews/:id')
+  async deleteReview(@Param('id') id: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+    if (!review) throw new BadRequestException('评价不存在');
+    await this.prisma.review.delete({ where: { id } });
+    const agg = await this.prisma.review.aggregate({
+      where: { partnerId: review.partnerId },
+      _avg: { rating: true },
+    });
+    await this.prisma.partner.update({
+      where: { id: review.partnerId },
+      data: { rating: Math.round((agg._avg.rating ?? 5) * 10) / 10 },
+    });
+    return { ok: true };
+  }
+
+  /** ---------- 玩伴推荐位/强制下线 ---------- */
+  @Put('partners/:id/recommend')
+  async recommendPartner(@Param('id') id: string, @Body() body: { recommended: boolean }) {
+    await this.prisma.partner.update({ where: { id }, data: { recommended: !!body.recommended } });
+    return { ok: true };
+  }
+
+  @Put('partners/:id/status')
+  async setPartnerStatus(@Param('id') id: string, @Body() body: { status: string }) {
+    if (!['available', 'rest'].includes(body.status)) throw new BadRequestException('非法状态');
+    await this.prisma.partner.update({ where: { id }, data: { status: body.status } });
     return { ok: true };
   }
 }

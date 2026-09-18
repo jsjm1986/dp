@@ -1914,6 +1914,7 @@ export const PartnerScalarFieldEnum = {
   status: 'status',
   auditStatus: 'auditStatus',
   verified: 'verified',
+  recommended: 'recommended',
   balance: 'balance',
   serviceCount: 'serviceCount',
   viewCount: 'viewCount',

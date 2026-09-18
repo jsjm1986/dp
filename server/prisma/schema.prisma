@@ -54,6 +54,7 @@ model Partner {
   status        String   @default("available")
   auditStatus   String   @default("pending")
   verified      Boolean  @default(false)
+  recommended   Boolean  @default(false)
   balance       Decimal  @default(0)
   serviceCount  Int      @default(0)
   viewCount     Int      @default(0)

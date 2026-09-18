@@ -20,10 +20,16 @@ const partners = ref<PartnerRow[]>([]);
 const partnerTab = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 const orders = ref<OrderRow[]>([]);
 const orderStatus = ref('');
+const orderKeyword = ref('');
 const dynamics = ref<DynRow[]>([]);
 const users = ref<UserRow[]>([]);
+const userKeyword = ref('');
 const banners = ref<BannerRow[]>([]);
 const withdrawals = ref<WithdrawalRow[]>([]);
+const reviews = ref<Awaited<ReturnType<typeof api.adminReviews>>['items']>([]);
+const balanceEdit = ref<{ show: boolean; id: string; nickname: string; amount: number | undefined; remark: string }>({
+  show: false, id: '', nickname: '', amount: undefined, remark: '',
+});
 const settings = ref<Settings | null>(null);
 const rateInput = ref(5);
 const wordsInput = ref('');
@@ -52,9 +58,62 @@ const auditMap: Record<string, { text: string; color: string }> = {
 
 async function loadDash() { dash.value = await api.adminDashboard(); }
 async function loadPartners() { partners.value = (await api.adminPartners(partnerTab.value)).items; }
-async function loadOrders() { orders.value = (await api.adminOrders(1, orderStatus.value || undefined)).items; }
+async function loadOrders() { orders.value = (await api.adminOrders(1, orderStatus.value || undefined, orderKeyword.value || undefined)).items; }
 async function loadDynamics() { dynamics.value = (await api.adminDynamics()).items; }
-async function loadUsers() { users.value = (await api.adminUsers()).items; }
+async function loadUsers() { users.value = (await api.adminUsers(1, userKeyword.value || undefined)).items; }
+async function loadReviews() { reviews.value = (await api.adminReviews()).items; }
+
+async function adminCancel(o: OrderRow) {
+  try {
+    await showConfirmDialog({ title: '强制取消', message: `取消订单 ${o.orderNo}？已支付将自动退款。` });
+  } catch { return; }
+  const r = await api.adminCancelOrder(o.id, '管理员取消') as { status: string };
+  showToast(r.status === 'refunded' ? '已取消并退款' : '已取消');
+  loadOrders();
+}
+
+async function removeReview(id: string) {
+  try {
+    await showConfirmDialog({ title: '删除评价', message: '删除后玩伴评分将重算，确定？' });
+  } catch { return; }
+  await api.adminDeleteReview(id);
+  reviews.value = reviews.value.filter((r) => r.id !== id);
+  showToast('已删除');
+}
+
+async function toggleRecommend(p: PartnerRow) {
+  await api.adminRecommend(p.id, !p.recommended);
+  p.recommended = !p.recommended;
+}
+
+async function togglePartnerStatus(p: PartnerRow) {
+  const to = p.status === 'available' ? 'rest' : 'available';
+  await api.adminPartnerStatus(p.id, to);
+  p.status = to;
+  showToast(to === 'rest' ? '已强制下线' : '已恢复上线');
+}
+
+async function toggleRole(u: UserRow) {
+  const to = u.role === 'admin' ? 'user' : 'admin';
+  try {
+    await showConfirmDialog({ title: '角色变更', message: `将「${u.nickname}」设为${to === 'admin' ? '管理员' : '普通用户'}？` });
+  } catch { return; }
+  await api.adminSetRole(u.id, to);
+  u.role = to;
+}
+
+function openBalance(u: UserRow) {
+  balanceEdit.value = { show: true, id: u.id, nickname: u.nickname, amount: undefined, remark: '' };
+}
+
+async function saveBalance() {
+  const { id, amount } = balanceEdit.value;
+  if (!amount) return showToast('请输入调整金额（可为负）');
+  const r = await api.adminAdjustBalance(id, amount, balanceEdit.value.remark || undefined);
+  balanceEdit.value.show = false;
+  showToast(`已调整，余额 ¥${r.balance.toFixed(2)}`);
+  loadUsers();
+}
 async function loadBanners() { banners.value = await api.adminBanners(); }
 async function loadWithdrawals() { withdrawals.value = await api.adminWithdrawals('all'); }
 
@@ -197,6 +256,7 @@ function onTabChange(name: string | number) {
   if (name === 'banners') loadBanners();
   if (name === 'withdrawals') loadWithdrawals();
   if (name === 'coupons') loadCoupons();
+  if (name === 'reviews') loadReviews();
   if (name === 'settings') loadSettings();
 }
 </script>
@@ -219,6 +279,11 @@ function onTabChange(name: string | number) {
           <div class="admin__stat"><b>¥{{ dash.gmv.toFixed(0) }}</b><span>交易额</span></div>
           <div class="admin__stat"><b>{{ dash.dynamicCount }}</b><span>动态</span></div>
           <div class="admin__stat"><b>{{ dash.messageCount }}</b><span>私信</span></div>
+          <div class="admin__stat"><b class="warn">¥{{ dash.pendingWithdrawalAmount.toFixed(0) }}</b><span>待提现({{ dash.pendingWithdrawals }})</span></div>
+          <div class="admin__stat"><b>¥{{ dash.commissionTotal.toFixed(0) }}</b><span>已发佣金</span></div>
+          <div class="admin__stat"><b>{{ dash.reviewCount }}</b><span>评价</span></div>
+          <div class="admin__stat"><b>{{ dash.couponClaimed }}</b><span>已用券</span></div>
+          <div class="admin__stat"><b class="warn">{{ dash.disabledUsers }}</b><span>禁用用户</span></div>
         </div>
       </van-tab>
 
@@ -262,6 +327,12 @@ function onTabChange(name: string | number) {
               <van-button v-if="p.auditStatus === 'approved'" size="small" round plain @click="toggleVerify(p)">
                 {{ p.verified ? '取消实名标' : '加实名标' }}
               </van-button>
+              <van-button v-if="p.auditStatus === 'approved'" size="small" round plain :type="p.recommended ? 'warning' : 'default'" @click="toggleRecommend(p)">
+                {{ p.recommended ? '取消推荐' : '设为推荐' }}
+              </van-button>
+              <van-button v-if="p.auditStatus === 'approved'" size="small" round plain :type="p.status === 'available' ? 'danger' : 'success'" @click="togglePartnerStatus(p)">
+                {{ p.status === 'available' ? '强制下线' : '恢复上线' }}
+              </van-button>
             </div>
           </div>
           <van-empty v-if="!partners.length" description="暂无记录" image-size="70" />
@@ -273,12 +344,20 @@ function onTabChange(name: string | number) {
         <van-dropdown-menu active-color="#ff5a5f">
           <van-dropdown-item v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
         </van-dropdown-menu>
+        <van-search v-model="orderKeyword" placeholder="搜索订单号" @search="loadOrders" @clear="loadOrders" />
         <div class="admin__list">
           <van-cell v-for="o in orders" :key="o.id" :title="`${o.customer} → ${o.partner}`" :label="`${o.orderNo} · ${fmt(o.createdAt)}`">
             <template #value>
               <div class="admin__order-val">
                 <div>¥{{ o.totalAmount }}</div>
                 <van-tag>{{ statusMap[o.status] || o.status }}</van-tag>
+                <van-button
+                  v-if="['pending_payment', 'pending_accept', 'pending_service'].includes(o.status)"
+                  size="mini" type="danger" plain round
+                  @click="adminCancel(o)"
+                >
+                  取消
+                </van-button>
               </div>
             </template>
           </van-cell>
@@ -288,27 +367,51 @@ function onTabChange(name: string | number) {
 
       <!-- 用户 -->
       <van-tab title="用户" name="users">
+        <van-search v-model="userKeyword" placeholder="搜索昵称/手机号" @search="loadUsers" @clear="loadUsers" />
         <div class="admin__list">
-          <van-cell v-for="u in users" :key="u.id" :title="u.nickname" :label="`${u.mobile} · ${u.orderCount}单 · ${fmt(u.createdAt)}`">
-            <template #icon>
-              <van-image round width="36" height="36" :src="u.avatar || ''" class="admin__user-avatar" />
-            </template>
-            <template #value>
-              <div class="admin__user-ops">
-                <van-tag v-if="u.disabled" type="danger">已禁用</van-tag>
-                <van-tag v-else-if="u.role === 'admin'" type="primary">管理员</van-tag>
-                <van-tag v-else-if="u.partnerId" type="success" plain>玩伴</van-tag>
-                <span v-else class="muted">用户</span>
-                <van-button
-                  v-if="u.role !== 'admin'" size="mini" round plain
-                  :type="u.disabled ? 'success' : 'danger'"
-                  @click="toggleUser(u)"
-                >
-                  {{ u.disabled ? '启用' : '禁用' }}
-                </van-button>
+          <div v-for="u in users" :key="u.id" class="card admin__user">
+            <div class="admin__user-head">
+              <van-image round width="36" height="36" :src="u.avatar || ''" />
+              <div class="admin__user-info">
+                <div>
+                  <b>{{ u.nickname }}</b>
+                  <van-tag v-if="u.disabled" type="danger">已禁用</van-tag>
+                  <van-tag v-else-if="u.role === 'admin'" type="primary">管理员</van-tag>
+                  <van-tag v-else-if="u.partnerId" type="success" plain>玩伴</van-tag>
+                </div>
+                <div class="muted">{{ u.mobile }} · {{ u.orderCount }}单 · 余额¥{{ u.balance }} · {{ fmt(u.createdAt) }}</div>
               </div>
-            </template>
-          </van-cell>
+            </div>
+            <div class="admin__user-btns">
+              <van-button size="mini" round plain :type="u.disabled ? 'success' : 'danger'" @click="toggleUser(u)">
+                {{ u.disabled ? '启用' : '禁用' }}
+              </van-button>
+              <van-button size="mini" round plain @click="toggleRole(u)">
+                {{ u.role === 'admin' ? '取消管理员' : '设为管理员' }}
+              </van-button>
+              <van-button size="mini" round plain type="primary" @click="openBalance(u)">调余额</van-button>
+            </div>
+          </div>
+          <van-empty v-if="!users.length" description="暂无用户" image-size="70" />
+        </div>
+      </van-tab>
+
+      <!-- 评价 -->
+      <van-tab title="评价" name="reviews">
+        <div class="admin__list">
+          <div v-for="r in reviews" :key="r.id" class="card admin__review">
+            <div class="admin__review-head">
+              <van-image round width="30" height="30" :src="r.avatar || ''" />
+              <div class="admin__review-info">
+                <div><b>{{ r.author }}</b> → {{ r.partner }} <span class="admin__review-stars">{{ '★'.repeat(r.rating) }}</span></div>
+                <div class="muted">订单 {{ r.orderNo }} · {{ fmt(r.createdAt) }}</div>
+              </div>
+              <van-button size="mini" type="danger" plain @click="removeReview(r.id)">删除</van-button>
+            </div>
+            <div class="admin__review-content">{{ r.content || '未留言' }}</div>
+            <div v-if="r.reply" class="admin__review-reply">玩伴回复：{{ r.reply }}</div>
+          </div>
+          <van-empty v-if="!reviews.length" description="暂无评价" image-size="70" />
         </div>
       </van-tab>
 
@@ -446,6 +549,13 @@ function onTabChange(name: string | number) {
       </div>
     </van-dialog>
 
+    <van-dialog v-model:show="balanceEdit.show" :title="`调整余额 · ${balanceEdit.nickname}`" show-cancel-button @confirm="saveBalance">
+      <div class="admin__banner-form">
+        <van-field v-model.number="balanceEdit.amount" type="number" placeholder="金额（正数充值，负数扣减）" />
+        <van-field v-model="balanceEdit.remark" placeholder="备注（可选）" />
+      </div>
+    </van-dialog>
+
     <van-dialog v-model:show="couponEdit.show" title="新增优惠券" show-cancel-button @confirm="createCoupon">
       <div class="admin__banner-form">
         <van-field v-model="couponEdit.title" placeholder="券名称，如：新人立减券" />
@@ -518,4 +628,14 @@ function onTabChange(name: string | number) {
 .admin__commission { position: relative; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
 .admin__commission:last-of-type { border-bottom: 0; }
 .admin__commission-amount { position: absolute; right: 0; top: 10px; color: #ff5a5f; font-weight: 800; }
+.admin__user { padding: 12px; margin-bottom: 10px; }
+.admin__user-head { display: flex; align-items: center; gap: 10px; }
+.admin__user-info { flex: 1; font-size: 14px; }
+.admin__user-btns { display: flex; gap: 8px; margin-top: 10px; }
+.admin__review { padding: 12px; margin-bottom: 10px; }
+.admin__review-head { display: flex; align-items: center; gap: 8px; }
+.admin__review-info { flex: 1; font-size: 13px; }
+.admin__review-stars { color: #ffb21e; font-size: 11px; }
+.admin__review-content { font-size: 13px; color: #555; margin-top: 6px; }
+.admin__review-reply { font-size: 12px; color: #888; background: #f7f8fa; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
 </style>

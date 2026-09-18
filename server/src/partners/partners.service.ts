@@ -19,6 +19,7 @@ const CARD_SELECT = {
   tags: true,
   status: true,
   verified: true,
+  recommended: true,
   serviceCount: true,
   rating: true,
   photos: true,
@@ -48,10 +49,10 @@ export class PartnersService {
 
     const orderBy: Prisma.PartnerOrderByWithRelationInput[] =
       q.sort === 'newest'
-        ? [{ createdAt: 'desc' }]
+        ? [{ recommended: 'desc' }, { createdAt: 'desc' }]
         : q.sort === 'rating'
-          ? [{ rating: 'desc' }, { serviceCount: 'desc' }]
-          : [{ rating: 'desc' }, { serviceCount: 'desc' }];
+          ? [{ recommended: 'desc' }, { rating: 'desc' }, { serviceCount: 'desc' }]
+          : [{ recommended: 'desc' }, { rating: 'desc' }, { serviceCount: 'desc' }];
 
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.partner.count({ where }),
@@ -213,6 +214,7 @@ export class PartnersService {
       tags: JSON.parse(p.tags) as string[],
       status: p.status,
       verified: p.verified,
+      recommended: p.recommended,
       serviceCount: p.serviceCount,
       rating: p.rating,
       cover: (JSON.parse(p.photos) as string[])[0] ?? null,

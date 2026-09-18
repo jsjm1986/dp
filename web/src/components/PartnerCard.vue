@@ -22,6 +22,7 @@ const statusText: Record<string, string> = {
       <div class="pcard__name">
         {{ partner.nickname }}
         <van-icon v-if="partner.verified" name="certificate" color="#07c160" size="14" />
+        <van-tag v-if="partner.recommended" type="warning" plain>推荐</van-tag>
         <van-icon v-if="partner.gender === 'female'" name="like" color="#ff5a5f" size="12" />
       </div>
       <div class="pcard__meta">

@@ -1,0 +1,145 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ArrayMaxSize, IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
+import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.guard.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+
+class CreateDynamicDto {
+  @IsString()
+  @MaxLength(1000)
+  content: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(9)
+  @IsString({ each: true })
+  images?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  city?: string;
+}
+
+class CommentDto {
+  @IsString()
+  @MaxLength(300)
+  content: string;
+}
+
+@Controller('dynamics')
+export class DynamicsController {
+  constructor(private prisma: PrismaService) {}
+
+  @Get()
+  @UseGuards(OptionalAuthGuard)
+  async feed(
+    @CurrentUser() userId: string | undefined,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const p = Math.max(1, page ? Number(page) : 1);
+    const size = Math.min(50, pageSize ? Number(pageSize) : 10);
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.dynamic.count(),
+      this.prisma.dynamic.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * size,
+        take: size,
+        include: {
+          user: {
+            select: { nickname: true, avatar: true, partner: { select: { id: true } } },
+          },
+          likes: { select: { userId: true } },
+        },
+      }),
+    ]);
+    return {
+      total,
+      page: p,
+      pageSize: size,
+      items: rows.map((d) => ({
+        id: d.id,
+        content: d.content,
+        images: JSON.parse(d.images) as string[],
+        city: d.city,
+        likeCount: d.likeCount,
+        commentCount: d.commentCount,
+        createdAt: d.createdAt,
+        liked: userId ? d.likes.some((l) => l.userId === userId) : false,
+        author: {
+          nickname: d.user.nickname,
+          avatar: d.user.avatar,
+          partnerId: d.user.partner?.id ?? null,
+        },
+      })),
+    };
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async create(@CurrentUser() userId: string, @Body() dto: CreateDynamicDto) {
+    const d = await this.prisma.dynamic.create({
+      data: { userId, content: dto.content, images: JSON.stringify(dto.images ?? []), city: dto.city },
+    });
+    return { id: d.id };
+  }
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  async like(@CurrentUser() userId: string, @Param('id') id: string) {
+    await this.prisma.dynamicLike.upsert({
+      where: { dynamicId_userId: { dynamicId: id, userId } },
+      create: { dynamicId: id, userId },
+      update: {},
+    });
+    const likeCount = await this.prisma.dynamicLike.count({ where: { dynamicId: id } });
+    await this.prisma.dynamic.update({ where: { id }, data: { likeCount } });
+    return { liked: true, likeCount };
+  }
+
+  @Delete(':id/like')
+  @UseGuards(JwtAuthGuard)
+  async unlike(@CurrentUser() userId: string, @Param('id') id: string) {
+    await this.prisma.dynamicLike.deleteMany({ where: { dynamicId: id, userId } });
+    const likeCount = await this.prisma.dynamicLike.count({ where: { dynamicId: id } });
+    await this.prisma.dynamic.update({ where: { id }, data: { likeCount } });
+    return { liked: false, likeCount };
+  }
+
+  @Get(':id/comments')
+  async comments(@Param('id') id: string) {
+    const rows = await this.prisma.dynamicComment.findMany({
+      where: { dynamicId: id },
+      orderBy: { createdAt: 'asc' },
+      include: { user: { select: { nickname: true, avatar: true } } },
+      take: 100,
+    });
+    return rows.map((c) => ({
+      id: c.id,
+      content: c.content,
+      createdAt: c.createdAt,
+      user: c.user,
+    }));
+  }
+
+  @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  async comment(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CommentDto) {
+    const c = await this.prisma.dynamicComment.create({
+      data: { dynamicId: id, userId, content: dto.content },
+      include: { user: { select: { nickname: true, avatar: true } } },
+    });
+    const commentCount = await this.prisma.dynamicComment.count({ where: { dynamicId: id } });
+    await this.prisma.dynamic.update({ where: { id }, data: { commentCount } });
+    return { id: c.id, content: c.content, createdAt: c.createdAt, user: c.user, commentCount };
+  }
+}

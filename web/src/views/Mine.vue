@@ -1,0 +1,123 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { showConfirmDialog, showToast } from 'vant';
+import { api } from '../api';
+import { useUserStore } from '../stores/user';
+
+const store = useUserStore();
+const router = useRouter();
+const editing = ref(false);
+const nickname = ref('');
+
+onMounted(() => store.refresh().catch(() => {}));
+
+function openEdit() {
+  nickname.value = store.user?.nickname ?? '';
+  editing.value = true;
+}
+
+async function saveName() {
+  if (!nickname.value.trim()) return;
+  store.user = await api.updateProfile({ nickname: nickname.value.trim() });
+  editing.value = false;
+}
+
+async function logout() {
+  try {
+    await showConfirmDialog({ title: '退出登录', message: '确定退出当前账号吗？' });
+  } catch {
+    return;
+  }
+  store.logout();
+  router.replace('/home');
+}
+</script>
+
+<template>
+  <div class="page mine">
+    <div class="mine__hero">
+      <van-image round width="64" height="64" :src="store.user?.avatar || ''" class="mine__avatar" />
+      <div class="mine__who" @click="openEdit">
+        <div class="mine__name">{{ store.user?.nickname || '未登录' }}</div>
+        <div class="mine__mobile">{{ store.user?.mobile }}</div>
+      </div>
+      <van-icon name="edit" color="#fff" size="18" @click="openEdit" />
+    </div>
+
+    <div class="card mine__wallet">
+      <div class="mine__wallet-item">
+        <div class="mine__wallet-num">¥{{ (store.user?.balance ?? 0).toFixed(2) }}</div>
+        <div class="muted">余额</div>
+      </div>
+      <div class="mine__wallet-item" @click="router.push('/follows')">
+        <div class="mine__wallet-num">❤</div>
+        <div class="muted">我的关注</div>
+      </div>
+      <div class="mine__wallet-item" @click="router.push('/orders')">
+        <div class="mine__wallet-num">📋</div>
+        <div class="muted">全部订单</div>
+      </div>
+    </div>
+
+    <div class="card mine__menu">
+      <van-cell title="我的关注" is-link icon="like-o" @click="router.push('/follows')" />
+      <van-cell title="全部订单" is-link icon="orders-o" @click="router.push('/orders')" />
+      <van-cell title="发动态" is-link icon="edit" @click="router.push('/dynamic/publish')" />
+      <van-cell title="联系客服" is-link icon="service-o" @click="showToast('演示版暂无客服')" />
+      <van-cell title="平台规则" is-link icon="description" @click="showToast('绿色服务 · 平台担保 · 爽约包退')" />
+    </div>
+
+    <div class="mine__logout">
+      <van-button round block plain type="danger" @click="logout">退出登录</van-button>
+    </div>
+
+    <van-dialog v-model:show="editing" title="修改昵称" show-cancel-button @confirm="saveName">
+      <van-field v-model="nickname" placeholder="输入新昵称" maxlength="30" />
+    </van-dialog>
+  </div>
+</template>
+
+<style scoped>
+.mine__hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 20px 56px;
+  background: linear-gradient(135deg, #ff5a5f, #ff8e53);
+}
+.mine__name {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+.mine__mobile {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  margin-top: 4px;
+}
+.mine__who {
+  flex: 1;
+}
+.mine__wallet {
+  margin: -36px 12px 0;
+  position: relative;
+  display: flex;
+  padding: 16px 0;
+}
+.mine__wallet-item {
+  flex: 1;
+  text-align: center;
+}
+.mine__wallet-num {
+  font-weight: 700;
+  font-size: 17px;
+}
+.mine__menu {
+  margin: 12px;
+  overflow: hidden;
+}
+.mine__logout {
+  margin: 24px 16px;
+}
+</style>

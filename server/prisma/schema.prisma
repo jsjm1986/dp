@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  mobile    String   @unique
+  nickname  String
+  avatar    String?
+  gender    String?
+  city      String?
+  balance   Decimal  @default(0)
+  createdAt DateTime @default(now())
+
+  partner   Partner?
+  orders    Order[]
+  dynamics  Dynamic[]
+  reviews   Review[]
+  follows   Follow[]
+  likes     DynamicLike[]
+  comments  DynamicComment[]
+}
+
+model Partner {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  photos        String   @default("[]")
+  voiceIntro    String?
+  bio           String?
+  age           Int?
+  height        Int?
+  weight        Int?
+  constellation String?
+  education     String?
+  tags          String   @default("[]")
+  city          String
+  district      String?
+  latitude      Float?
+  longitude     Float?
+  status        String   @default("available")
+  verified      Boolean  @default(false)
+  serviceCount  Int      @default(0)
+  viewCount     Int      @default(0)
+  rating        Float    @default(5.0)
+  wechatId      String?
+  createdAt     DateTime @default(now())
+
+  services PartnerService[]
+  orders   Order[]
+  reviews  Review[]
+  follows  Follow[]
+}
+
+model PartnerService {
+  id        String  @id @default(cuid())
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name      String
+  desc      String?
+  price     Decimal
+  unit      String  @default("小时")
+  miniNum   Int     @default(1)
+  sort      Int     @default(0)
+
+  items OrderItem[]
+}
+
+model Order {
+  id           String    @id @default(cuid())
+  orderNo      String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  partnerId    String
+  partner      Partner   @relation(fields: [partnerId], references: [id])
+  items        OrderItem[]
+  appointAt    DateTime
+  address      String?
+  remark       String?
+  totalAmount  Decimal
+  status       String    @default("pending_payment")
+  cancelReason String?
+  urgedAt      DateTime?
+  paidAt       DateTime?
+  acceptedAt   DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  review Review?
+}
+
+model OrderItem {
+  id        String         @id @default(cuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   PartnerService @relation(fields: [serviceId], references: [id])
+  name      String
+  price     Decimal
+  unit      String
+  num       Int
+  subtotal  Decimal
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  rating    Int
+  content   String?
+  createdAt DateTime @default(now())
+}
+
+model Dynamic {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  content      String
+  images       String   @default("[]")
+  city         String?
+  likeCount    Int      @default(0)
+  commentCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  likes    DynamicLike[]
+  comments DynamicComment[]
+}
+
+model DynamicLike {
+  id        String  @id @default(cuid())
+  dynamicId String
+  dynamic   Dynamic @relation(fields: [dynamicId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@unique([dynamicId, userId])
+}
+
+model DynamicComment {
+  id        String   @id @default(cuid())
+  dynamicId String
+  dynamic   Dynamic  @relation(fields: [dynamicId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, partnerId])
+}
+
+model Banner {
+  id    String @id @default(cuid())
+  image String
+  link  String?
+  sort  Int    @default(0)
+}
+
+model SmsCode {
+  id        String   @id @default(cuid())
+  mobile    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

@@ -9,6 +9,7 @@ type OrderRow = Awaited<ReturnType<typeof api.adminOrders>>['items'][number];
 type DynRow = Awaited<ReturnType<typeof api.adminDynamics>>['items'][number];
 type UserRow = Awaited<ReturnType<typeof api.adminUsers>>['items'][number];
 type BannerRow = { id: string; image: string; link: string | null; sort: number };
+type WithdrawalRow = Awaited<ReturnType<typeof api.adminWithdrawals>>[number];
 
 const tab = ref('dash');
 const dash = ref<Dash | null>(null);
@@ -18,6 +19,7 @@ const orders = ref<OrderRow[]>([]);
 const dynamics = ref<DynRow[]>([]);
 const users = ref<UserRow[]>([]);
 const banners = ref<BannerRow[]>([]);
+const withdrawals = ref<WithdrawalRow[]>([]);
 const bannerEdit = ref<{ show: boolean; id?: string; image: string; link: string; sort: number }>({
   show: false, image: '', link: '', sort: 0,
 });
@@ -39,6 +41,18 @@ async function loadOrders() { orders.value = (await api.adminOrders()).items; }
 async function loadDynamics() { dynamics.value = (await api.adminDynamics()).items; }
 async function loadUsers() { users.value = (await api.adminUsers()).items; }
 async function loadBanners() { banners.value = await api.adminBanners(); }
+async function loadWithdrawals() { withdrawals.value = await api.adminWithdrawals('all'); }
+
+async function handleWithdrawal(w: WithdrawalRow, ok: boolean) {
+  if (!ok) {
+    try {
+      await showConfirmDialog({ title: '拒绝提现', message: `拒绝后 ¥${w.amount} 将退回玩伴余额，确认？` });
+    } catch { return; }
+  }
+  await (ok ? api.adminApproveWithdrawal(w.id) : api.adminRejectWithdrawal(w.id, '不符合提现条件'));
+  showToast(ok ? '已打款' : '已拒绝并退款');
+  loadWithdrawals();
+}
 
 async function audit(id: string, ok: boolean) {
   await (ok ? api.adminApprove(id) : api.adminReject(id));
@@ -102,6 +116,7 @@ function onTabChange(name: string | number) {
   if (name === 'dynamics') loadDynamics();
   if (name === 'users') loadUsers();
   if (name === 'banners') loadBanners();
+  if (name === 'withdrawals') loadWithdrawals();
 }
 </script>
 
@@ -220,6 +235,32 @@ function onTabChange(name: string | number) {
         </div>
       </van-tab>
 
+      <!-- 提现 -->
+      <van-tab title="提现" name="withdrawals">
+        <div class="admin__list">
+          <div v-for="w in withdrawals" :key="w.id" class="card admin__wd">
+            <div class="admin__wd-head">
+              <van-image round width="36" height="36" :src="w.partner.avatar || ''" />
+              <div class="admin__wd-info">
+                <div><b>{{ w.partner.nickname }}</b> <span class="muted">{{ w.partner.mobile }}</span></div>
+                <div class="muted">{{ fmt(w.createdAt) }}</div>
+              </div>
+              <div class="admin__wd-amount">¥{{ w.amount.toFixed(2) }}</div>
+            </div>
+            <div class="admin__wd-ops">
+              <van-tag :type="w.status === 'done' ? 'success' : w.status === 'rejected' ? 'danger' : 'warning'">
+                {{ w.status === 'done' ? '已打款' : w.status === 'rejected' ? '已拒绝' : '待审核' }}
+              </van-tag>
+              <template v-if="w.status === 'pending'">
+                <van-button size="small" type="success" round @click="handleWithdrawal(w, true)">打款</van-button>
+                <van-button size="small" type="danger" round plain @click="handleWithdrawal(w, false)">拒绝</van-button>
+              </template>
+            </div>
+          </div>
+          <van-empty v-if="!withdrawals.length" description="暂无提现申请" image-size="70" />
+        </div>
+      </van-tab>
+
       <!-- Banner -->
       <van-tab title="Banner" name="banners">
         <div class="admin__list">
@@ -293,4 +334,9 @@ function onTabChange(name: string | number) {
   width: 100%; height: 80px; background: #f5f6f8; border-radius: 8px;
   display: flex; align-items: center; justify-content: center; color: #999;
 }
+.admin__wd { padding: 12px; margin-bottom: 10px; }
+.admin__wd-head { display: flex; align-items: center; gap: 10px; }
+.admin__wd-info { flex: 1; }
+.admin__wd-amount { font-size: 18px; font-weight: 800; color: #ff5a5f; }
+.admin__wd-ops { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 </style>

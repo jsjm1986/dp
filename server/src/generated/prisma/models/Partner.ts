@@ -32,6 +32,7 @@ export type PartnerAvgAggregateOutputType = {
   weight: number | null
   latitude: number | null
   longitude: number | null
+  balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
   rating: number | null
@@ -43,6 +44,7 @@ export type PartnerSumAggregateOutputType = {
   weight: number | null
   latitude: number | null
   longitude: number | null
+  balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
   rating: number | null
@@ -67,6 +69,7 @@ export type PartnerMinAggregateOutputType = {
   status: string | null
   auditStatus: string | null
   verified: boolean | null
+  balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
   rating: number | null
@@ -93,6 +96,7 @@ export type PartnerMaxAggregateOutputType = {
   status: string | null
   auditStatus: string | null
   verified: boolean | null
+  balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
   rating: number | null
@@ -119,6 +123,7 @@ export type PartnerCountAggregateOutputType = {
   status: number
   auditStatus: number
   verified: number
+  balance: number
   serviceCount: number
   viewCount: number
   rating: number
@@ -134,6 +139,7 @@ export type PartnerAvgAggregateInputType = {
   weight?: true
   latitude?: true
   longitude?: true
+  balance?: true
   serviceCount?: true
   viewCount?: true
   rating?: true
@@ -145,6 +151,7 @@ export type PartnerSumAggregateInputType = {
   weight?: true
   latitude?: true
   longitude?: true
+  balance?: true
   serviceCount?: true
   viewCount?: true
   rating?: true
@@ -169,6 +176,7 @@ export type PartnerMinAggregateInputType = {
   status?: true
   auditStatus?: true
   verified?: true
+  balance?: true
   serviceCount?: true
   viewCount?: true
   rating?: true
@@ -195,6 +203,7 @@ export type PartnerMaxAggregateInputType = {
   status?: true
   auditStatus?: true
   verified?: true
+  balance?: true
   serviceCount?: true
   viewCount?: true
   rating?: true
@@ -221,6 +230,7 @@ export type PartnerCountAggregateInputType = {
   status?: true
   auditStatus?: true
   verified?: true
+  balance?: true
   serviceCount?: true
   viewCount?: true
   rating?: true
@@ -334,6 +344,7 @@ export type PartnerGroupByOutputType = {
   status: string
   auditStatus: string
   verified: boolean
+  balance: runtime.Decimal
   serviceCount: number
   viewCount: number
   rating: number
@@ -383,6 +394,7 @@ export type PartnerWhereInput = {
   status?: Prisma.StringFilter<"Partner"> | string
   auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
+  balance?: Prisma.DecimalFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
   rating?: Prisma.FloatFilter<"Partner"> | number
@@ -393,6 +405,7 @@ export type PartnerWhereInput = {
   orders?: Prisma.OrderListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
   follows?: Prisma.FollowListRelationFilter
+  withdrawals?: Prisma.WithdrawalListRelationFilter
 }
 
 export type PartnerOrderByWithRelationInput = {
@@ -414,6 +427,7 @@ export type PartnerOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -424,6 +438,7 @@ export type PartnerOrderByWithRelationInput = {
   orders?: Prisma.OrderOrderByRelationAggregateInput
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
   follows?: Prisma.FollowOrderByRelationAggregateInput
+  withdrawals?: Prisma.WithdrawalOrderByRelationAggregateInput
 }
 
 export type PartnerWhereUniqueInput = Prisma.AtLeast<{
@@ -448,6 +463,7 @@ export type PartnerWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"Partner"> | string
   auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
+  balance?: Prisma.DecimalFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
   rating?: Prisma.FloatFilter<"Partner"> | number
@@ -458,6 +474,7 @@ export type PartnerWhereUniqueInput = Prisma.AtLeast<{
   orders?: Prisma.OrderListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
   follows?: Prisma.FollowListRelationFilter
+  withdrawals?: Prisma.WithdrawalListRelationFilter
 }, "id" | "userId">
 
 export type PartnerOrderByWithAggregationInput = {
@@ -479,6 +496,7 @@ export type PartnerOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -513,6 +531,7 @@ export type PartnerScalarWhereWithAggregatesInput = {
   status?: Prisma.StringWithAggregatesFilter<"Partner"> | string
   auditStatus?: Prisma.StringWithAggregatesFilter<"Partner"> | string
   verified?: Prisma.BoolWithAggregatesFilter<"Partner"> | boolean
+  balance?: Prisma.DecimalWithAggregatesFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
   viewCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
   rating?: Prisma.FloatWithAggregatesFilter<"Partner"> | number
@@ -538,6 +557,7 @@ export type PartnerCreateInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -548,6 +568,7 @@ export type PartnerCreateInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateInput = {
@@ -569,6 +590,7 @@ export type PartnerUncheckedCreateInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -578,6 +600,7 @@ export type PartnerUncheckedCreateInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUpdateInput = {
@@ -598,6 +621,7 @@ export type PartnerUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -608,6 +632,7 @@ export type PartnerUpdateInput = {
   orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateInput = {
@@ -629,6 +654,7 @@ export type PartnerUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -638,6 +664,7 @@ export type PartnerUncheckedUpdateInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateManyInput = {
@@ -659,6 +686,7 @@ export type PartnerCreateManyInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -684,6 +712,7 @@ export type PartnerUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -710,6 +739,7 @@ export type PartnerUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -741,6 +771,7 @@ export type PartnerCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -754,6 +785,7 @@ export type PartnerAvgOrderByAggregateInput = {
   weight?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -778,6 +810,7 @@ export type PartnerMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -804,6 +837,7 @@ export type PartnerMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -817,6 +851,7 @@ export type PartnerSumOrderByAggregateInput = {
   weight?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
@@ -951,6 +986,20 @@ export type PartnerUpdateOneRequiredWithoutFollowsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerUpdateToOneWithWhereWithoutFollowsInput, Prisma.PartnerUpdateWithoutFollowsInput>, Prisma.PartnerUncheckedUpdateWithoutFollowsInput>
 }
 
+export type PartnerCreateNestedOneWithoutWithdrawalsInput = {
+  create?: Prisma.XOR<Prisma.PartnerCreateWithoutWithdrawalsInput, Prisma.PartnerUncheckedCreateWithoutWithdrawalsInput>
+  connectOrCreate?: Prisma.PartnerCreateOrConnectWithoutWithdrawalsInput
+  connect?: Prisma.PartnerWhereUniqueInput
+}
+
+export type PartnerUpdateOneRequiredWithoutWithdrawalsNestedInput = {
+  create?: Prisma.XOR<Prisma.PartnerCreateWithoutWithdrawalsInput, Prisma.PartnerUncheckedCreateWithoutWithdrawalsInput>
+  connectOrCreate?: Prisma.PartnerCreateOrConnectWithoutWithdrawalsInput
+  upsert?: Prisma.PartnerUpsertWithoutWithdrawalsInput
+  connect?: Prisma.PartnerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerUpdateToOneWithWhereWithoutWithdrawalsInput, Prisma.PartnerUpdateWithoutWithdrawalsInput>, Prisma.PartnerUncheckedUpdateWithoutWithdrawalsInput>
+}
+
 export type PartnerCreateWithoutUserInput = {
   id?: string
   photos?: string
@@ -969,6 +1018,7 @@ export type PartnerCreateWithoutUserInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -978,6 +1028,7 @@ export type PartnerCreateWithoutUserInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateWithoutUserInput = {
@@ -998,6 +1049,7 @@ export type PartnerUncheckedCreateWithoutUserInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1007,6 +1059,7 @@ export type PartnerUncheckedCreateWithoutUserInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerCreateOrConnectWithoutUserInput = {
@@ -1043,6 +1096,7 @@ export type PartnerUpdateWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1052,6 +1106,7 @@ export type PartnerUpdateWithoutUserInput = {
   orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutUserInput = {
@@ -1072,6 +1127,7 @@ export type PartnerUncheckedUpdateWithoutUserInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1081,6 +1137,7 @@ export type PartnerUncheckedUpdateWithoutUserInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateWithoutServicesInput = {
@@ -1101,6 +1158,7 @@ export type PartnerCreateWithoutServicesInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1110,6 +1168,7 @@ export type PartnerCreateWithoutServicesInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateWithoutServicesInput = {
@@ -1131,6 +1190,7 @@ export type PartnerUncheckedCreateWithoutServicesInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1139,6 +1199,7 @@ export type PartnerUncheckedCreateWithoutServicesInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerCreateOrConnectWithoutServicesInput = {
@@ -1175,6 +1236,7 @@ export type PartnerUpdateWithoutServicesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1184,6 +1246,7 @@ export type PartnerUpdateWithoutServicesInput = {
   orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutServicesInput = {
@@ -1205,6 +1268,7 @@ export type PartnerUncheckedUpdateWithoutServicesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1213,6 +1277,7 @@ export type PartnerUncheckedUpdateWithoutServicesInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateWithoutOrdersInput = {
@@ -1233,6 +1298,7 @@ export type PartnerCreateWithoutOrdersInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1242,6 +1308,7 @@ export type PartnerCreateWithoutOrdersInput = {
   services?: Prisma.PartnerServiceCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateWithoutOrdersInput = {
@@ -1263,6 +1330,7 @@ export type PartnerUncheckedCreateWithoutOrdersInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1271,6 +1339,7 @@ export type PartnerUncheckedCreateWithoutOrdersInput = {
   services?: Prisma.PartnerServiceUncheckedCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerCreateOrConnectWithoutOrdersInput = {
@@ -1307,6 +1376,7 @@ export type PartnerUpdateWithoutOrdersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1316,6 +1386,7 @@ export type PartnerUpdateWithoutOrdersInput = {
   services?: Prisma.PartnerServiceUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutOrdersInput = {
@@ -1337,6 +1408,7 @@ export type PartnerUncheckedUpdateWithoutOrdersInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1345,6 +1417,7 @@ export type PartnerUncheckedUpdateWithoutOrdersInput = {
   services?: Prisma.PartnerServiceUncheckedUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateWithoutReviewsInput = {
@@ -1365,6 +1438,7 @@ export type PartnerCreateWithoutReviewsInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1374,6 +1448,7 @@ export type PartnerCreateWithoutReviewsInput = {
   services?: Prisma.PartnerServiceCreateNestedManyWithoutPartnerInput
   orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateWithoutReviewsInput = {
@@ -1395,6 +1470,7 @@ export type PartnerUncheckedCreateWithoutReviewsInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1403,6 +1479,7 @@ export type PartnerUncheckedCreateWithoutReviewsInput = {
   services?: Prisma.PartnerServiceUncheckedCreateNestedManyWithoutPartnerInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
   follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerCreateOrConnectWithoutReviewsInput = {
@@ -1439,6 +1516,7 @@ export type PartnerUpdateWithoutReviewsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1448,6 +1526,7 @@ export type PartnerUpdateWithoutReviewsInput = {
   services?: Prisma.PartnerServiceUpdateManyWithoutPartnerNestedInput
   orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutReviewsInput = {
@@ -1469,6 +1548,7 @@ export type PartnerUncheckedUpdateWithoutReviewsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1477,6 +1557,7 @@ export type PartnerUncheckedUpdateWithoutReviewsInput = {
   services?: Prisma.PartnerServiceUncheckedUpdateManyWithoutPartnerNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
   follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateWithoutFollowsInput = {
@@ -1497,6 +1578,7 @@ export type PartnerCreateWithoutFollowsInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1506,6 +1588,7 @@ export type PartnerCreateWithoutFollowsInput = {
   services?: Prisma.PartnerServiceCreateNestedManyWithoutPartnerInput
   orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerUncheckedCreateWithoutFollowsInput = {
@@ -1527,6 +1610,7 @@ export type PartnerUncheckedCreateWithoutFollowsInput = {
   status?: string
   auditStatus?: string
   verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
   rating?: number
@@ -1535,6 +1619,7 @@ export type PartnerUncheckedCreateWithoutFollowsInput = {
   services?: Prisma.PartnerServiceUncheckedCreateNestedManyWithoutPartnerInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
+  withdrawals?: Prisma.WithdrawalUncheckedCreateNestedManyWithoutPartnerInput
 }
 
 export type PartnerCreateOrConnectWithoutFollowsInput = {
@@ -1571,6 +1656,7 @@ export type PartnerUpdateWithoutFollowsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1580,6 +1666,7 @@ export type PartnerUpdateWithoutFollowsInput = {
   services?: Prisma.PartnerServiceUpdateManyWithoutPartnerNestedInput
   orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutFollowsInput = {
@@ -1601,6 +1688,7 @@ export type PartnerUncheckedUpdateWithoutFollowsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1609,6 +1697,147 @@ export type PartnerUncheckedUpdateWithoutFollowsInput = {
   services?: Prisma.PartnerServiceUncheckedUpdateManyWithoutPartnerNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
+  withdrawals?: Prisma.WithdrawalUncheckedUpdateManyWithoutPartnerNestedInput
+}
+
+export type PartnerCreateWithoutWithdrawalsInput = {
+  id?: string
+  photos?: string
+  voiceIntro?: string | null
+  bio?: string | null
+  age?: number | null
+  height?: number | null
+  weight?: number | null
+  constellation?: string | null
+  education?: string | null
+  tags?: string
+  city: string
+  district?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  status?: string
+  auditStatus?: string
+  verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  serviceCount?: number
+  viewCount?: number
+  rating?: number
+  wechatId?: string | null
+  createdAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutPartnerInput
+  services?: Prisma.PartnerServiceCreateNestedManyWithoutPartnerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutPartnerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutPartnerInput
+  follows?: Prisma.FollowCreateNestedManyWithoutPartnerInput
+}
+
+export type PartnerUncheckedCreateWithoutWithdrawalsInput = {
+  id?: string
+  userId: string
+  photos?: string
+  voiceIntro?: string | null
+  bio?: string | null
+  age?: number | null
+  height?: number | null
+  weight?: number | null
+  constellation?: string | null
+  education?: string | null
+  tags?: string
+  city: string
+  district?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  status?: string
+  auditStatus?: string
+  verified?: boolean
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  serviceCount?: number
+  viewCount?: number
+  rating?: number
+  wechatId?: string | null
+  createdAt?: Date | string
+  services?: Prisma.PartnerServiceUncheckedCreateNestedManyWithoutPartnerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutPartnerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutPartnerInput
+  follows?: Prisma.FollowUncheckedCreateNestedManyWithoutPartnerInput
+}
+
+export type PartnerCreateOrConnectWithoutWithdrawalsInput = {
+  where: Prisma.PartnerWhereUniqueInput
+  create: Prisma.XOR<Prisma.PartnerCreateWithoutWithdrawalsInput, Prisma.PartnerUncheckedCreateWithoutWithdrawalsInput>
+}
+
+export type PartnerUpsertWithoutWithdrawalsInput = {
+  update: Prisma.XOR<Prisma.PartnerUpdateWithoutWithdrawalsInput, Prisma.PartnerUncheckedUpdateWithoutWithdrawalsInput>
+  create: Prisma.XOR<Prisma.PartnerCreateWithoutWithdrawalsInput, Prisma.PartnerUncheckedCreateWithoutWithdrawalsInput>
+  where?: Prisma.PartnerWhereInput
+}
+
+export type PartnerUpdateToOneWithWhereWithoutWithdrawalsInput = {
+  where?: Prisma.PartnerWhereInput
+  data: Prisma.XOR<Prisma.PartnerUpdateWithoutWithdrawalsInput, Prisma.PartnerUncheckedUpdateWithoutWithdrawalsInput>
+}
+
+export type PartnerUpdateWithoutWithdrawalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.StringFieldUpdateOperationsInput | string
+  voiceIntro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  age?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  weight?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  constellation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  education?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number
+  wechatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutPartnerNestedInput
+  services?: Prisma.PartnerServiceUpdateManyWithoutPartnerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutPartnerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutPartnerNestedInput
+  follows?: Prisma.FollowUpdateManyWithoutPartnerNestedInput
+}
+
+export type PartnerUncheckedUpdateWithoutWithdrawalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  photos?: Prisma.StringFieldUpdateOperationsInput | string
+  voiceIntro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  age?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  weight?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  constellation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  education?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tags?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number
+  wechatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  services?: Prisma.PartnerServiceUncheckedUpdateManyWithoutPartnerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutPartnerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutPartnerNestedInput
+  follows?: Prisma.FollowUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 
@@ -1621,6 +1850,7 @@ export type PartnerCountOutputType = {
   orders: number
   reviews: number
   follows: number
+  withdrawals: number
 }
 
 export type PartnerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1628,6 +1858,7 @@ export type PartnerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   orders?: boolean | PartnerCountOutputTypeCountOrdersArgs
   reviews?: boolean | PartnerCountOutputTypeCountReviewsArgs
   follows?: boolean | PartnerCountOutputTypeCountFollowsArgs
+  withdrawals?: boolean | PartnerCountOutputTypeCountWithdrawalsArgs
 }
 
 /**
@@ -1668,6 +1899,13 @@ export type PartnerCountOutputTypeCountFollowsArgs<ExtArgs extends runtime.Types
   where?: Prisma.FollowWhereInput
 }
 
+/**
+ * PartnerCountOutputType without action
+ */
+export type PartnerCountOutputTypeCountWithdrawalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WithdrawalWhereInput
+}
+
 
 export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1688,6 +1926,7 @@ export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   status?: boolean
   auditStatus?: boolean
   verified?: boolean
+  balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
   rating?: boolean
@@ -1698,6 +1937,7 @@ export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   orders?: boolean | Prisma.Partner$ordersArgs<ExtArgs>
   reviews?: boolean | Prisma.Partner$reviewsArgs<ExtArgs>
   follows?: boolean | Prisma.Partner$followsArgs<ExtArgs>
+  withdrawals?: boolean | Prisma.Partner$withdrawalsArgs<ExtArgs>
   _count?: boolean | Prisma.PartnerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["partner"]>
 
@@ -1720,6 +1960,7 @@ export type PartnerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   status?: boolean
   auditStatus?: boolean
   verified?: boolean
+  balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
   rating?: boolean
@@ -1747,6 +1988,7 @@ export type PartnerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   status?: boolean
   auditStatus?: boolean
   verified?: boolean
+  balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
   rating?: boolean
@@ -1774,6 +2016,7 @@ export type PartnerSelectScalar = {
   status?: boolean
   auditStatus?: boolean
   verified?: boolean
+  balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
   rating?: boolean
@@ -1781,13 +2024,14 @@ export type PartnerSelectScalar = {
   createdAt?: boolean
 }
 
-export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "auditStatus" | "verified" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
+export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "auditStatus" | "verified" | "balance" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
 export type PartnerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   services?: boolean | Prisma.Partner$servicesArgs<ExtArgs>
   orders?: boolean | Prisma.Partner$ordersArgs<ExtArgs>
   reviews?: boolean | Prisma.Partner$reviewsArgs<ExtArgs>
   follows?: boolean | Prisma.Partner$followsArgs<ExtArgs>
+  withdrawals?: boolean | Prisma.Partner$withdrawalsArgs<ExtArgs>
   _count?: boolean | Prisma.PartnerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PartnerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1805,6 +2049,7 @@ export type $PartnerPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     orders: Prisma.$OrderPayload<ExtArgs>[]
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
     follows: Prisma.$FollowPayload<ExtArgs>[]
+    withdrawals: Prisma.$WithdrawalPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1825,6 +2070,7 @@ export type $PartnerPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     status: string
     auditStatus: string
     verified: boolean
+    balance: runtime.Decimal
     serviceCount: number
     viewCount: number
     rating: number
@@ -2229,6 +2475,7 @@ export interface Prisma__PartnerClient<T, Null = never, ExtArgs extends runtime.
   orders<T extends Prisma.Partner$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.Partner$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   follows<T extends Prisma.Partner$followsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$followsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  withdrawals<T extends Prisma.Partner$withdrawalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$withdrawalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WithdrawalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2276,6 +2523,7 @@ export interface PartnerFieldRefs {
   readonly status: Prisma.FieldRef<"Partner", 'String'>
   readonly auditStatus: Prisma.FieldRef<"Partner", 'String'>
   readonly verified: Prisma.FieldRef<"Partner", 'Boolean'>
+  readonly balance: Prisma.FieldRef<"Partner", 'Decimal'>
   readonly serviceCount: Prisma.FieldRef<"Partner", 'Int'>
   readonly viewCount: Prisma.FieldRef<"Partner", 'Int'>
   readonly rating: Prisma.FieldRef<"Partner", 'Float'>
@@ -2773,6 +3021,30 @@ export type Partner$followsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.FollowScalarFieldEnum | Prisma.FollowScalarFieldEnum[]
+}
+
+/**
+ * Partner.withdrawals
+ */
+export type Partner$withdrawalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Withdrawal
+   */
+  select?: Prisma.WithdrawalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Withdrawal
+   */
+  omit?: Prisma.WithdrawalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WithdrawalInclude<ExtArgs> | null
+  where?: Prisma.WithdrawalWhereInput
+  orderBy?: Prisma.WithdrawalOrderByWithRelationInput | Prisma.WithdrawalOrderByWithRelationInput[]
+  cursor?: Prisma.WithdrawalWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WithdrawalScalarFieldEnum | Prisma.WithdrawalScalarFieldEnum[]
 }
 
 /**

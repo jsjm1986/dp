@@ -341,7 +341,10 @@ export class OrdersService {
     if (action === 'finish') {
       await this.prisma.partner.update({
         where: { id: partner.id },
-        data: { serviceCount: { increment: 1 } },
+        data: {
+          serviceCount: { increment: 1 },
+          balance: { increment: order.totalAmount },
+        },
       });
     }
     return this.toDto(updated);
@@ -382,7 +385,10 @@ export class OrdersService {
           if (step.action === 'finish') {
             await this.prisma.partner.update({
               where: { id: order.partnerId },
-              data: { serviceCount: { increment: 1 } },
+              data: {
+                serviceCount: { increment: 1 },
+                balance: { increment: order.totalAmount },
+              },
             });
           }
         } catch {

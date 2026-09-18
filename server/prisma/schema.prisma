@@ -50,16 +50,18 @@ model Partner {
   status        String   @default("available")
   auditStatus   String   @default("pending")
   verified      Boolean  @default(false)
+  balance       Decimal  @default(0)
   serviceCount  Int      @default(0)
   viewCount     Int      @default(0)
   rating        Float    @default(5.0)
   wechatId      String?
   createdAt     DateTime @default(now())
 
-  services PartnerService[]
-  orders   Order[]
-  reviews  Review[]
-  follows  Follow[]
+  services    PartnerService[]
+  orders      Order[]
+  reviews     Review[]
+  follows     Follow[]
+  withdrawals Withdrawal[]
 }
 
 model PartnerService {
@@ -238,4 +240,17 @@ model UserCoupon {
   coupon Coupon @relation(fields: [couponId], references: [id])
 
   @@unique([userId, couponId])
+}
+
+// ---------- 提现 ----------
+model Withdrawal {
+  id        String   @id @default(cuid())
+  partnerId String
+  amount    Decimal
+  status    String   @default("pending")
+  remark    String?
+  createdAt DateTime @default(now())
+  handledAt DateTime?
+
+  partner Partner @relation(fields: [partnerId], references: [id])
 }

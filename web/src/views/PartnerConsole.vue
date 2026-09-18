@@ -13,7 +13,34 @@ const tab = ref('pending_accept');
 const items = ref<PartnerOrder[]>([]);
 const loading = ref(false);
 const acting = ref('');
+const wallet = ref<Awaited<ReturnType<typeof api.partnerWallet>> | null>(null);
+const showWithdraw = ref(false);
+const withdrawAmount = ref<number | undefined>();
+const withdrawing = ref(false);
 let poller: ReturnType<typeof setInterval> | null = null;
+
+async function loadWallet() {
+  wallet.value = await api.partnerWallet();
+}
+
+async function withdraw() {
+  const amount = Number(withdrawAmount.value);
+  if (!amount || amount <= 0) return showToast('请输入提现金额');
+  withdrawing.value = true;
+  try {
+    await api.partnerWithdraw(amount);
+    showWithdraw.value = false;
+    withdrawAmount.value = undefined;
+    showToast('提现申请已提交，等待平台审核');
+    loadWallet();
+  } finally {
+    withdrawing.value = false;
+  }
+}
+
+const withdrawStatusText: Record<string, string> = {
+  pending: '审核中', done: '已到账', rejected: '已拒绝',
+};
 
 const tabs = [
   { label: '待接单', value: 'pending_accept' },
@@ -73,6 +100,7 @@ function fmt(iso: string) {
 onMounted(() => {
   loadStats();
   loadOrders();
+  loadWallet();
   poller = setInterval(() => {
     loadStats();
     loadOrders();
@@ -132,6 +160,22 @@ onUnmounted(() => poller && clearInterval(poller));
       </div>
     </div>
 
+    <div class="card pc__wallet" @click="showWithdraw = true">
+      <div>
+        <div class="muted">可提现余额</div>
+        <div class="pc__wallet-num">¥{{ (wallet?.balance ?? 0).toFixed(2) }}</div>
+      </div>
+      <van-button size="small" round type="primary" plain>提现</van-button>
+    </div>
+    <div v-if="wallet?.withdrawals.length" class="card pc__withdrawals">
+      <div v-for="w in wallet.withdrawals" :key="w.id" class="pc__withdrawal">
+        <span>提现 ¥{{ w.amount.toFixed(2) }}</span>
+        <van-tag :type="w.status === 'done' ? 'success' : w.status === 'rejected' ? 'danger' : 'warning'">
+          {{ withdrawStatusText[w.status] || w.status }}
+        </van-tag>
+      </div>
+    </div>
+
     <van-tabs v-model:active="tab" sticky offset-top="46" color="#ff5a5f" @change="loadOrders">
       <van-tab v-for="t in tabs" :key="t.value" :name="t.value">
         <template #title>
@@ -186,6 +230,18 @@ onUnmounted(() => poller && clearInterval(poller));
         <van-empty v-if="!items.length" description="暂无订单" />
       </template>
     </div>
+
+    <van-dialog v-model:show="showWithdraw" title="申请提现" show-cancel-button :confirm-button-loading="withdrawing" @confirm="withdraw">
+      <div class="pc__withdraw-form">
+        <van-field
+          v-model.number="withdrawAmount"
+          type="number"
+          label="金额"
+          :placeholder="`可提 ¥${(wallet?.balance ?? 0).toFixed(2)}`"
+        />
+        <div class="muted pc__withdraw-hint">提交后平台审核打款，拒绝将退回余额</div>
+      </div>
+    </van-dialog>
   </div>
 </template>
 
@@ -284,5 +340,36 @@ onUnmounted(() => poller && clearInterval(poller));
 .porder__actions {
   display: flex;
   gap: 8px;
+}
+.pc__wallet {
+  margin: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pc__wallet-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ff5a5f;
+  margin-top: 2px;
+}
+.pc__withdrawals {
+  margin: 0 12px 12px;
+  padding: 8px 16px;
+}
+.pc__withdrawal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+}
+.pc__withdraw-form {
+  padding: 8px 0;
+}
+.pc__withdraw-hint {
+  padding: 8px 16px;
+  font-size: 12px;
 }
 </style>

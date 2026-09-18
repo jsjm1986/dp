@@ -92,3 +92,8 @@ export type Coupon = Prisma.CouponModel
  * 
  */
 export type UserCoupon = Prisma.UserCouponModel
+/**
+ * Model Withdrawal
+ * 
+ */
+export type Withdrawal = Prisma.WithdrawalModel

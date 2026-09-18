@@ -216,6 +216,48 @@ export class PartnerSelfController {
     };
   }
 
+  /** 钱包：余额 + 提现记录 */
+  @Get('wallet')
+  async wallet(@CurrentUser() userId: string) {
+    const p = await this.mustBePartner(userId);
+    const withdrawals = await this.prisma.withdrawal.findMany({
+      where: { partnerId: p.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return {
+      balance: Number(p.balance),
+      withdrawals: withdrawals.map((w) => ({
+        id: w.id,
+        amount: Number(w.amount),
+        status: w.status,
+        remark: w.remark,
+        createdAt: w.createdAt,
+      })),
+    };
+  }
+
+  /** 申请提现（先扣余额，拒绝退回） */
+  @Post('withdraw')
+  async withdraw(@CurrentUser() userId: string, @Body() dto: { amount: number }) {
+    const p = await this.mustBePartner(userId);
+    const amount = Math.round(Number(dto.amount) * 100) / 100;
+    if (!amount || amount <= 0) throw new BadRequestException('金额无效');
+    if (amount > Number(p.balance)) throw new BadRequestException('余额不足');
+    const pending = await this.prisma.withdrawal.count({
+      where: { partnerId: p.id, status: 'pending' },
+    });
+    if (pending) throw new BadRequestException('有提现申请处理中，请等待审核');
+    const [, w] = await this.prisma.$transaction([
+      this.prisma.partner.update({
+        where: { id: p.id },
+        data: { balance: { decrement: amount } },
+      }),
+      this.prisma.withdrawal.create({ data: { partnerId: p.id, amount } }),
+    ]);
+    return { id: w.id, status: w.status };
+  }
+
   private async mustBePartner(userId: string) {
     const p = await this.prisma.partner.findUnique({ where: { userId } });
     if (!p) throw new ForbiddenException('你不是玩伴，请先申请入驻');

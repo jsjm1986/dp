@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -223,6 +224,61 @@ export class AdminController {
   @Delete('dynamics/:id')
   async deleteDynamic(@Param('id') id: string) {
     await this.prisma.dynamic.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  /** 提现审核 */
+  @Get('withdrawals')
+  async withdrawals(@Query('status') status = 'pending') {
+    const where: any = status === 'all' ? {} : { status };
+    const rows = await this.prisma.withdrawal.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: { partner: { include: { user: { select: { nickname: true, avatar: true, mobile: true } } } } },
+    });
+    return rows.map((w) => ({
+      id: w.id,
+      amount: Number(w.amount),
+      status: w.status,
+      remark: w.remark,
+      createdAt: w.createdAt,
+      handledAt: w.handledAt,
+      partner: {
+        id: w.partner.id,
+        nickname: w.partner.user.nickname,
+        avatar: w.partner.user.avatar,
+        mobile: w.partner.user.mobile,
+      },
+    }));
+  }
+
+  @Post('withdrawals/:id/approve')
+  async approveWithdrawal(@Param('id') id: string) {
+    const w = await this.prisma.withdrawal.findUnique({ where: { id } });
+    if (!w || w.status !== 'pending') throw new BadRequestException('申请不存在或已处理');
+    await this.prisma.withdrawal.update({
+      where: { id },
+      data: { status: 'done', handledAt: new Date() },
+    });
+    return { ok: true };
+  }
+
+  @Post('withdrawals/:id/reject')
+  async rejectWithdrawal(@Param('id') id: string, @Body() body: { remark?: string }) {
+    const w = await this.prisma.withdrawal.findUnique({ where: { id } });
+    if (!w || w.status !== 'pending') throw new BadRequestException('申请不存在或已处理');
+    await this.prisma.$transaction([
+      this.prisma.withdrawal.update({
+        where: { id },
+        data: { status: 'rejected', remark: body.remark, handledAt: new Date() },
+      }),
+      // 拒绝退回余额
+      this.prisma.partner.update({
+        where: { id: w.partnerId },
+        data: { balance: { increment: w.amount } },
+      }),
+    ]);
     return { ok: true };
   }
 

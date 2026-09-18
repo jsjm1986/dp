@@ -65,7 +65,8 @@ export const ModelName = {
   SmsCode: 'SmsCode',
   Message: 'Message',
   Coupon: 'Coupon',
-  UserCoupon: 'UserCoupon'
+  UserCoupon: 'UserCoupon',
+  Withdrawal: 'Withdrawal'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -115,6 +116,7 @@ export const PartnerScalarFieldEnum = {
   status: 'status',
   auditStatus: 'auditStatus',
   verified: 'verified',
+  balance: 'balance',
   serviceCount: 'serviceCount',
   viewCount: 'viewCount',
   rating: 'rating',
@@ -296,6 +298,19 @@ export const UserCouponScalarFieldEnum = {
 } as const
 
 export type UserCouponScalarFieldEnum = (typeof UserCouponScalarFieldEnum)[keyof typeof UserCouponScalarFieldEnum]
+
+
+export const WithdrawalScalarFieldEnum = {
+  id: 'id',
+  partnerId: 'partnerId',
+  amount: 'amount',
+  status: 'status',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  handledAt: 'handledAt'
+} as const
+
+export type WithdrawalScalarFieldEnum = (typeof WithdrawalScalarFieldEnum)[keyof typeof WithdrawalScalarFieldEnum]
 
 
 export const SortOrder = {

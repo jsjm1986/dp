@@ -197,6 +197,9 @@ export const api = {
     http.get<Array<Order & { customer: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/partner/orders', { params: { status } }),
   partnerOrderAct: (id: string, action: 'accept' | 'reject' | 'start' | 'finish') =>
     http.post<Order>(`/partner/orders/${id}/${action}`),
+  partnerWallet: () =>
+    http.get<{ balance: number; withdrawals: Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string }> }>('/partner/wallet'),
+  partnerWithdraw: (amount: number) => http.post<{ id: string; status: string }>('/partner/withdraw', { amount }),
 
   dynamics: (page = 1) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page } }),
   createDynamic: (data: { content: string; images?: string[]; city?: string }) => http.post<{ id: string }>('/dynamics', data),
@@ -246,6 +249,10 @@ export const api = {
   adminSaveBanner: (data: { id?: string; image: string; link?: string; sort?: number }) =>
     data.id ? http.put(`/admin/banners/${data.id}`, data) : http.post('/admin/banners', data),
   adminDeleteBanner: (id: string) => http.delete(`/admin/banners/${id}`),
+  adminWithdrawals: (status = 'pending') =>
+    http.get<Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string; handledAt: string | null; partner: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/admin/withdrawals', { params: { status } }),
+  adminApproveWithdrawal: (id: string) => http.post(`/admin/withdrawals/${id}/approve`),
+  adminRejectWithdrawal: (id: string, remark?: string) => http.post(`/admin/withdrawals/${id}/reject`, { remark }),
 
   upload: (file: File) => {
     const fd = new FormData();

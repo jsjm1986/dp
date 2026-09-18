@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { api, type Dynamic } from '../api';
 import { useUserStore } from '../stores/user';
-import { showToast } from 'vant';
+import { showImagePreview, showToast } from 'vant';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{ item: Dynamic }>();
@@ -19,6 +19,10 @@ async function toggleLike() {
 
 function goPartner() {
   if (props.item.author.partnerId) router.push(`/partner/${props.item.author.partnerId}`);
+}
+
+function preview(i: number) {
+  showImagePreview({ images: props.item.images, startPosition: i });
 }
 
 function fmtTime(iso: string) {
@@ -51,7 +55,7 @@ function fmtTime(iso: string) {
         :src="img"
         fit="cover"
         lazy-load
-        @click.stop
+        @click="preview(i)"
       />
     </div>
     <div class="dcard__foot">

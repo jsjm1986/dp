@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { showConfirmDialog, showToast } from 'vant';
+import { showConfirmDialog, showImagePreview, showToast } from 'vant';
 import { api, type PartnerDetail } from '../api';
 import { useUserStore } from '../stores/user';
 
@@ -67,7 +67,7 @@ onMounted(load);
   <div v-if="p" class="page page--no-tab detail">
     <van-swipe class="detail__swipe" indicator-color="#fff">
       <van-swipe-item v-for="(img, i) in p.photos" :key="i">
-        <img :src="img" class="detail__photo" alt="" />
+        <img :src="img" class="detail__photo" alt="" @click="showImagePreview({ images: p.photos, startPosition: i })" />
       </van-swipe-item>
       <van-swipe-item v-if="!p.photos.length">
         <div class="detail__photo detail__photo--empty" />

@@ -17,6 +17,8 @@ const router = createRouter({
     { path: '/review/:orderId', component: () => import('../views/Review.vue'), meta: { auth: true } },
     { path: '/dynamic/publish', component: () => import('../views/DynamicPublish.vue'), meta: { auth: true } },
     { path: '/follows', component: () => import('../views/Follows.vue'), meta: { auth: true } },
+    { path: '/partner/apply', component: () => import('../views/PartnerApply.vue'), meta: { auth: true } },
+    { path: '/partner/console', component: () => import('../views/PartnerConsole.vue'), meta: { auth: true } },
   ],
 });
 

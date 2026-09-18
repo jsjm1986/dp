@@ -9,6 +9,17 @@ const store = useUserStore();
 const router = useRouter();
 const editing = ref(false);
 const nickname = ref('');
+const uploadingAvatar = ref(false);
+
+async function uploadAvatar(file: File) {
+  uploadingAvatar.value = true;
+  try {
+    const res = await api.upload(file);
+    store.user = await api.updateProfile({ avatar: res.url });
+  } finally {
+    uploadingAvatar.value = false;
+  }
+}
 
 onMounted(() => store.refresh().catch(() => {}));
 
@@ -37,7 +48,12 @@ async function logout() {
 <template>
   <div class="page mine">
     <div class="mine__hero">
-      <van-image round width="64" height="64" :src="store.user?.avatar || ''" class="mine__avatar" />
+      <van-uploader :after-read="(f: any) => uploadAvatar(f.file)" :disabled="uploadingAvatar">
+        <div class="mine__avatar-wrap">
+          <van-image round width="64" height="64" :src="store.user?.avatar || ''" class="mine__avatar" />
+          <span class="mine__avatar-edit"><van-icon name="photograph" size="12" color="#fff" /></span>
+        </div>
+      </van-uploader>
       <div class="mine__who" @click="openEdit">
         <div class="mine__name">{{ store.user?.nickname || '未登录' }}</div>
         <div class="mine__mobile">{{ store.user?.mobile }}</div>
@@ -61,6 +77,20 @@ async function logout() {
     </div>
 
     <div class="card mine__menu">
+      <van-cell
+        v-if="store.user?.partnerId"
+        title="玩伴工作台"
+        is-link
+        icon="shop-o"
+        @click="router.push('/partner/console')"
+      />
+      <van-cell
+        v-else
+        title="申请成为玩伴"
+        is-link
+        icon="vip-card-o"
+        @click="router.push('/partner/apply')"
+      />
       <van-cell title="我的关注" is-link icon="like-o" @click="router.push('/follows')" />
       <van-cell title="全部订单" is-link icon="orders-o" @click="router.push('/orders')" />
       <van-cell title="发动态" is-link icon="edit" @click="router.push('/dynamic/publish')" />
@@ -98,6 +128,21 @@ async function logout() {
 }
 .mine__who {
   flex: 1;
+}
+.mine__avatar-wrap {
+  position: relative;
+}
+.mine__avatar-edit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .mine__wallet {
   margin: -36px 12px 0;

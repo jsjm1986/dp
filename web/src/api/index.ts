@@ -110,6 +110,33 @@ export interface CommentRow {
   user: { nickname: string; avatar: string | null };
 }
 
+export interface PartnerApplyPayload {
+  city: string;
+  district?: string;
+  bio?: string;
+  tags?: string[];
+  photos?: string[];
+  services: Array<{ name: string; desc?: string; price: number; unit: string; miniNum: number }>;
+}
+
+export interface PartnerProfile extends PartnerApplyPayload {
+  id: string;
+  status: string;
+  rating: number;
+  serviceCount: number;
+  viewCount: number;
+}
+
+export interface PartnerStats {
+  pendingAccept: number;
+  todayOrders: number;
+  doneCount: number;
+  doneAmount: number;
+  followers: number;
+  rating: number;
+  status: string;
+}
+
 export interface UserProfile {
   id: string;
   mobile: string;
@@ -148,6 +175,17 @@ export const api = {
   cancelOrder: (id: string, reason?: string) => http.post<Order>(`/orders/${id}/cancel`, { reason }),
   urgeOrder: (id: string) => http.post(`/orders/${id}/urge`),
   reviewOrder: (id: string, rating: number, content?: string) => http.post(`/orders/${id}/review`, { rating, content }),
+
+  /* 玩伴端 */
+  partnerApply: (data: PartnerApplyPayload) => http.post<{ id: string }>('/partner/apply', data),
+  partnerProfile: () => http.get<PartnerProfile>('/partner/profile'),
+  updatePartnerProfile: (data: PartnerApplyPayload) => http.put<PartnerProfile>('/partner/profile', data),
+  setPartnerStatus: (status: 'available' | 'rest') => http.put<{ status: string }>('/partner/status', { status }),
+  partnerStats: () => http.get<PartnerStats>('/partner/stats'),
+  partnerOrders: (status?: string) =>
+    http.get<Array<Order & { customer: { nickname: string; avatar: string | null; mobile: string } }>>('/partner/orders', { params: { status } }),
+  partnerOrderAct: (id: string, action: 'accept' | 'reject' | 'start' | 'finish') =>
+    http.post<Order>(`/partner/orders/${id}/${action}`),
 
   dynamics: (page = 1) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page } }),
   createDynamic: (data: { content: string; images?: string[]; city?: string }) => http.post<{ id: string }>('/dynamics', data),

@@ -79,6 +79,80 @@ export class UsersController {
     return admin;
   }
 
+  /** 绑定推荐人（只能绑一次，不能绑自己） */
+  @Post('bind-inviter')
+  async bindInviter(@CurrentUser() userId: string, @Body() dto: { code: string }) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.inviterId) throw new BadRequestException('已绑定过推荐人');
+    const inviter = await this.prisma.user.findUnique({
+      where: { inviteCode: (dto.code ?? '').trim().toUpperCase() },
+    });
+    if (!inviter) throw new BadRequestException('邀请码不存在');
+    if (inviter.id === userId) throw new BadRequestException('不能绑定自己');
+    await this.prisma.user.update({ where: { id: userId }, data: { inviterId: inviter.id } });
+    return { bound: true, inviter: inviter.nickname };
+  }
+
+  /** 推广中心数据：我的邀请码 + 下线 + 佣金记录 */
+  @Get('referral')
+  async referral(@CurrentUser() userId: string) {
+    let user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.inviteCode) {
+      // 懒生成邀请码（6 位字母数字）
+      const code = 'DP' + Math.random().toString(36).slice(2, 8).toUpperCase();
+      try {
+        user = await this.prisma.user.update({ where: { id: userId }, data: { inviteCode: code } });
+      } catch {
+        user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+      }
+    }
+    const [invitees, commissions, rateSetting, inviter] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { inviterId: userId },
+        select: { id: true, nickname: true, avatar: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.commission.findMany({
+        where: { inviterId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.setting.findUnique({ where: { key: 'commissionRate' } }),
+      user.inviterId
+        ? this.prisma.user.findUnique({ where: { id: user.inviterId }, select: { nickname: true } })
+        : null,
+    ]);
+    // 佣金记录关联下线昵称与订单号
+    const inviteeIds = [...new Set(commissions.map((c) => c.inviteeId))];
+    const inviteeUsers = await this.prisma.user.findMany({
+      where: { id: { in: inviteeIds } },
+      select: { id: true, nickname: true },
+    });
+    const orders = await this.prisma.order.findMany({
+      where: { id: { in: commissions.map((c) => c.orderId) } },
+      select: { id: true, orderNo: true, totalAmount: true },
+    });
+    const nameOf = new Map(inviteeUsers.map((u) => [u.id, u.nickname]));
+    const orderOf = new Map(orders.map((o) => [o.id, o]));
+    return {
+      inviteCode: user.inviteCode,
+      inviterNickname: inviter?.nickname ?? null,
+      rate: Number(rateSetting?.value ?? 5) / 100,
+      inviteeCount: invitees.length,
+      totalCommission: commissions.reduce((s, c) => s + Number(c.amount), 0),
+      invitees: invitees.slice(0, 20),
+      commissions: commissions.map((c) => ({
+        id: c.id,
+        amount: Number(c.amount),
+        rate: c.rate,
+        createdAt: c.createdAt,
+        inviteeNickname: nameOf.get(c.inviteeId) ?? '用户',
+        orderNo: orderOf.get(c.orderId)?.orderNo ?? '',
+        orderAmount: Number(orderOf.get(c.orderId)?.totalAmount ?? 0),
+      })),
+    };
+  }
+
   /** 模拟充值 */
   @Post('recharge')
   async recharge(@CurrentUser() userId: string, @Body() dto: { amount: number }) {

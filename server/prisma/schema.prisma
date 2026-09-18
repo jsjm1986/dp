@@ -16,6 +16,9 @@ model User {
   city      String?
   balance   Decimal  @default(0)
   role      String   @default("user")
+  inviteCode String? @unique
+  inviterId  String?
+  disabled   Boolean @default(false)
   createdAt DateTime @default(now())
 
   partner   Partner?
@@ -28,6 +31,7 @@ model User {
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
   userCoupons UserCoupon[]
+  commissionsEarned Commission[] @relation("InviterCommissions")
 }
 
 model Partner {
@@ -265,4 +269,23 @@ model Block {
   createdAt DateTime @default(now())
 
   @@unique([userId, blockedId])
+}
+
+// ---------- 分销佣金 ----------
+model Commission {
+  id        String   @id @default(cuid())
+  inviterId String
+  inviteeId String
+  orderId   String   @unique
+  amount    Decimal
+  rate      Float
+  createdAt DateTime @default(now())
+
+  inviter User @relation("InviterCommissions", fields: [inviterId], references: [id])
+}
+
+// ---------- 平台配置 ----------
+model Setting {
+  key   String @id
+  value String
 }

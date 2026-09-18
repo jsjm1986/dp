@@ -24,7 +24,7 @@ export class AuthService {
     return { devCode: code };
   }
 
-  async login(mobile: string, code: string) {
+  async login(mobile: string, code: string, inviteCode?: string) {
     const record = await this.prisma.smsCode.findFirst({
       where: { mobile, code, used: false, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -34,10 +34,17 @@ export class AuthService {
 
     let user = await this.prisma.user.findUnique({ where: { mobile } });
     if (!user) {
+      // 新用户注册时可携带邀请码绑定推荐关系
+      let inviterId: string | undefined;
+      if (inviteCode) {
+        const inviter = await this.prisma.user.findUnique({ where: { inviteCode } });
+        if (inviter) inviterId = inviter.id;
+      }
       user = await this.prisma.user.create({
-        data: { mobile, nickname: `用户${mobile.slice(-4)}` },
+        data: { mobile, nickname: `用户${mobile.slice(-4)}`, inviterId },
       });
     }
+    if (user.disabled) throw new UnauthorizedException('账号已被禁用，请联系客服');
     return {
       token: await this.jwt.signAsync({ sub: user.id }),
       user: this.toProfile(user),

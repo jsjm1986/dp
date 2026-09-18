@@ -13,6 +13,6 @@ export class AuthController {
 
   @Post('login')
   login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.mobile, dto.code);
+    return this.auth.login(dto.mobile, dto.code, dto.inviteCode);
   }
 }

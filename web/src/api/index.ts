@@ -160,8 +160,8 @@ export interface UserProfile {
 /* ---------- api ---------- */
 export const api = {
   sendSms: (mobile: string) => http.post<{ devCode: string }>('/auth/sms/send', { mobile }),
-  login: (mobile: string, code: string) =>
-    http.post<{ token: string; user: UserProfile }>('/auth/login', { mobile, code }),
+  login: (mobile: string, code: string, inviteCode?: string) =>
+    http.post<{ token: string; user: UserProfile }>('/auth/login', { mobile, code, inviteCode }),
   profile: () => http.get<UserProfile>('/user/profile'),
   updateProfile: (data: Partial<UserProfile>) => http.put<UserProfile>('/user/profile', data),
   myFollows: () => http.get<PartnerCard[]>('/user/follows'),
@@ -241,7 +241,7 @@ export const api = {
   adminDashboard: () =>
     http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number }>('/admin/dashboard'),
   adminUsers: (page = 1, keyword?: string) =>
-    http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
+    http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; disabled: boolean; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
   adminPartners: (auditStatus = 'pending', page = 1) =>
     http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; rating: number; serviceCount: number; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
   adminApprove: (id: string) => http.post(`/admin/partners/${id}/approve`),
@@ -260,6 +260,30 @@ export const api = {
     http.get<Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string; handledAt: string | null; partner: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/admin/withdrawals', { params: { status } }),
   adminApproveWithdrawal: (id: string) => http.post(`/admin/withdrawals/${id}/approve`),
   adminRejectWithdrawal: (id: string, remark?: string) => http.post(`/admin/withdrawals/${id}/reject`, { remark }),
+  adminSettings: () =>
+    http.get<{ commissionRate: number; sensitiveWords: string[]; commissionTotal: number; commissionCount: number }>('/admin/settings'),
+  adminUpdateSettings: (data: { commissionRate?: number; sensitiveWords?: string[] }) =>
+    http.put<{ commissionRate: number; sensitiveWords: string[] }>('/admin/settings', data),
+  adminCommissions: (page = 1) =>
+    http.get<{ total: number; items: Array<{ id: string; inviter: string; inviterMobile: string; invitee: string; orderNo: string; amount: number; rate: number; createdAt: string }> }>('/admin/commissions', { params: { page } }),
+  adminCoupons: () =>
+    http.get<Array<{ id: string; title: string; amount: number; minSpend: number; total: number; claimed: number; expiresAt: string; createdAt: string }>>('/admin/coupons'),
+  adminCreateCoupon: (data: { title: string; amount: number; minSpend?: number; total: number; days: number }) =>
+    http.post('/admin/coupons', data),
+  adminDeleteCoupon: (id: string) => http.delete(`/admin/coupons/${id}`),
+  adminToggleUser: (id: string, disabled: boolean) => http.put(`/admin/users/${id}/disabled`, { disabled }),
+
+  bindInviter: (code: string) => http.post<{ bound: boolean; inviter: string }>('/user/bind-inviter', { code }),
+  referral: () =>
+    http.get<{
+      inviteCode: string;
+      inviterNickname: string | null;
+      rate: number;
+      inviteeCount: number;
+      totalCommission: number;
+      invitees: Array<{ id: string; nickname: string; avatar: string | null; createdAt: string }>;
+      commissions: Array<{ id: string; amount: number; rate: number; createdAt: string; inviteeNickname: string; orderNo: string; orderAmount: number }>;
+    }>('/user/referral'),
 
   upload: (file: File) => {
     const fd = new FormData();

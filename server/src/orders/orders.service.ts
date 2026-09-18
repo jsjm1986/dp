@@ -339,18 +339,47 @@ export class OrdersService {
       include: ORDER_INCLUDE,
     });
     if (action === 'finish') {
-      await this.prisma.partner.update({
-        where: { id: partner.id },
-        data: {
-          serviceCount: { increment: 1 },
-          balance: { increment: order.totalAmount },
-        },
-      });
+      await this.settleFinish(order);
     }
     return this.toDto(updated);
   }
 
   /* ---------------- internals ---------------- */
+
+  /** 完单结算：玩伴入账 + 服务数 + 分销佣金（订单用户有推荐人时） */
+  private async settleFinish(order: { id: string; userId: string; partnerId: string; totalAmount: unknown }) {
+    await this.prisma.partner.update({
+      where: { id: order.partnerId },
+      data: {
+        serviceCount: { increment: 1 },
+        balance: { increment: Number(order.totalAmount) },
+      },
+    });
+    // 分销：下线完成订单，推荐人按比例拿佣金入余额
+    const buyer = await this.prisma.user.findUnique({
+      where: { id: order.userId },
+      select: { inviterId: true },
+    });
+    if (!buyer?.inviterId) return;
+    const rateRow = await this.prisma.setting.findUnique({ where: { key: 'commissionRate' } });
+    const rate = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
+    if (rate <= 0) return;
+    const amount = Math.round(Number(order.totalAmount) * rate * 100) / 100;
+    if (amount <= 0) return;
+    try {
+      await this.prisma.$transaction([
+        this.prisma.commission.create({
+          data: { inviterId: buyer.inviterId, inviteeId: order.userId, orderId: order.id, amount, rate },
+        }),
+        this.prisma.user.update({
+          where: { id: buyer.inviterId },
+          data: { balance: { increment: amount } },
+        }),
+      ]);
+    } catch {
+      /* 佣金记录已存在（重复结算）则跳过 */
+    }
+  }
 
   private scheduleAutoFlow(orderId: string) {
     const steps: Array<{ delay: number; action: 'accept' | 'start' | 'finish' }> = [
@@ -383,13 +412,7 @@ export class OrdersService {
             },
           });
           if (step.action === 'finish') {
-            await this.prisma.partner.update({
-              where: { id: order.partnerId },
-              data: {
-                serviceCount: { increment: 1 },
-                balance: { increment: order.totalAmount },
-              },
-            });
+            await this.settleFinish(order);
           }
         } catch {
           /* demo flow best-effort */

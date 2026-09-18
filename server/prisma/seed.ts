@@ -79,7 +79,7 @@ async function main() {
     const photos = [0, 1, 2].map((k) => save(`photo-${i}-${k}.svg`, svgPhoto(`${p.city} · ${p.tags[0]}`, i, k)));
     const user = await prisma.user.create({
       data: {
-        mobile: `1380000${String(1000 + i).slice(1)}`,
+        mobile: `1380000${String(10000 + i).slice(1)}`,
         nickname: p.name,
         avatar,
         gender: p.gender,

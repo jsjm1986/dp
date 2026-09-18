@@ -67,7 +67,9 @@ export const ModelName = {
   Coupon: 'Coupon',
   UserCoupon: 'UserCoupon',
   Withdrawal: 'Withdrawal',
-  Block: 'Block'
+  Block: 'Block',
+  Commission: 'Commission',
+  Setting: 'Setting'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -92,6 +94,9 @@ export const UserScalarFieldEnum = {
   city: 'city',
   balance: 'balance',
   role: 'role',
+  inviteCode: 'inviteCode',
+  inviterId: 'inviterId',
+  disabled: 'disabled',
   createdAt: 'createdAt'
 } as const
 
@@ -324,6 +329,27 @@ export const BlockScalarFieldEnum = {
 } as const
 
 export type BlockScalarFieldEnum = (typeof BlockScalarFieldEnum)[keyof typeof BlockScalarFieldEnum]
+
+
+export const CommissionScalarFieldEnum = {
+  id: 'id',
+  inviterId: 'inviterId',
+  inviteeId: 'inviteeId',
+  orderId: 'orderId',
+  amount: 'amount',
+  rate: 'rate',
+  createdAt: 'createdAt'
+} as const
+
+export type CommissionScalarFieldEnum = (typeof CommissionScalarFieldEnum)[keyof typeof CommissionScalarFieldEnum]
+
+
+export const SettingScalarFieldEnum = {
+  key: 'key',
+  value: 'value'
+} as const
+
+export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
 export const SortOrder = {

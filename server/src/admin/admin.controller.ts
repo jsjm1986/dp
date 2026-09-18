@@ -10,8 +10,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { AdminGuard, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class BannerDto {
@@ -29,7 +30,31 @@ class BannerDto {
   sort?: number;
 }
 
-const userBrief = { id: true, mobile: true, nickname: true, avatar: true, city: true, role: true, createdAt: true } as const;
+class CouponDto {
+  @IsString()
+  @MaxLength(30)
+  title: string;
+
+  @IsNumber()
+  @Min(0.1)
+  amount: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minSpend?: number;
+
+  /** 限量张数，-1 不限量 */
+  @IsInt()
+  total: number;
+
+  /** 有效天数 */
+  @IsInt()
+  @Min(1)
+  days: number;
+}
+
+const userBrief = { id: true, mobile: true, nickname: true, avatar: true, city: true, role: true, disabled: true, createdAt: true } as const;
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -301,6 +326,128 @@ export class AdminController {
   @Delete('banners/:id')
   async deleteBanner(@Param('id') id: string) {
     await this.prisma.banner.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  /** ---------- 系统设置 ---------- */
+  @Get('settings')
+  async settings() {
+    const rows = await this.prisma.setting.findMany();
+    const map = new Map(rows.map((r) => [r.key, r.value]));
+    return {
+      commissionRate: Number(map.get('commissionRate') ?? 5),
+      sensitiveWords: getSensitiveWords(),
+      commissionTotal: Number(
+        (await this.prisma.commission.aggregate({ _sum: { amount: true } }))._sum.amount ?? 0,
+      ),
+      commissionCount: await this.prisma.commission.count(),
+    };
+  }
+
+  @Put('settings')
+  async updateSettings(
+    @Body() dto: { commissionRate?: number; sensitiveWords?: string[] | string },
+  ) {
+    if (dto.commissionRate !== undefined) {
+      const rate = Math.min(Math.max(Number(dto.commissionRate) || 0, 0), 50);
+      await this.prisma.setting.upsert({
+        where: { key: 'commissionRate' },
+        create: { key: 'commissionRate', value: String(rate) },
+        update: { value: String(rate) },
+      });
+    }
+    if (dto.sensitiveWords !== undefined) {
+      const list = Array.isArray(dto.sensitiveWords)
+        ? dto.sensitiveWords
+        : String(dto.sensitiveWords).split(/[,，\n]+/).map((w) => w.trim()).filter(Boolean);
+      await setSensitiveWords(this.prisma, list);
+    }
+    return this.settings();
+  }
+
+  /** 佣金明细（管理端可查全部） */
+  @Get('commissions')
+  async commissions(@Query('page') page = '1') {
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.commission.count(),
+      this.prisma.commission.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (Math.max(1, +page) - 1) * 20,
+        take: 20,
+        include: { inviter: { select: { nickname: true, mobile: true } } },
+      }),
+    ]);
+    const invitees = await this.prisma.user.findMany({
+      where: { id: { in: rows.map((r) => r.inviteeId) } },
+      select: { id: true, nickname: true },
+    });
+    const orders = await this.prisma.order.findMany({
+      where: { id: { in: rows.map((r) => r.orderId) } },
+      select: { id: true, orderNo: true },
+    });
+    const nameOf = new Map(invitees.map((u) => [u.id, u.nickname]));
+    const orderOf = new Map(orders.map((o) => [o.id, o.orderNo]));
+    return {
+      total,
+      items: rows.map((c) => ({
+        id: c.id,
+        inviter: c.inviter.nickname,
+        inviterMobile: c.inviter.mobile,
+        invitee: nameOf.get(c.inviteeId) ?? '-',
+        orderNo: orderOf.get(c.orderId) ?? '-',
+        amount: Number(c.amount),
+        rate: c.rate,
+        createdAt: c.createdAt,
+      })),
+    };
+  }
+
+  /** ---------- 优惠券模板管理 ---------- */
+  @Get('coupons')
+  async coupons() {
+    const rows = await this.prisma.coupon.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { userCoupons: true } } },
+    });
+    return rows.map((c) => ({
+      id: c.id,
+      title: c.title,
+      amount: Number(c.amount),
+      minSpend: Number(c.minSpend),
+      total: c.total,
+      claimed: c._count.userCoupons,
+      expiresAt: c.expiresAt,
+      createdAt: c.createdAt,
+    }));
+  }
+
+  @Post('coupons')
+  async createCoupon(@Body() dto: CouponDto) {
+    const expiresAt = new Date(Date.now() + dto.days * 86400_000);
+    return this.prisma.coupon.create({
+      data: {
+        title: dto.title,
+        amount: dto.amount,
+        minSpend: dto.minSpend ?? 0,
+        total: dto.total,
+        expiresAt,
+      },
+    });
+  }
+
+  @Delete('coupons/:id')
+  async deleteCoupon(@Param('id') id: string) {
+    await this.prisma.coupon.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  /** ---------- 用户禁用/启用 ---------- */
+  @Put('users/:id/disabled')
+  async toggleUserDisabled(@Param('id') id: string, @Body() body: { disabled: boolean }) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new BadRequestException('用户不存在');
+    if (user.role === 'admin') throw new BadRequestException('不能禁用管理员');
+    await this.prisma.user.update({ where: { id }, data: { disabled: !!body.disabled } });
     return { ok: true };
   }
 }

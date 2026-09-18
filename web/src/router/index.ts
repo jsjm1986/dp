@@ -24,6 +24,7 @@ const router = createRouter({
     { path: '/admin', component: () => import('../views/Admin.vue'), meta: { auth: true } },
     { path: '/coupons', component: () => import('../views/Coupons.vue'), meta: { auth: true } },
     { path: '/my-dynamics', component: () => import('../views/MyDynamics.vue'), meta: { auth: true } },
+    { path: '/referral', component: () => import('../views/Referral.vue'), meta: { auth: true } },
   ],
 });
 

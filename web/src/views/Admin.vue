@@ -10,16 +10,27 @@ type DynRow = Awaited<ReturnType<typeof api.adminDynamics>>['items'][number];
 type UserRow = Awaited<ReturnType<typeof api.adminUsers>>['items'][number];
 type BannerRow = { id: string; image: string; link: string | null; sort: number };
 type WithdrawalRow = Awaited<ReturnType<typeof api.adminWithdrawals>>[number];
+type Settings = Awaited<ReturnType<typeof api.adminSettings>>;
+type CommissionRow = Awaited<ReturnType<typeof api.adminCommissions>>['items'][number];
+type CouponRow = Awaited<ReturnType<typeof api.adminCoupons>>[number];
 
 const tab = ref('dash');
 const dash = ref<Dash | null>(null);
 const partners = ref<PartnerRow[]>([]);
 const partnerTab = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 const orders = ref<OrderRow[]>([]);
+const orderStatus = ref('');
 const dynamics = ref<DynRow[]>([]);
 const users = ref<UserRow[]>([]);
 const banners = ref<BannerRow[]>([]);
 const withdrawals = ref<WithdrawalRow[]>([]);
+const settings = ref<Settings | null>(null);
+const rateInput = ref(5);
+const wordsInput = ref('');
+const commissions = ref<CommissionRow[]>([]);
+const coupons = ref<CouponRow[]>([]);
+const couponEdit = ref({ show: false, title: '', amount: 5, minSpend: 0, total: -1, days: 30 });
+const saving = ref(false);
 const bannerEdit = ref<{ show: boolean; id?: string; image: string; link: string; sort: number }>({
   show: false, image: '', link: '', sort: 0,
 });
@@ -29,6 +40,10 @@ const statusMap: Record<string, string> = {
   pending_payment: '待支付', pending_accept: '待接单', pending_service: '待服务',
   serving: '服务中', done: '已完成', cancelled: '已取消', rejected: '已拒绝', refunding: '退款中', refunded: '已退款',
 };
+const orderStatusOptions = [
+  { text: '全部状态', value: '' },
+  ...Object.entries(statusMap).map(([value, text]) => ({ text, value })),
+];
 const auditMap: Record<string, { text: string; color: string }> = {
   pending: { text: '待审核', color: '#ff9f00' },
   approved: { text: '已通过', color: '#07c160' },
@@ -37,11 +52,75 @@ const auditMap: Record<string, { text: string; color: string }> = {
 
 async function loadDash() { dash.value = await api.adminDashboard(); }
 async function loadPartners() { partners.value = (await api.adminPartners(partnerTab.value)).items; }
-async function loadOrders() { orders.value = (await api.adminOrders()).items; }
+async function loadOrders() { orders.value = (await api.adminOrders(1, orderStatus.value || undefined)).items; }
 async function loadDynamics() { dynamics.value = (await api.adminDynamics()).items; }
 async function loadUsers() { users.value = (await api.adminUsers()).items; }
 async function loadBanners() { banners.value = await api.adminBanners(); }
 async function loadWithdrawals() { withdrawals.value = await api.adminWithdrawals('all'); }
+
+async function loadSettings() {
+  settings.value = await api.adminSettings();
+  rateInput.value = settings.value.commissionRate;
+  wordsInput.value = settings.value.sensitiveWords.join('，');
+  commissions.value = (await api.adminCommissions()).items;
+}
+
+async function saveSettings() {
+  saving.value = true;
+  try {
+    await api.adminUpdateSettings({ commissionRate: rateInput.value });
+    showToast('已保存');
+    loadSettings();
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function saveWords() {
+  saving.value = true;
+  try {
+    const words = wordsInput.value.split(/[,，\n]+/).map((w) => w.trim()).filter(Boolean);
+    await api.adminUpdateSettings({ sensitiveWords: words });
+    showToast('敏感词已更新');
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function loadCoupons() { coupons.value = await api.adminCoupons(); }
+
+async function createCoupon() {
+  if (!couponEdit.value.title.trim()) return showToast('请输入券名称');
+  await api.adminCreateCoupon({
+    title: couponEdit.value.title.trim(),
+    amount: couponEdit.value.amount,
+    minSpend: couponEdit.value.minSpend,
+    total: couponEdit.value.total,
+    days: couponEdit.value.days,
+  });
+  couponEdit.value.show = false;
+  couponEdit.value.title = '';
+  showToast('已创建');
+  loadCoupons();
+}
+
+async function removeCoupon(id: string) {
+  try {
+    await showConfirmDialog({ title: '删除优惠券', message: '已领取的券不受影响，确定删除模板？' });
+  } catch { return; }
+  await api.adminDeleteCoupon(id);
+  coupons.value = coupons.value.filter((c) => c.id !== id);
+}
+
+async function toggleUser(u: UserRow) {
+  const action = u.disabled ? '启用' : '禁用';
+  try {
+    await showConfirmDialog({ title: `${action}用户`, message: `确定${action}「${u.nickname}」吗？禁用后无法登录。` });
+  } catch { return; }
+  await api.adminToggleUser(u.id, !u.disabled);
+  u.disabled = !u.disabled;
+  showToast(`已${action}`);
+}
 
 async function handleWithdrawal(w: WithdrawalRow, ok: boolean) {
   if (!ok) {
@@ -117,6 +196,8 @@ function onTabChange(name: string | number) {
   if (name === 'users') loadUsers();
   if (name === 'banners') loadBanners();
   if (name === 'withdrawals') loadWithdrawals();
+  if (name === 'coupons') loadCoupons();
+  if (name === 'settings') loadSettings();
 }
 </script>
 
@@ -189,6 +270,9 @@ function onTabChange(name: string | number) {
 
       <!-- 订单 -->
       <van-tab title="订单" name="orders">
+        <van-dropdown-menu active-color="#ff5a5f">
+          <van-dropdown-item v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
+        </van-dropdown-menu>
         <div class="admin__list">
           <van-cell v-for="o in orders" :key="o.id" :title="`${o.customer} → ${o.partner}`" :label="`${o.orderNo} · ${fmt(o.createdAt)}`">
             <template #value>
@@ -210,9 +294,19 @@ function onTabChange(name: string | number) {
               <van-image round width="36" height="36" :src="u.avatar || ''" class="admin__user-avatar" />
             </template>
             <template #value>
-              <van-tag v-if="u.role === 'admin'" type="primary">管理员</van-tag>
-              <van-tag v-else-if="u.partnerId" type="success" plain>玩伴</van-tag>
-              <span v-else class="muted">用户</span>
+              <div class="admin__user-ops">
+                <van-tag v-if="u.disabled" type="danger">已禁用</van-tag>
+                <van-tag v-else-if="u.role === 'admin'" type="primary">管理员</van-tag>
+                <van-tag v-else-if="u.partnerId" type="success" plain>玩伴</van-tag>
+                <span v-else class="muted">用户</span>
+                <van-button
+                  v-if="u.role !== 'admin'" size="mini" round plain
+                  :type="u.disabled ? 'success' : 'danger'"
+                  @click="toggleUser(u)"
+                >
+                  {{ u.disabled ? '启用' : '禁用' }}
+                </van-button>
+              </div>
             </template>
           </van-cell>
         </div>
@@ -277,6 +371,68 @@ function onTabChange(name: string | number) {
           <van-button block round type="primary" plain class="admin__banner-add" @click="openBanner()">新增 Banner</van-button>
         </div>
       </van-tab>
+
+      <!-- 优惠券 -->
+      <van-tab title="优惠券" name="coupons">
+        <div class="admin__list">
+          <div v-for="c in coupons" :key="c.id" class="card admin__coupon">
+            <div class="admin__coupon-amount">¥{{ c.amount }}</div>
+            <div class="admin__coupon-info">
+              <div><b>{{ c.title }}</b></div>
+              <div class="muted">
+                {{ c.minSpend > 0 ? `满${c.minSpend}可用` : '无门槛' }} ·
+                {{ c.total < 0 ? '不限量' : `限${c.total}张` }} · 已领{{ c.claimed }} ·
+                {{ fmt(c.expiresAt) }}到期
+              </div>
+            </div>
+            <van-button size="mini" type="danger" plain @click="removeCoupon(c.id)">删除</van-button>
+          </div>
+          <van-empty v-if="!coupons.length" description="暂无券模板" image-size="70" />
+          <van-button block round type="primary" plain class="admin__banner-add" @click="couponEdit.show = true">新增优惠券</van-button>
+        </div>
+      </van-tab>
+
+      <!-- 设置 -->
+      <van-tab title="设置" name="settings">
+        <div v-if="settings" class="admin__list">
+          <div class="card admin__set">
+            <div class="admin__set-title">分销佣金比例</div>
+            <div class="muted">下线用户完成订单后，推荐人获得订单金额一定比例的佣金（0-50%）</div>
+            <div class="admin__set-row">
+              <van-stepper v-model="rateInput" min="0" max="50" step="1" theme="round" button-size="24" />
+              <span class="admin__set-unit">%</span>
+              <van-button size="small" type="primary" round :loading="saving" @click="saveSettings">保存</van-button>
+            </div>
+            <div class="muted admin__set-stat">
+              累计发放佣金 ¥{{ settings.commissionTotal.toFixed(2) }} · {{ settings.commissionCount }}笔
+            </div>
+          </div>
+
+          <div class="card admin__set">
+            <div class="admin__set-title">敏感词库</div>
+            <div class="muted">用于动态、评论、私信的违规内容拦截，逗号或换行分隔；清空则恢复默认词库</div>
+            <van-field
+              v-model="wordsInput" type="textarea" rows="4" autosize
+              placeholder="敏感词，用逗号分隔"
+              class="admin__set-words"
+            />
+            <van-button size="small" type="primary" round :loading="saving" @click="saveWords">保存词库</van-button>
+          </div>
+
+          <div class="card admin__set">
+            <div class="admin__set-title">佣金明细</div>
+            <div v-for="c in commissions" :key="c.id" class="admin__commission">
+              <div>
+                <b>{{ c.inviter }}</b><span class="muted">（{{ c.inviterMobile }}）</span>
+                ← {{ c.invitee }}
+              </div>
+              <div class="muted">订单 {{ c.orderNo }} · 比例 {{ (c.rate * 100).toFixed(0) }}% · {{ fmt(c.createdAt) }}</div>
+              <div class="admin__commission-amount">+¥{{ c.amount.toFixed(2) }}</div>
+            </div>
+            <van-empty v-if="!commissions.length" description="暂无佣金记录" image-size="70" />
+          </div>
+        </div>
+      </van-tab>
     </van-tabs>
 
     <van-dialog v-model:show="bannerEdit.show" title="Banner" show-cancel-button @confirm="saveBanner">
@@ -287,6 +443,16 @@ function onTabChange(name: string | number) {
         </van-uploader>
         <van-field v-model="bannerEdit.link" placeholder="跳转链接（可选）" />
         <van-field v-model.number="bannerEdit.sort" type="number" placeholder="排序（越小越前）" />
+      </div>
+    </van-dialog>
+
+    <van-dialog v-model:show="couponEdit.show" title="新增优惠券" show-cancel-button @confirm="createCoupon">
+      <div class="admin__banner-form">
+        <van-field v-model="couponEdit.title" placeholder="券名称，如：新人立减券" />
+        <van-field v-model.number="couponEdit.amount" type="number" placeholder="面额（元）" />
+        <van-field v-model.number="couponEdit.minSpend" type="number" placeholder="最低消费门槛，0为无门槛" />
+        <van-field v-model.number="couponEdit.total" type="number" placeholder="限量张数，-1为不限量" />
+        <van-field v-model.number="couponEdit.days" type="number" placeholder="有效天数" />
       </div>
     </van-dialog>
   </div>
@@ -339,4 +505,17 @@ function onTabChange(name: string | number) {
 .admin__wd-info { flex: 1; }
 .admin__wd-amount { font-size: 18px; font-weight: 800; color: #ff5a5f; }
 .admin__wd-ops { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.admin__user-ops { display: flex; align-items: center; gap: 8px; }
+.admin__coupon { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 10px; }
+.admin__coupon-amount { color: #ff5a5f; font-size: 24px; font-weight: 800; }
+.admin__coupon-info { flex: 1; font-size: 12px; }
+.admin__set { padding: 14px; margin-bottom: 12px; }
+.admin__set-title { font-weight: 700; margin-bottom: 4px; }
+.admin__set-row { display: flex; align-items: center; gap: 10px; margin: 12px 0 6px; }
+.admin__set-unit { font-size: 16px; font-weight: 700; }
+.admin__set-stat { font-size: 12px; }
+.admin__set-words { background: #f7f8fa; border-radius: 8px; margin: 10px 0; }
+.admin__commission { position: relative; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+.admin__commission:last-of-type { border-bottom: 0; }
+.admin__commission-amount { position: absolute; right: 0; top: 10px; color: #ff5a5f; font-weight: 800; }
 </style>

@@ -7,6 +7,7 @@ import { useUserStore } from '../stores/user';
 
 const mobile = ref('');
 const code = ref('');
+const inviteCode = ref((new URLSearchParams(location.search).get('invite') || '').toUpperCase());
 const agreed = ref(false);
 const sending = ref(false);
 const countdown = ref(0);
@@ -37,7 +38,7 @@ async function submit() {
   if (!code.value) return showToast('请输入验证码');
   loading.value = true;
   try {
-    const res = await api.login(mobile.value, code.value);
+    const res = await api.login(mobile.value, code.value, inviteCode.value.trim() || undefined);
     store.setAuth(res.token, res.user);
     showToast('登录成功');
     router.replace((route.query.redirect as string) || '/home');
@@ -74,6 +75,12 @@ async function submit() {
           </van-button>
         </template>
       </van-field>
+      <van-field
+        v-model="inviteCode"
+        maxlength="10"
+        placeholder="邀请码（选填，新用户可绑定推荐人）"
+        left-icon="gift-o"
+      />
       <van-button block round type="primary" size="large" :loading="loading" class="login__btn" @click="submit">
         登录 / 注册
       </van-button>

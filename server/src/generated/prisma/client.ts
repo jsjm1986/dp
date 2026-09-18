@@ -126,3 +126,13 @@ export type Withdrawal = Prisma.WithdrawalModel
  * 
  */
 export type Block = Prisma.BlockModel
+/**
+ * Model Commission
+ * 
+ */
+export type Commission = Prisma.CommissionModel
+/**
+ * Model Setting
+ * 
+ */
+export type Setting = Prisma.SettingModel

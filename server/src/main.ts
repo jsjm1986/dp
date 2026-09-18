@@ -4,6 +4,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import 'dotenv/config';
 import { join } from 'path';
 import { AppModule } from './app.module.js';
+import { initSensitive } from './common/sensitive.js';
+import { PrismaService } from './prisma/prisma.service.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -11,6 +13,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors();
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
+  await initSensitive(app.get(PrismaService));
   await app.listen(process.env.PORT ?? 3000);
 }
 await bootstrap();

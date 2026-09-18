@@ -43,6 +43,9 @@ export type UserMinAggregateOutputType = {
   city: string | null
   balance: runtime.Decimal | null
   role: string | null
+  inviteCode: string | null
+  inviterId: string | null
+  disabled: boolean | null
   createdAt: Date | null
 }
 
@@ -55,6 +58,9 @@ export type UserMaxAggregateOutputType = {
   city: string | null
   balance: runtime.Decimal | null
   role: string | null
+  inviteCode: string | null
+  inviterId: string | null
+  disabled: boolean | null
   createdAt: Date | null
 }
 
@@ -67,6 +73,9 @@ export type UserCountAggregateOutputType = {
   city: number
   balance: number
   role: number
+  inviteCode: number
+  inviterId: number
+  disabled: number
   createdAt: number
   _all: number
 }
@@ -89,6 +98,9 @@ export type UserMinAggregateInputType = {
   city?: true
   balance?: true
   role?: true
+  inviteCode?: true
+  inviterId?: true
+  disabled?: true
   createdAt?: true
 }
 
@@ -101,6 +113,9 @@ export type UserMaxAggregateInputType = {
   city?: true
   balance?: true
   role?: true
+  inviteCode?: true
+  inviterId?: true
+  disabled?: true
   createdAt?: true
 }
 
@@ -113,6 +128,9 @@ export type UserCountAggregateInputType = {
   city?: true
   balance?: true
   role?: true
+  inviteCode?: true
+  inviterId?: true
+  disabled?: true
   createdAt?: true
   _all?: true
 }
@@ -212,6 +230,9 @@ export type UserGroupByOutputType = {
   city: string | null
   balance: runtime.Decimal
   role: string
+  inviteCode: string | null
+  inviterId: string | null
+  disabled: boolean
   createdAt: Date
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
@@ -247,6 +268,9 @@ export type UserWhereInput = {
   city?: Prisma.StringNullableFilter<"User"> | string | null
   balance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFilter<"User"> | string
+  inviteCode?: Prisma.StringNullableFilter<"User"> | string | null
+  inviterId?: Prisma.StringNullableFilter<"User"> | string | null
+  disabled?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -258,6 +282,7 @@ export type UserWhereInput = {
   sentMessages?: Prisma.MessageListRelationFilter
   receivedMessages?: Prisma.MessageListRelationFilter
   userCoupons?: Prisma.UserCouponListRelationFilter
+  commissionsEarned?: Prisma.CommissionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -269,6 +294,9 @@ export type UserOrderByWithRelationInput = {
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  inviteCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  inviterId?: Prisma.SortOrderInput | Prisma.SortOrder
+  disabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   partner?: Prisma.PartnerOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
@@ -280,11 +308,13 @@ export type UserOrderByWithRelationInput = {
   sentMessages?: Prisma.MessageOrderByRelationAggregateInput
   receivedMessages?: Prisma.MessageOrderByRelationAggregateInput
   userCoupons?: Prisma.UserCouponOrderByRelationAggregateInput
+  commissionsEarned?: Prisma.CommissionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   mobile?: string
+  inviteCode?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -294,6 +324,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   city?: Prisma.StringNullableFilter<"User"> | string | null
   balance?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFilter<"User"> | string
+  inviterId?: Prisma.StringNullableFilter<"User"> | string | null
+  disabled?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -305,7 +337,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sentMessages?: Prisma.MessageListRelationFilter
   receivedMessages?: Prisma.MessageListRelationFilter
   userCoupons?: Prisma.UserCouponListRelationFilter
-}, "id" | "mobile">
+  commissionsEarned?: Prisma.CommissionListRelationFilter
+}, "id" | "mobile" | "inviteCode">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -316,6 +349,9 @@ export type UserOrderByWithAggregationInput = {
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  inviteCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  inviterId?: Prisma.SortOrderInput | Prisma.SortOrder
+  disabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
@@ -336,6 +372,9 @@ export type UserScalarWhereWithAggregatesInput = {
   city?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   balance?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringWithAggregatesFilter<"User"> | string
+  inviteCode?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  inviterId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  disabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
@@ -348,6 +387,9 @@ export type UserCreateInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -359,6 +401,7 @@ export type UserCreateInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -370,6 +413,9 @@ export type UserUncheckedCreateInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -381,6 +427,7 @@ export type UserUncheckedCreateInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserUpdateInput = {
@@ -392,6 +439,9 @@ export type UserUpdateInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -403,6 +453,7 @@ export type UserUpdateInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -414,6 +465,9 @@ export type UserUncheckedUpdateInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -425,6 +479,7 @@ export type UserUncheckedUpdateInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -436,6 +491,9 @@ export type UserCreateManyInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
 }
 
@@ -448,6 +506,9 @@ export type UserUpdateManyMutationInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -460,6 +521,9 @@ export type UserUncheckedUpdateManyInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -472,6 +536,9 @@ export type UserCountOrderByAggregateInput = {
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  inviteCode?: Prisma.SortOrder
+  inviterId?: Prisma.SortOrder
+  disabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -488,6 +555,9 @@ export type UserMaxOrderByAggregateInput = {
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  inviteCode?: Prisma.SortOrder
+  inviterId?: Prisma.SortOrder
+  disabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -500,6 +570,9 @@ export type UserMinOrderByAggregateInput = {
   city?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  inviteCode?: Prisma.SortOrder
+  inviterId?: Prisma.SortOrder
+  disabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -526,6 +599,10 @@ export type DecimalFieldUpdateOperationsInput = {
   decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
   multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -672,6 +749,20 @@ export type UserUpdateOneRequiredWithoutUserCouponsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserCouponsInput, Prisma.UserUpdateWithoutUserCouponsInput>, Prisma.UserUncheckedUpdateWithoutUserCouponsInput>
 }
 
+export type UserCreateNestedOneWithoutCommissionsEarnedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCommissionsEarnedInput, Prisma.UserUncheckedCreateWithoutCommissionsEarnedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCommissionsEarnedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCommissionsEarnedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCommissionsEarnedInput, Prisma.UserUncheckedCreateWithoutCommissionsEarnedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCommissionsEarnedInput
+  upsert?: Prisma.UserUpsertWithoutCommissionsEarnedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCommissionsEarnedInput, Prisma.UserUpdateWithoutCommissionsEarnedInput>, Prisma.UserUncheckedUpdateWithoutCommissionsEarnedInput>
+}
+
 export type UserCreateWithoutPartnerInput = {
   id?: string
   mobile: string
@@ -681,6 +772,9 @@ export type UserCreateWithoutPartnerInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
   dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
@@ -691,6 +785,7 @@ export type UserCreateWithoutPartnerInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutPartnerInput = {
@@ -702,6 +797,9 @@ export type UserUncheckedCreateWithoutPartnerInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
   dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
@@ -712,6 +810,7 @@ export type UserUncheckedCreateWithoutPartnerInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutPartnerInput = {
@@ -739,6 +838,9 @@ export type UserUpdateWithoutPartnerInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
   dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
@@ -749,6 +851,7 @@ export type UserUpdateWithoutPartnerInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPartnerInput = {
@@ -760,6 +863,9 @@ export type UserUncheckedUpdateWithoutPartnerInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
   dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
@@ -770,6 +876,7 @@ export type UserUncheckedUpdateWithoutPartnerInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -781,6 +888,9 @@ export type UserCreateWithoutOrdersInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
@@ -791,6 +901,7 @@ export type UserCreateWithoutOrdersInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -802,6 +913,9 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
@@ -812,6 +926,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -839,6 +954,9 @@ export type UserUpdateWithoutOrdersInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
@@ -849,6 +967,7 @@ export type UserUpdateWithoutOrdersInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -860,6 +979,9 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
@@ -870,6 +992,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -881,6 +1004,9 @@ export type UserCreateWithoutReviewsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -891,6 +1017,7 @@ export type UserCreateWithoutReviewsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -902,6 +1029,9 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -912,6 +1042,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -939,6 +1070,9 @@ export type UserUpdateWithoutReviewsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -949,6 +1083,7 @@ export type UserUpdateWithoutReviewsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -960,6 +1095,9 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -970,6 +1108,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutDynamicsInput = {
@@ -981,6 +1120,9 @@ export type UserCreateWithoutDynamicsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -991,6 +1133,7 @@ export type UserCreateWithoutDynamicsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutDynamicsInput = {
@@ -1002,6 +1145,9 @@ export type UserUncheckedCreateWithoutDynamicsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1012,6 +1158,7 @@ export type UserUncheckedCreateWithoutDynamicsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutDynamicsInput = {
@@ -1039,6 +1186,9 @@ export type UserUpdateWithoutDynamicsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1049,6 +1199,7 @@ export type UserUpdateWithoutDynamicsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDynamicsInput = {
@@ -1060,6 +1211,9 @@ export type UserUncheckedUpdateWithoutDynamicsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1070,6 +1224,7 @@ export type UserUncheckedUpdateWithoutDynamicsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutLikesInput = {
@@ -1081,6 +1236,9 @@ export type UserCreateWithoutLikesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1091,6 +1249,7 @@ export type UserCreateWithoutLikesInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutLikesInput = {
@@ -1102,6 +1261,9 @@ export type UserUncheckedCreateWithoutLikesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1112,6 +1274,7 @@ export type UserUncheckedCreateWithoutLikesInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutLikesInput = {
@@ -1139,6 +1302,9 @@ export type UserUpdateWithoutLikesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1149,6 +1315,7 @@ export type UserUpdateWithoutLikesInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLikesInput = {
@@ -1160,6 +1327,9 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1170,6 +1340,7 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -1181,6 +1352,9 @@ export type UserCreateWithoutCommentsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1191,6 +1365,7 @@ export type UserCreateWithoutCommentsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -1202,6 +1377,9 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1212,6 +1390,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -1239,6 +1418,9 @@ export type UserUpdateWithoutCommentsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1249,6 +1431,7 @@ export type UserUpdateWithoutCommentsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -1260,6 +1443,9 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1270,6 +1456,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutFollowsInput = {
@@ -1281,6 +1468,9 @@ export type UserCreateWithoutFollowsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1291,6 +1481,7 @@ export type UserCreateWithoutFollowsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutFollowsInput = {
@@ -1302,6 +1493,9 @@ export type UserUncheckedCreateWithoutFollowsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1312,6 +1506,7 @@ export type UserUncheckedCreateWithoutFollowsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutFollowsInput = {
@@ -1339,6 +1534,9 @@ export type UserUpdateWithoutFollowsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1349,6 +1547,7 @@ export type UserUpdateWithoutFollowsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowsInput = {
@@ -1360,6 +1559,9 @@ export type UserUncheckedUpdateWithoutFollowsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1370,6 +1572,7 @@ export type UserUncheckedUpdateWithoutFollowsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutSentMessagesInput = {
@@ -1381,6 +1584,9 @@ export type UserCreateWithoutSentMessagesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1391,6 +1597,7 @@ export type UserCreateWithoutSentMessagesInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -1402,6 +1609,9 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1412,6 +1622,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -1428,6 +1639,9 @@ export type UserCreateWithoutReceivedMessagesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1438,6 +1652,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutReceivedMessagesInput = {
@@ -1449,6 +1664,9 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1459,6 +1677,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutReceivedMessagesInput = {
@@ -1486,6 +1705,9 @@ export type UserUpdateWithoutSentMessagesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1496,6 +1718,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -1507,6 +1730,9 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1517,6 +1743,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUpsertWithoutReceivedMessagesInput = {
@@ -1539,6 +1766,9 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1549,6 +1779,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
@@ -1560,6 +1791,9 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1570,6 +1804,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutUserCouponsInput = {
@@ -1581,6 +1816,9 @@ export type UserCreateWithoutUserCouponsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
@@ -1591,6 +1829,7 @@ export type UserCreateWithoutUserCouponsInput = {
   comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutUserCouponsInput = {
@@ -1602,6 +1841,9 @@ export type UserUncheckedCreateWithoutUserCouponsInput = {
   city?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
   createdAt?: Date | string
   partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
@@ -1612,6 +1854,7 @@ export type UserUncheckedCreateWithoutUserCouponsInput = {
   comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutUserCouponsInput = {
@@ -1639,6 +1882,9 @@ export type UserUpdateWithoutUserCouponsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
@@ -1649,6 +1895,7 @@ export type UserUpdateWithoutUserCouponsInput = {
   comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserCouponsInput = {
@@ -1660,6 +1907,9 @@ export type UserUncheckedUpdateWithoutUserCouponsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
@@ -1670,6 +1920,123 @@ export type UserUncheckedUpdateWithoutUserCouponsInput = {
   comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+}
+
+export type UserCreateWithoutCommissionsEarnedInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
+  createdAt?: Date | string
+  partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCommissionsEarnedInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
+  createdAt?: Date | string
+  partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowUncheckedCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCommissionsEarnedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCommissionsEarnedInput, Prisma.UserUncheckedCreateWithoutCommissionsEarnedInput>
+}
+
+export type UserUpsertWithoutCommissionsEarnedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCommissionsEarnedInput, Prisma.UserUncheckedUpdateWithoutCommissionsEarnedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCommissionsEarnedInput, Prisma.UserUncheckedCreateWithoutCommissionsEarnedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCommissionsEarnedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCommissionsEarnedInput, Prisma.UserUncheckedUpdateWithoutCommissionsEarnedInput>
+}
+
+export type UserUpdateWithoutCommissionsEarnedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCommissionsEarnedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUncheckedUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -1687,6 +2054,7 @@ export type UserCountOutputType = {
   sentMessages: number
   receivedMessages: number
   userCoupons: number
+  commissionsEarned: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1699,6 +2067,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sentMessages?: boolean | UserCountOutputTypeCountSentMessagesArgs
   receivedMessages?: boolean | UserCountOutputTypeCountReceivedMessagesArgs
   userCoupons?: boolean | UserCountOutputTypeCountUserCouponsArgs
+  commissionsEarned?: boolean | UserCountOutputTypeCountCommissionsEarnedArgs
 }
 
 /**
@@ -1774,6 +2143,13 @@ export type UserCountOutputTypeCountUserCouponsArgs<ExtArgs extends runtime.Type
   where?: Prisma.UserCouponWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCommissionsEarnedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommissionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1784,6 +2160,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   city?: boolean
   balance?: boolean
   role?: boolean
+  inviteCode?: boolean
+  inviterId?: boolean
+  disabled?: boolean
   createdAt?: boolean
   partner?: boolean | Prisma.User$partnerArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
@@ -1795,6 +2174,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sentMessages?: boolean | Prisma.User$sentMessagesArgs<ExtArgs>
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
+  commissionsEarned?: boolean | Prisma.User$commissionsEarnedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1807,6 +2187,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   city?: boolean
   balance?: boolean
   role?: boolean
+  inviteCode?: boolean
+  inviterId?: boolean
+  disabled?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -1819,6 +2202,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   city?: boolean
   balance?: boolean
   role?: boolean
+  inviteCode?: boolean
+  inviterId?: boolean
+  disabled?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
 
@@ -1831,10 +2217,13 @@ export type UserSelectScalar = {
   city?: boolean
   balance?: boolean
   role?: boolean
+  inviteCode?: boolean
+  inviterId?: boolean
+  disabled?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mobile" | "nickname" | "avatar" | "gender" | "city" | "balance" | "role" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "mobile" | "nickname" | "avatar" | "gender" | "city" | "balance" | "role" | "inviteCode" | "inviterId" | "disabled" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   partner?: boolean | Prisma.User$partnerArgs<ExtArgs>
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
@@ -1846,6 +2235,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sentMessages?: boolean | Prisma.User$sentMessagesArgs<ExtArgs>
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
+  commissionsEarned?: boolean | Prisma.User$commissionsEarnedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1864,6 +2254,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sentMessages: Prisma.$MessagePayload<ExtArgs>[]
     receivedMessages: Prisma.$MessagePayload<ExtArgs>[]
     userCoupons: Prisma.$UserCouponPayload<ExtArgs>[]
+    commissionsEarned: Prisma.$CommissionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1874,6 +2265,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     city: string | null
     balance: runtime.Decimal
     role: string
+    inviteCode: string | null
+    inviterId: string | null
+    disabled: boolean
     createdAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
@@ -2279,6 +2673,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sentMessages<T extends Prisma.User$sentMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   receivedMessages<T extends Prisma.User$receivedMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userCoupons<T extends Prisma.User$userCouponsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userCouponsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  commissionsEarned<T extends Prisma.User$commissionsEarnedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commissionsEarnedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2316,6 +2711,9 @@ export interface UserFieldRefs {
   readonly city: Prisma.FieldRef<"User", 'String'>
   readonly balance: Prisma.FieldRef<"User", 'Decimal'>
   readonly role: Prisma.FieldRef<"User", 'String'>
+  readonly inviteCode: Prisma.FieldRef<"User", 'String'>
+  readonly inviterId: Prisma.FieldRef<"User", 'String'>
+  readonly disabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
@@ -2940,6 +3338,30 @@ export type User$userCouponsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.UserCouponScalarFieldEnum | Prisma.UserCouponScalarFieldEnum[]
+}
+
+/**
+ * User.commissionsEarned
+ */
+export type User$commissionsEarnedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Commission
+   */
+  select?: Prisma.CommissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Commission
+   */
+  omit?: Prisma.CommissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommissionInclude<ExtArgs> | null
+  where?: Prisma.CommissionWhereInput
+  orderBy?: Prisma.CommissionOrderByWithRelationInput | Prisma.CommissionOrderByWithRelationInput[]
+  cursor?: Prisma.CommissionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommissionScalarFieldEnum | Prisma.CommissionScalarFieldEnum[]
 }
 
 /**

@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""全量冒烟测试：城市玩伴平台 API 回归。
+
+用法: python3 scripts/smoke.py [base_url]
+默认打 http://localhost:3000/api，需要后端已启动且 seed 已跑。
+每次运行使用全新手机号，不受历史数据影响。
+"""
+import json
+import sys
+import time
+import urllib.request
+import urllib.error
+import urllib.parse
+
+BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:3000/api"
+RUN = str(int(time.time()))[-6:]  # 本次运行唯一后缀
+MOBILE = lambda tag: f"199{RUN}{tag}"  # 199 + 6位 + 2位tag = 11位
+
+PASS, FAIL = [], []
+
+
+def check(name, ok, detail=""):
+    (PASS if ok else FAIL).append(f"{name} {detail}")
+    print(("✓" if ok else "✗"), name, detail)
+
+
+def call(method, path, token=None, body=None, expect=None):
+    req = urllib.request.Request(BASE + path, method=method)
+    req.add_header("content-type", "application/json")
+    if token:
+        req.add_header("authorization", "Bearer " + token)
+    data = json.dumps(body).encode() if body is not None else None
+    try:
+        with urllib.request.urlopen(req, data) as r:
+            res = json.loads(r.read())
+            code = r.status
+    except urllib.error.HTTPError as e:
+        res = json.loads(e.read() or b"{}")
+        code = e.code
+    if expect is not None and code != expect:
+        raise AssertionError(f"{method} {path} -> {code} (want {expect}): {res}")
+    return code, res
+
+
+def login(mobile, invite=None):
+    _, r = call("POST", "/auth/sms/send", body={"mobile": mobile}, expect=201)
+    body = {"mobile": mobile, "code": r["devCode"]}
+    if invite:
+        body["inviteCode"] = invite
+    _, res = call("POST", "/auth/login", body=body, expect=201)
+    return res["token"]
+
+
+def main():
+    print(f"=== smoke @ {BASE} run={RUN} ===")
+
+    # ---------- 公开接口 ----------
+    code, home = call("GET", "/home", expect=200)
+    check("home", code == 200 and "recommend" in home and "banners" in home)
+    code, plist = call("GET", "/partners?sort=rating&page=1", expect=200)
+    check("partners.list", plist["total"] > 0)
+    code, _ = call("GET", "/partners?keyword=" + urllib.parse.quote("不存在xyz"), expect=200)
+    check("partners.search", code == 200)
+    pid = plist["items"][0]["id"]
+    code, pd = call("GET", f"/partners/{pid}", expect=200)
+    check("partners.detail", code == 200 and "services" in pd and "userId" in pd)
+    code, _ = call("GET", "/dynamics?page=1", expect=200)
+    check("dynamics.feed", code == 200)
+    code, _ = call("GET", "/admin/dashboard", expect=401)
+    check("admin.no-auth 401", code == 401)
+
+    # ---------- 用户注册/资料 ----------
+    admin_tok = login("13800138000")
+    ua_tok = login(MOBILE("01"))
+    ub_tok = login(MOBILE("02"))
+    code, prof = call("GET", "/user/profile", ua_tok, expect=200)
+    check("user.profile", code == 200)
+    code, prof = call("PUT", "/user/profile", ua_tok, {"nickname": f"冒烟{RUN}"}, expect=200)
+    check("user.update", prof["nickname"] == f"冒烟{RUN}")
+    code, _ = call("GET", "/user/service", ua_tok, expect=200)
+    check("user.service", code == 200)
+    code, _ = call("POST", "/user/recharge", ua_tok, {"amount": 1000}, expect=201)
+    check("user.recharge", code == 201)
+    code, _ = call("GET", "/user/follows", ua_tok, expect=200)
+    check("user.follows", code == 200)
+    code, _ = call("GET", "/user/blocks", ua_tok, expect=200)
+    check("user.blocks", code == 200)
+
+    # ---------- 分销 ----------
+    code, ref = call("GET", "/user/referral", ua_tok, expect=200)
+    check("referral.code", bool(ref["inviteCode"]))
+    _, r = call("POST", "/user/bind-inviter", ua_tok, {"code": ref["inviteCode"]}, expect=400)
+    check("referral.self-bind 400", True)
+    uc_tok = login(MOBILE("03"), invite=ref["inviteCode"])
+    code, refc = call("GET", "/user/referral", uc_tok, expect=200)
+    check("referral.bind-on-register", refc["inviterNickname"] is not None)
+
+    # ---------- 关注/拉黑 ----------
+    code, _ = call("POST", f"/partners/{pid}/follow", ua_tok, expect=201)
+    check("follow", code == 201)
+    code, det = call("GET", f"/partners/{pid}", ua_tok, expect=200)
+    check("follow.state", det["followed"] is True)
+    peer_uid = pd["userId"]
+    code, _ = call("POST", f"/user/block/{peer_uid}", ub_tok, expect=201)
+    code, r = call("POST", "/chat/send", ub_tok, {"peerId": peer_uid, "content": "hi"}, expect=400)
+    check("block.msg-rejected", code == 400)
+    call("DELETE", f"/user/block/{peer_uid}", ub_tok, expect=200)
+
+    # ---------- 聊天 ----------
+    code, _ = call("POST", "/chat/send", ub_tok, {"peerId": peer_uid, "content": "冒烟测试消息"}, expect=201)
+    check("chat.send", code == 201)
+    code, convs = call("GET", "/chat/conversations", ub_tok, expect=200)
+    check("chat.conversations", len(convs) > 0 and "peer" in convs[0])
+    code, un = call("GET", "/chat/unread", ua_tok, expect=200)
+    check("chat.unread", code == 200)
+    ub_id = call("GET", "/user/profile", ub_tok, expect=200)[1]["id"]
+    code, hist = call("GET", f"/chat/messages?peerId={ub_id}", login_from_partner_user(pd) or admin_tok, expect=200)
+    check("chat.history", code == 200 and "items" in hist)
+    code, r = call("POST", "/chat/send", ub_tok, {"peerId": ub_id, "content": "自聊"}, expect=400)
+    check("chat.self-chat 400", code == 400)
+
+    # ---------- 玩伴入驻/工作台 ----------
+    pw_tok = login(MOBILE("04"))
+    code, app = call("POST", "/partner/apply", pw_tok, {
+        "city": "上海", "district": "徐汇区", "age": 25, "bio": "冒烟测试玩伴",
+        "tags": ["陪逛", "拍照"], "photos": [],
+        "services": [{"name": "陪逛", "price": 100, "unit": "小时", "miniNum": 1}],
+    })
+    check("partner.apply", code in (200, 201))
+    code, pprof = call("GET", "/partner/profile", pw_tok, expect=200)
+    check("partner.profile", pprof["auditStatus"] in ("pending", "approved"))
+    # 管理员通过审核
+    pending = call("GET", "/admin/partners?auditStatus=pending", admin_tok)[1]["items"]
+    my_app = next((p for p in pending if p["mobile"] == MOBILE("04")), None)
+    if my_app:
+        call("POST", f"/admin/partners/{my_app['id']}/approve", admin_tok, expect=201)
+        check("admin.partner-approve", True)
+        pid2 = my_app["id"]
+    else:
+        check("admin.partner-approve", False, "no pending found")
+        pid2 = pid
+    code, _ = call("PUT", "/partner/status", pw_tok, {"status": "rest"}, expect=200)
+    check("partner.status", code == 200)
+    call("PUT", "/partner/status", pw_tok, {"status": "available"}, expect=200)
+    code, _ = call("GET", "/partner/orders?status=pending_accept", pw_tok, expect=200)
+    check("partner.orders", code == 200)
+    code, _ = call("GET", "/partner/wallet", pw_tok, expect=200)
+    check("partner.wallet", code == 200)
+    code, _ = call("GET", "/partner/reviews", pw_tok, expect=200)
+    check("partner.reviews", code == 200)
+
+    # ---------- 券 ----------
+    code, claimable = call("GET", "/coupons/claimable", ua_tok, expect=200)
+    check("coupons.claimable", code == 200)
+    c0 = next((c for c in claimable if not c["claimed"] and (c["left"] == -1 or c["left"] > 0)), None)
+    if c0:
+        code, _ = call("POST", f"/coupons/{c0['id']}/claim", ua_tok, expect=201)
+        check("coupons.claim", code == 201)
+    code, mine = call("GET", "/coupons/mine", ua_tok, expect=200)
+    check("coupons.mine", len(mine) > 0)
+
+    # ---------- 下单→支付→玩伴履约→评价 ----------
+    _, pd2 = call("GET", f"/partners/{pid2}", ua_tok, expect=200)
+    svc2 = pd2["services"][0]
+    code, order = call("POST", "/orders", ua_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+        "appointAt": "2030-01-01T10:00:00.000Z",
+        "address": "冒烟地址", "remark": "smoke",
+    }, expect=201)
+    check("order.create", code == 201)
+    oid = order["id"]
+    code, _ = call("POST", f"/orders/{oid}/pay", ua_tok, {"method": "balance"}, expect=201)
+    check("order.pay-balance", code == 201)
+    code, r = call("POST", f"/orders/{oid}/urge", ua_tok)
+    check("order.urge", code in (200, 201, 400), f"({code} 冷却限制属正常)")
+    for act in ["accept", "start", "finish"]:
+        code, _ = call("POST", f"/partner/orders/{oid}/{act}", pw_tok, expect=201)
+    code, od = call("GET", f"/orders/{oid}", ua_tok, expect=200)
+    check("order.lifecycle-done", od["status"] == "done", od["status"])
+    code, _ = call("POST", f"/orders/{oid}/review", ua_tok, {"rating": 5, "content": "冒烟好评"}, expect=201)
+    check("order.review", code == 201)
+
+    # ---------- 佣金结算（uc 是 ua 的下线，需 uc 下单）----------
+    call("POST", "/user/recharge", uc_tok, {"amount": 500})
+    code, o2 = call("POST", "/orders", uc_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+        "appointAt": "2030-01-02T10:00:00.000Z",
+    }, expect=201)
+    oid2 = o2["id"]
+    call("POST", f"/orders/{oid2}/pay", uc_tok, {"method": "balance"}, expect=201)
+    for act in ["accept", "start", "finish"]:
+        call("POST", f"/partner/orders/{oid2}/{act}", pw_tok, expect=201)
+    code, ref2 = call("GET", "/user/referral", ua_tok, expect=200)
+    check("commission.settled", ref2["totalCommission"] > 0, f"¥{ref2['totalCommission']}")
+
+    # ---------- 玩伴提现 ----------
+    code, w = call("POST", "/partner/withdraw", pw_tok, {"amount": 10}, expect=201)
+    check("partner.withdraw", code == 201)
+    wds = call("GET", "/admin/withdrawals?status=pending", admin_tok)[1]
+    mine_wd = next((x for x in wds if x["id"] == w["id"]), None)
+    if mine_wd:
+        call("POST", f"/admin/withdrawals/{w['id']}/approve", admin_tok, expect=201)
+    check("admin.withdrawal-approve", mine_wd is not None)
+
+    # ---------- 动态 ----------
+    code, d = call("POST", "/dynamics", ua_tok, {"content": f"冒烟动态{RUN}", "city": "上海"}, expect=201)
+    check("dynamic.create", code == 201)
+    did = d["id"]
+    code, _ = call("POST", f"/dynamics/{did}/like", ub_tok, expect=201)
+    check("dynamic.like", code == 201)
+    code, _ = call("POST", f"/dynamics/{did}/comments", ub_tok, {"content": "冒烟评论"}, expect=201)
+    check("dynamic.comment", code == 201)
+    code, _ = call("GET", f"/dynamics/{did}/comments", ua_tok, expect=200)
+    check("dynamic.comments", code == 200)
+    code, fd = call("GET", "/dynamics?tab=follow", ua_tok, expect=200)
+    check("dynamic.follow-tab", code == 200)
+    code, mine_d = call("GET", "/dynamics/mine", ua_tok, expect=200)
+    check("dynamic.mine", any(x["id"] == did for x in mine_d))
+    code, _ = call("DELETE", f"/dynamics/{did}", ua_tok, expect=200)
+    check("dynamic.delete", code == 200)
+    code, r = call("POST", "/dynamics", ua_tok, {"content": "测试诈骗内容"}, expect=400)
+    check("dynamic.sensitive-400", code == 400)
+
+    # ---------- 管理端全接口 ----------
+    code, dash = call("GET", "/admin/dashboard", admin_tok, expect=200)
+    check("admin.dashboard", all(k in dash for k in ["userCount", "gmv", "pendingWithdrawals", "commissionTotal"]))
+    code, _ = call("GET", "/admin/users?keyword=199", admin_tok, expect=200)
+    check("admin.users-search", code == 200)
+    code, ud = call("GET", f"/admin/users/{prof['id']}", admin_tok, expect=200)
+    check("admin.user-detail", "recentOrders" in ud)
+    code, _ = call("POST", f"/admin/users/{prof['id']}/balance", admin_tok, {"amount": 1}, expect=201)
+    check("admin.balance-adjust", code == 201)
+    code, _ = call("GET", "/admin/orders?status=done", admin_tok, expect=200)
+    check("admin.orders-filter", code == 200)
+    code, _ = call("GET", "/admin/orders?keyword=DP", admin_tok, expect=200)
+    check("admin.orders-search", code == 200)
+    code, _ = call("GET", "/admin/reviews", admin_tok, expect=200)
+    check("admin.reviews", code == 200)
+    code, _ = call("GET", "/admin/dynamics", admin_tok, expect=200)
+    check("admin.dynamics", code == 200)
+    code, _ = call("GET", "/admin/banners", admin_tok, expect=200)
+    check("admin.banners", code == 200)
+    code, _ = call("GET", "/admin/coupons", admin_tok, expect=200)
+    check("admin.coupons", code == 200)
+    code, _ = call("GET", "/admin/commissions", admin_tok, expect=200)
+    check("admin.commissions", code == 200)
+    code, st = call("GET", "/admin/settings", admin_tok, expect=200)
+    check("admin.settings", "commissionRate" in st and "sensitiveWords" in st)
+    code, _ = call("PUT", "/admin/partners/" + pid2 + "/recommend", admin_tok, {"recommended": True}, expect=200)
+    check("admin.recommend", code == 200)
+    code, _ = call("PUT", f"/admin/users/{prof['id']}/disabled", admin_tok, {"disabled": True}, expect=200)
+    _, sms = call("POST", "/auth/sms/send", body={"mobile": prof["mobile"]}, expect=201)
+    code, r = call("POST", "/auth/login", body={"mobile": prof["mobile"], "code": sms["devCode"]}, expect=401)
+    check("admin.disabled-login 401", "禁用" in r.get("message", ""))
+    call("PUT", f"/admin/users/{prof['id']}/disabled", admin_tok, {"disabled": False}, expect=200)
+    # 非管理员访问
+    code, _ = call("GET", "/admin/dashboard", ua_tok, expect=403)
+    check("admin.non-admin 403", code == 403)
+
+    print(f"\n=== {len(PASS)} passed, {len(FAIL)} failed ===")
+    for f in FAIL:
+        print("FAIL:", f)
+    sys.exit(1 if FAIL else 0)
+
+
+def login_from_partner_user(pd):
+    """登录玩伴对应用户（mobile 未知时跳过）。"""
+    try:
+        partners_admin = None
+        # 通过管理端找该玩伴 user 的 mobile
+        _, res = call("POST", "/auth/sms/send", body={"mobile": "13800138000"}, expect=201)
+        _, res = call("POST", "/auth/login", body={"mobile": "13800138000", "code": res["devCode"]}, expect=201)
+        admin = res["token"]
+        _, rows = call("GET", "/admin/partners?auditStatus=all", admin, expect=200)
+        m = next((p["mobile"] for p in rows["items"] if p["id"] == pd["id"]), None)
+        if m:
+            return login(m)
+    except Exception:
+        pass
+    return None
+
+
+if __name__ == "__main__":
+    main()

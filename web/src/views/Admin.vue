@@ -27,6 +27,12 @@ const userKeyword = ref('');
 const banners = ref<BannerRow[]>([]);
 const withdrawals = ref<WithdrawalRow[]>([]);
 const reviews = ref<Awaited<ReturnType<typeof api.adminReviews>>['items']>([]);
+const cards = ref<Awaited<ReturnType<typeof api.adminRechargeCards>>['items']>([]);
+const cardUnused = ref(0);
+const cardStatus = ref('unused');
+const genForm = ref({ amount: 100, count: 10 });
+const genCodes = ref<string[]>([]);
+const generating = ref(false);
 const balanceEdit = ref<{ show: boolean; id: string; nickname: string; amount: number | undefined; remark: string }>({
   show: false, id: '', nickname: '', amount: undefined, remark: '',
 });
@@ -148,6 +154,44 @@ async function saveWords() {
 
 async function loadCoupons() { coupons.value = await api.adminCoupons(); }
 
+async function loadCards() {
+  const r = await api.adminRechargeCards(cardStatus.value === 'all' ? undefined : cardStatus.value);
+  cards.value = r.items;
+  cardUnused.value = r.unusedCount;
+}
+
+async function genCards() {
+  if (!genForm.value.amount || genForm.value.amount <= 0) return showToast('请输入面额');
+  if (!genForm.value.count || genForm.value.count < 1) return showToast('请输入数量');
+  generating.value = true;
+  try {
+    const r = await api.adminGenCards(genForm.value.amount, genForm.value.count);
+    genCodes.value = r.codes;
+    showToast(`已生成 ${r.count} 张`);
+    loadCards();
+  } finally {
+    generating.value = false;
+  }
+}
+
+async function copyCodes() {
+  const text = genCodes.value.join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(`已复制 ${genCodes.value.length} 个卡密`);
+  } catch {
+    showToast('复制失败，请手动选择');
+  }
+}
+
+async function removeCard(id: string) {
+  try {
+    await showConfirmDialog({ title: '删除充值卡', message: '删除后卡密将失效，确定？' });
+  } catch { return; }
+  await api.adminDeleteCard(id);
+  cards.value = cards.value.filter((c) => c.id !== id);
+}
+
 async function createCoupon() {
   if (!couponEdit.value.title.trim()) return showToast('请输入券名称');
   await api.adminCreateCoupon({
@@ -256,6 +300,7 @@ function onTabChange(name: string | number) {
   if (name === 'banners') loadBanners();
   if (name === 'withdrawals') loadWithdrawals();
   if (name === 'coupons') loadCoupons();
+  if (name === 'cards') loadCards();
   if (name === 'reviews') loadReviews();
   if (name === 'settings') loadSettings();
 }
@@ -495,6 +540,50 @@ function onTabChange(name: string | number) {
         </div>
       </van-tab>
 
+      <!-- 充值卡 -->
+      <van-tab title="充值卡" name="cards">
+        <div class="admin__list">
+          <div class="card admin__set">
+            <div class="admin__set-title">生成充值卡</div>
+            <div class="admin__set-row">
+              <van-field v-model.number="genForm.amount" type="number" placeholder="面额（元）" />
+              <van-field v-model.number="genForm.count" type="number" placeholder="数量" />
+              <van-button size="small" type="primary" round :loading="generating" @click="genCards">生成</van-button>
+            </div>
+            <div v-if="genCodes.length" class="admin__gen-result">
+              <div class="admin__gen-head">
+                <span class="muted">本次生成 {{ genCodes.length }} 张</span>
+                <van-button size="mini" type="primary" plain @click="copyCodes">复制全部</van-button>
+              </div>
+              <div class="admin__gen-codes">{{ genCodes.join('  ') }}</div>
+            </div>
+          </div>
+
+          <div class="admin__card-filter">
+            <van-tabs v-model:active="cardStatus" type="card" @change="loadCards">
+              <van-tab title="未使用" name="unused" />
+              <van-tab title="已使用" name="used" />
+              <van-tab title="全部" name="all" />
+            </van-tabs>
+            <div class="muted admin__card-count">剩余未用 {{ cardUnused }} 张</div>
+          </div>
+
+          <div v-for="c in cards" :key="c.id" class="card admin__card">
+            <div class="admin__card-code">{{ c.code }}</div>
+            <div class="admin__card-info">
+              <div>¥{{ c.amount }} <span class="muted">{{ c.batch }}</span></div>
+              <div class="muted">
+                <template v-if="c.used">已被 {{ c.usedBy }} 使用 · {{ c.usedAt ? fmt(c.usedAt) : '' }}</template>
+                <template v-else>未使用 · {{ fmt(c.createdAt) }}</template>
+              </div>
+            </div>
+            <van-tag v-if="c.used" type="success">已用</van-tag>
+            <van-button v-else size="mini" type="danger" plain @click="removeCard(c.id)">删除</van-button>
+          </div>
+          <van-empty v-if="!cards.length" description="暂无充值卡" image-size="70" />
+        </div>
+      </van-tab>
+
       <!-- 设置 -->
       <van-tab title="设置" name="settings">
         <div v-if="settings" class="admin__list">
@@ -638,4 +727,12 @@ function onTabChange(name: string | number) {
 .admin__review-stars { color: #ffb21e; font-size: 11px; }
 .admin__review-content { font-size: 13px; color: #555; margin-top: 6px; }
 .admin__review-reply { font-size: 12px; color: #888; background: #f7f8fa; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+.admin__card-filter { margin-bottom: 10px; }
+.admin__card-count { text-align: right; font-size: 12px; padding: 6px 4px 0; }
+.admin__card { display: flex; align-items: center; gap: 10px; padding: 12px; margin-bottom: 8px; }
+.admin__card-code { font-family: monospace; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
+.admin__card-info { flex: 1; font-size: 13px; }
+.admin__gen-result { margin-top: 10px; background: #f7f8fa; border-radius: 8px; padding: 10px; }
+.admin__gen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.admin__gen-codes { font-family: monospace; font-size: 12px; color: #555; word-break: break-all; line-height: 1.8; user-select: all; }
 </style>

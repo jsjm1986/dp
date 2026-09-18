@@ -283,6 +283,7 @@ export type UserWhereInput = {
   receivedMessages?: Prisma.MessageListRelationFilter
   userCoupons?: Prisma.UserCouponListRelationFilter
   commissionsEarned?: Prisma.CommissionListRelationFilter
+  rechargeCardsUsed?: Prisma.RechargeCardListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -309,6 +310,7 @@ export type UserOrderByWithRelationInput = {
   receivedMessages?: Prisma.MessageOrderByRelationAggregateInput
   userCoupons?: Prisma.UserCouponOrderByRelationAggregateInput
   commissionsEarned?: Prisma.CommissionOrderByRelationAggregateInput
+  rechargeCardsUsed?: Prisma.RechargeCardOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -338,6 +340,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   receivedMessages?: Prisma.MessageListRelationFilter
   userCoupons?: Prisma.UserCouponListRelationFilter
   commissionsEarned?: Prisma.CommissionListRelationFilter
+  rechargeCardsUsed?: Prisma.RechargeCardListRelationFilter
 }, "id" | "mobile" | "inviteCode">
 
 export type UserOrderByWithAggregationInput = {
@@ -402,6 +405,7 @@ export type UserCreateInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -428,6 +432,7 @@ export type UserUncheckedCreateInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUpdateInput = {
@@ -454,6 +459,7 @@ export type UserUpdateInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -480,6 +486,7 @@ export type UserUncheckedUpdateInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -583,6 +590,11 @@ export type UserSumOrderByAggregateInput = {
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -763,6 +775,22 @@ export type UserUpdateOneRequiredWithoutCommissionsEarnedNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCommissionsEarnedInput, Prisma.UserUpdateWithoutCommissionsEarnedInput>, Prisma.UserUncheckedUpdateWithoutCommissionsEarnedInput>
 }
 
+export type UserCreateNestedOneWithoutRechargeCardsUsedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedCreateWithoutRechargeCardsUsedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRechargeCardsUsedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutRechargeCardsUsedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedCreateWithoutRechargeCardsUsedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRechargeCardsUsedInput
+  upsert?: Prisma.UserUpsertWithoutRechargeCardsUsedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRechargeCardsUsedInput, Prisma.UserUpdateWithoutRechargeCardsUsedInput>, Prisma.UserUncheckedUpdateWithoutRechargeCardsUsedInput>
+}
+
 export type UserCreateWithoutPartnerInput = {
   id?: string
   mobile: string
@@ -786,6 +814,7 @@ export type UserCreateWithoutPartnerInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutPartnerInput = {
@@ -811,6 +840,7 @@ export type UserUncheckedCreateWithoutPartnerInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutPartnerInput = {
@@ -852,6 +882,7 @@ export type UserUpdateWithoutPartnerInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPartnerInput = {
@@ -877,6 +908,7 @@ export type UserUncheckedUpdateWithoutPartnerInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -902,6 +934,7 @@ export type UserCreateWithoutOrdersInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -927,6 +960,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -968,6 +1002,7 @@ export type UserUpdateWithoutOrdersInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -993,6 +1028,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -1018,6 +1054,7 @@ export type UserCreateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -1043,6 +1080,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -1084,6 +1122,7 @@ export type UserUpdateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -1109,6 +1148,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutDynamicsInput = {
@@ -1134,6 +1174,7 @@ export type UserCreateWithoutDynamicsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutDynamicsInput = {
@@ -1159,6 +1200,7 @@ export type UserUncheckedCreateWithoutDynamicsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutDynamicsInput = {
@@ -1200,6 +1242,7 @@ export type UserUpdateWithoutDynamicsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDynamicsInput = {
@@ -1225,6 +1268,7 @@ export type UserUncheckedUpdateWithoutDynamicsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutLikesInput = {
@@ -1250,6 +1294,7 @@ export type UserCreateWithoutLikesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutLikesInput = {
@@ -1275,6 +1320,7 @@ export type UserUncheckedCreateWithoutLikesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutLikesInput = {
@@ -1316,6 +1362,7 @@ export type UserUpdateWithoutLikesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLikesInput = {
@@ -1341,6 +1388,7 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -1366,6 +1414,7 @@ export type UserCreateWithoutCommentsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -1391,6 +1440,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -1432,6 +1482,7 @@ export type UserUpdateWithoutCommentsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -1457,6 +1508,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutFollowsInput = {
@@ -1482,6 +1534,7 @@ export type UserCreateWithoutFollowsInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutFollowsInput = {
@@ -1507,6 +1560,7 @@ export type UserUncheckedCreateWithoutFollowsInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutFollowsInput = {
@@ -1548,6 +1602,7 @@ export type UserUpdateWithoutFollowsInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowsInput = {
@@ -1573,6 +1628,7 @@ export type UserUncheckedUpdateWithoutFollowsInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutSentMessagesInput = {
@@ -1598,6 +1654,7 @@ export type UserCreateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -1623,6 +1680,7 @@ export type UserUncheckedCreateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -1653,6 +1711,7 @@ export type UserCreateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutReceivedMessagesInput = {
@@ -1678,6 +1737,7 @@ export type UserUncheckedCreateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutReceivedMessagesInput = {
@@ -1719,6 +1779,7 @@ export type UserUpdateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -1744,6 +1805,7 @@ export type UserUncheckedUpdateWithoutSentMessagesInput = {
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUpsertWithoutReceivedMessagesInput = {
@@ -1780,6 +1842,7 @@ export type UserUpdateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
@@ -1805,6 +1868,7 @@ export type UserUncheckedUpdateWithoutReceivedMessagesInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutUserCouponsInput = {
@@ -1830,6 +1894,7 @@ export type UserCreateWithoutUserCouponsInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutUserCouponsInput = {
@@ -1855,6 +1920,7 @@ export type UserUncheckedCreateWithoutUserCouponsInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutUserCouponsInput = {
@@ -1896,6 +1962,7 @@ export type UserUpdateWithoutUserCouponsInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserCouponsInput = {
@@ -1921,6 +1988,7 @@ export type UserUncheckedUpdateWithoutUserCouponsInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserCreateWithoutCommissionsEarnedInput = {
@@ -1946,6 +2014,7 @@ export type UserCreateWithoutCommissionsEarnedInput = {
   sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  rechargeCardsUsed?: Prisma.RechargeCardCreateNestedManyWithoutUsedByInput
 }
 
 export type UserUncheckedCreateWithoutCommissionsEarnedInput = {
@@ -1971,6 +2040,7 @@ export type UserUncheckedCreateWithoutCommissionsEarnedInput = {
   sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
   userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedCreateNestedManyWithoutUsedByInput
 }
 
 export type UserCreateOrConnectWithoutCommissionsEarnedInput = {
@@ -2012,6 +2082,7 @@ export type UserUpdateWithoutCommissionsEarnedInput = {
   sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUpdateManyWithoutUsedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommissionsEarnedInput = {
@@ -2037,6 +2108,127 @@ export type UserUncheckedUpdateWithoutCommissionsEarnedInput = {
   sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
   userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  rechargeCardsUsed?: Prisma.RechargeCardUncheckedUpdateManyWithoutUsedByNestedInput
+}
+
+export type UserCreateWithoutRechargeCardsUsedInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
+  createdAt?: Date | string
+  partner?: Prisma.PartnerCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionCreateNestedManyWithoutInviterInput
+}
+
+export type UserUncheckedCreateWithoutRechargeCardsUsedInput = {
+  id?: string
+  mobile: string
+  nickname: string
+  avatar?: string | null
+  gender?: string | null
+  city?: string | null
+  balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: string
+  inviteCode?: string | null
+  inviterId?: string | null
+  disabled?: boolean
+  createdAt?: Date | string
+  partner?: Prisma.PartnerUncheckedCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  dynamics?: Prisma.DynamicUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  follows?: Prisma.FollowUncheckedCreateNestedManyWithoutUserInput
+  likes?: Prisma.DynamicLikeUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.DynamicCommentUncheckedCreateNestedManyWithoutUserInput
+  sentMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  receivedMessages?: Prisma.MessageUncheckedCreateNestedManyWithoutReceiverInput
+  userCoupons?: Prisma.UserCouponUncheckedCreateNestedManyWithoutUserInput
+  commissionsEarned?: Prisma.CommissionUncheckedCreateNestedManyWithoutInviterInput
+}
+
+export type UserCreateOrConnectWithoutRechargeCardsUsedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedCreateWithoutRechargeCardsUsedInput>
+}
+
+export type UserUpsertWithoutRechargeCardsUsedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedUpdateWithoutRechargeCardsUsedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedCreateWithoutRechargeCardsUsedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRechargeCardsUsedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRechargeCardsUsedInput, Prisma.UserUncheckedUpdateWithoutRechargeCardsUsedInput>
+}
+
+export type UserUpdateWithoutRechargeCardsUsedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUpdateManyWithoutInviterNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRechargeCardsUsedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partner?: Prisma.PartnerUncheckedUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  dynamics?: Prisma.DynamicUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  follows?: Prisma.FollowUncheckedUpdateManyWithoutUserNestedInput
+  likes?: Prisma.DynamicLikeUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.DynamicCommentUncheckedUpdateManyWithoutUserNestedInput
+  sentMessages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  receivedMessages?: Prisma.MessageUncheckedUpdateManyWithoutReceiverNestedInput
+  userCoupons?: Prisma.UserCouponUncheckedUpdateManyWithoutUserNestedInput
+  commissionsEarned?: Prisma.CommissionUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 
@@ -2055,6 +2247,7 @@ export type UserCountOutputType = {
   receivedMessages: number
   userCoupons: number
   commissionsEarned: number
+  rechargeCardsUsed: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2068,6 +2261,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   receivedMessages?: boolean | UserCountOutputTypeCountReceivedMessagesArgs
   userCoupons?: boolean | UserCountOutputTypeCountUserCouponsArgs
   commissionsEarned?: boolean | UserCountOutputTypeCountCommissionsEarnedArgs
+  rechargeCardsUsed?: boolean | UserCountOutputTypeCountRechargeCardsUsedArgs
 }
 
 /**
@@ -2150,6 +2344,13 @@ export type UserCountOutputTypeCountCommissionsEarnedArgs<ExtArgs extends runtim
   where?: Prisma.CommissionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRechargeCardsUsedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RechargeCardWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2175,6 +2376,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
   commissionsEarned?: boolean | Prisma.User$commissionsEarnedArgs<ExtArgs>
+  rechargeCardsUsed?: boolean | Prisma.User$rechargeCardsUsedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2236,6 +2438,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   receivedMessages?: boolean | Prisma.User$receivedMessagesArgs<ExtArgs>
   userCoupons?: boolean | Prisma.User$userCouponsArgs<ExtArgs>
   commissionsEarned?: boolean | Prisma.User$commissionsEarnedArgs<ExtArgs>
+  rechargeCardsUsed?: boolean | Prisma.User$rechargeCardsUsedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2255,6 +2458,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     receivedMessages: Prisma.$MessagePayload<ExtArgs>[]
     userCoupons: Prisma.$UserCouponPayload<ExtArgs>[]
     commissionsEarned: Prisma.$CommissionPayload<ExtArgs>[]
+    rechargeCardsUsed: Prisma.$RechargeCardPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2674,6 +2878,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   receivedMessages<T extends Prisma.User$receivedMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userCoupons<T extends Prisma.User$userCouponsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userCouponsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   commissionsEarned<T extends Prisma.User$commissionsEarnedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commissionsEarnedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rechargeCardsUsed<T extends Prisma.User$rechargeCardsUsedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rechargeCardsUsedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RechargeCardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3362,6 +3567,30 @@ export type User$commissionsEarnedArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.CommissionScalarFieldEnum | Prisma.CommissionScalarFieldEnum[]
+}
+
+/**
+ * User.rechargeCardsUsed
+ */
+export type User$rechargeCardsUsedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RechargeCard
+   */
+  select?: Prisma.RechargeCardSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RechargeCard
+   */
+  omit?: Prisma.RechargeCardOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RechargeCardInclude<ExtArgs> | null
+  where?: Prisma.RechargeCardWhereInput
+  orderBy?: Prisma.RechargeCardOrderByWithRelationInput | Prisma.RechargeCardOrderByWithRelationInput[]
+  cursor?: Prisma.RechargeCardWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RechargeCardScalarFieldEnum | Prisma.RechargeCardScalarFieldEnum[]
 }
 
 /**

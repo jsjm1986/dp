@@ -164,6 +164,25 @@ export class UsersController {
     return { balance: Number(user.balance) };
   }
 
+  /** 充值卡核销：原子占用防重复使用 */
+  @Post('redeem')
+  async redeem(@CurrentUser() userId: string, @Body() dto: { code: string }) {
+    const code = (dto.code ?? '').trim().toUpperCase();
+    if (!code) throw new BadRequestException('请输入卡密');
+    const card = await this.prisma.rechargeCard.findUnique({ where: { code } });
+    if (!card) throw new BadRequestException('卡密无效');
+    const claim = await this.prisma.rechargeCard.updateMany({
+      where: { code, usedById: null },
+      data: { usedById: userId, usedAt: new Date() },
+    });
+    if (claim.count === 0) throw new BadRequestException('该卡已被使用');
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { balance: { increment: card.amount } },
+    });
+    return { balance: Number(user.balance), amount: Number(card.amount) };
+  }
+
   @Put('profile')
   async update(@CurrentUser() userId: string, @Body() dto: UpdateProfileDto) {
     const user = await this.prisma.user.update({ where: { id: userId }, data: dto });

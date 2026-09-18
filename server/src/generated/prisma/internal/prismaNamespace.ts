@@ -415,7 +415,8 @@ export const ModelName = {
   Withdrawal: 'Withdrawal',
   Block: 'Block',
   Commission: 'Commission',
-  Setting: 'Setting'
+  Setting: 'Setting',
+  RechargeCard: 'RechargeCard'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -431,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message" | "coupon" | "userCoupon" | "withdrawal" | "block" | "commission" | "setting"
+    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message" | "coupon" | "userCoupon" | "withdrawal" | "block" | "commission" | "setting" | "rechargeCard"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1841,6 +1842,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RechargeCard: {
+      payload: Prisma.$RechargeCardPayload<ExtArgs>
+      fields: Prisma.RechargeCardFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RechargeCardFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RechargeCardFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        findFirst: {
+          args: Prisma.RechargeCardFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RechargeCardFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        findMany: {
+          args: Prisma.RechargeCardFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>[]
+        }
+        create: {
+          args: Prisma.RechargeCardCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        createMany: {
+          args: Prisma.RechargeCardCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RechargeCardCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>[]
+        }
+        delete: {
+          args: Prisma.RechargeCardDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        update: {
+          args: Prisma.RechargeCardUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        deleteMany: {
+          args: Prisma.RechargeCardDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RechargeCardUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RechargeCardUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>[]
+        }
+        upsert: {
+          args: Prisma.RechargeCardUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RechargeCardPayload>
+        }
+        aggregate: {
+          args: Prisma.RechargeCardAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRechargeCard>
+        }
+        groupBy: {
+          args: Prisma.RechargeCardGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RechargeCardGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RechargeCardCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RechargeCardCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2145,6 +2220,19 @@ export const SettingScalarFieldEnum = {
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
+export const RechargeCardScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  amount: 'amount',
+  batch: 'batch',
+  usedById: 'usedById',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type RechargeCardScalarFieldEnum = (typeof RechargeCardScalarFieldEnum)[keyof typeof RechargeCardScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2378,6 +2466,7 @@ export type GlobalOmitConfig = {
   block?: Prisma.BlockOmit
   commission?: Prisma.CommissionOmit
   setting?: Prisma.SettingOmit
+  rechargeCard?: Prisma.RechargeCardOmit
 }
 
 /* Types for Logging */

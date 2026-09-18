@@ -69,7 +69,8 @@ export const ModelName = {
   Withdrawal: 'Withdrawal',
   Block: 'Block',
   Commission: 'Commission',
-  Setting: 'Setting'
+  Setting: 'Setting',
+  RechargeCard: 'RechargeCard'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -351,6 +352,19 @@ export const SettingScalarFieldEnum = {
 } as const
 
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
+
+
+export const RechargeCardScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  amount: 'amount',
+  batch: 'batch',
+  usedById: 'usedById',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type RechargeCardScalarFieldEnum = (typeof RechargeCardScalarFieldEnum)[keyof typeof RechargeCardScalarFieldEnum]
 
 
 export const SortOrder = {

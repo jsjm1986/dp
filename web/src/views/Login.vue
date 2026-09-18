@@ -84,6 +84,7 @@ async function submit() {
       <van-button block round type="primary" size="large" :loading="loading" class="login__btn" @click="submit">
         登录 / 注册
       </van-button>
+      <div class="login__demo muted">演示环境可直接使用万能验证码 888888</div>
       <div class="login__agree">
         <van-checkbox v-model="agreed" icon-size="14" checked-color="#ff5a5f" />
         <span class="muted">我已阅读并同意《用户协议》《隐私政策》和《平台交易规则》</span>
@@ -126,5 +127,10 @@ async function submit() {
   display: flex;
   align-items: flex-start;
   gap: 6px;
+}
+.login__demo {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 12px;
 }
 </style>

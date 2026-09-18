@@ -14,6 +14,8 @@ const unread = ref(0);
 const showRecharge = ref(false);
 const rechargeAmount = ref(100);
 const recharging = ref(false);
+const cardCode = ref('');
+const redeeming = ref(false);
 
 async function recharge() {
   recharging.value = true;
@@ -24,6 +26,20 @@ async function recharge() {
     showToast('充值成功');
   } finally {
     recharging.value = false;
+  }
+}
+
+async function redeem() {
+  if (!cardCode.value.trim()) return showToast('请输入卡密');
+  redeeming.value = true;
+  try {
+    const res = await api.redeemCard(cardCode.value.trim());
+    if (store.user) store.user.balance = res.balance;
+    cardCode.value = '';
+    showRecharge.value = false;
+    showToast(`充值卡到账 ¥${res.amount}`);
+  } finally {
+    redeeming.value = false;
   }
 }
 
@@ -152,6 +168,13 @@ async function logout() {
         >
           ¥{{ a }}
         </div>
+        <div class="mine__card">
+          <van-field v-model="cardCode" placeholder="充值卡密（如 DPXXXXXXXX）" maxlength="20">
+            <template #button>
+              <van-button size="small" type="primary" plain :loading="redeeming" @click="redeem">兑换</van-button>
+            </template>
+          </van-field>
+        </div>
       </div>
     </van-dialog>
   </div>
@@ -227,6 +250,9 @@ async function logout() {
   text-align: center;
   padding: 12px;
   font-weight: 600;
+}
+.mine__card {
+  margin-top: 12px;
 }
 .mine__recharge-opt--on {
   border-color: #ff5a5f;

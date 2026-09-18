@@ -32,6 +32,7 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   userCoupons UserCoupon[]
   commissionsEarned Commission[] @relation("InviterCommissions")
+  rechargeCardsUsed RechargeCard[]
 }
 
 model Partner {
@@ -289,4 +290,17 @@ model Commission {
 model Setting {
   key   String @id
   value String
+}
+
+// ---------- 充值卡 ----------
+model RechargeCard {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  amount    Decimal
+  batch     String?   // 批次号（同一次生成的一批）
+  usedById  String?
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  usedBy User? @relation(fields: [usedById], references: [id])
 }

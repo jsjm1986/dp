@@ -112,3 +112,8 @@ export type Commission = Prisma.CommissionModel
  * 
  */
 export type Setting = Prisma.SettingModel
+/**
+ * Model RechargeCard
+ * 
+ */
+export type RechargeCard = Prisma.RechargeCardModel

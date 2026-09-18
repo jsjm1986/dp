@@ -291,6 +291,12 @@ export const api = {
     http.post('/admin/coupons', data),
   adminDeleteCoupon: (id: string) => http.delete(`/admin/coupons/${id}`),
   adminToggleUser: (id: string, disabled: boolean) => http.put(`/admin/users/${id}/disabled`, { disabled }),
+  adminRechargeCards: (status?: string, page = 1) =>
+    http.get<{ total: number; unusedCount: number; items: Array<{ id: string; code: string; amount: number; batch: string | null; used: boolean; usedBy: string | null; usedAt: string | null; createdAt: string }> }>('/admin/recharge-cards', { params: { status, page } }),
+  adminGenCards: (amount: number, count: number) =>
+    http.post<{ batch: string; count: number; codes: string[] }>('/admin/recharge-cards', { amount, count }),
+  adminDeleteCard: (id: string) => http.delete(`/admin/recharge-cards/${id}`),
+  redeemCard: (code: string) => http.post<{ balance: number; amount: number }>('/user/redeem', { code }),
 
   bindInviter: (code: string) => http.post<{ bound: boolean; inviter: string }>('/user/bind-inviter', { code }),
   referral: () =>

@@ -25,12 +25,17 @@ export class AuthService {
   }
 
   async login(mobile: string, code: string, inviteCode?: string) {
-    const record = await this.prisma.smsCode.findFirst({
-      where: { mobile, code, used: false, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!record) throw new UnauthorizedException('验证码错误或已过期');
-    await this.prisma.smsCode.update({ where: { id: record.id }, data: { used: true } });
+    // 演示万能码：DEMO_UNIVERSAL_CODE=false 关闭，生产必须关闭
+    const demoCode = process.env.DEMO_UNIVERSAL_CODE ?? '888888';
+    const isDemoCode = demoCode !== 'false' && code === demoCode;
+    if (!isDemoCode) {
+      const record = await this.prisma.smsCode.findFirst({
+        where: { mobile, code, used: false, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!record) throw new UnauthorizedException('验证码错误或已过期');
+      await this.prisma.smsCode.update({ where: { id: record.id }, data: { used: true } });
+    }
 
     let user = await this.prisma.user.findUnique({ where: { mobile } });
     if (!user) {

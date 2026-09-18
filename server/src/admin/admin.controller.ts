@@ -639,6 +639,66 @@ export class AdminController {
     return { ok: true };
   }
 
+  /** ---------- 充值卡 ---------- */
+  @Post('recharge-cards')
+  async createRechargeCards(@Body() body: { amount: number; count: number }) {
+    const amount = Math.round(Number(body.amount) * 100) / 100;
+    const count = Math.min(Math.max(Math.floor(Number(body.count) || 1), 1), 500);
+    if (!amount || amount <= 0 || amount > 100000) throw new BadRequestException('面额无效');
+    const batch = `B${Date.now().toString(36).toUpperCase()}`;
+    const cards = await this.prisma.$transaction(
+      Array.from({ length: count }, () =>
+        this.prisma.rechargeCard.create({
+          data: {
+            code: 'DP' + Math.random().toString(36).slice(2, 10).toUpperCase(),
+            amount,
+            batch,
+          },
+        }),
+      ),
+    );
+    return { batch, count: cards.length, codes: cards.map((c) => c.code) };
+  }
+
+  @Get('recharge-cards')
+  async rechargeCards(@Query('page') page = '1', @Query('status') status?: string) {
+    const where: any = status === 'used' ? { usedById: { not: null } } : status === 'unused' ? { usedById: null } : {};
+    const [total, rows, unusedCount] = await this.prisma.$transaction([
+      this.prisma.rechargeCard.count({ where }),
+      this.prisma.rechargeCard.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (Math.max(1, +page) - 1) * 30,
+        take: 30,
+        include: { usedBy: { select: { nickname: true, mobile: true } } },
+      }),
+      this.prisma.rechargeCard.count({ where: { usedById: null } }),
+    ]);
+    return {
+      total,
+      unusedCount,
+      items: rows.map((c) => ({
+        id: c.id,
+        code: c.code,
+        amount: Number(c.amount),
+        batch: c.batch,
+        used: !!c.usedById,
+        usedBy: c.usedBy ? `${c.usedBy.nickname}(${c.usedBy.mobile})` : null,
+        usedAt: c.usedAt,
+        createdAt: c.createdAt,
+      })),
+    };
+  }
+
+  @Delete('recharge-cards/:id')
+  async deleteRechargeCard(@Param('id') id: string) {
+    const card = await this.prisma.rechargeCard.findUnique({ where: { id } });
+    if (!card) throw new BadRequestException('卡不存在');
+    if (card.usedById) throw new BadRequestException('已使用的卡不能删除');
+    await this.prisma.rechargeCard.delete({ where: { id } });
+    return { ok: true };
+  }
+
   /** ---------- 玩伴推荐位/强制下线 ---------- */
   @Put('partners/:id/recommend')
   async recommendPartner(@Param('id') id: string, @Body() body: { recommended: boolean }) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { showConfirmDialog, showToast } from 'vant';
 import { api } from '../api';
 import { useUserStore } from '../stores/user';
 
@@ -20,6 +21,7 @@ const peer = ref<{ id: string; nickname: string; avatar: string | null } | null>
 const items = ref<Msg[]>([]);
 const draft = ref('');
 const sending = ref(false);
+const blocked = ref(false);
 const listEl = ref<HTMLElement>();
 let timer: ReturnType<typeof setInterval> | undefined;
 
@@ -56,16 +58,37 @@ function fmt(t: string) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-onMounted(() => {
+async function toggleBlock() {
+  if (!blocked.value) {
+    try {
+      await showConfirmDialog({ title: '拉黑对方', message: '拉黑后将无法互相发消息，确认拉黑？' });
+    } catch { return; }
+  }
+  const res = blocked.value
+    ? await api.unblockUser(peerId.value)
+    : await api.blockUser(peerId.value);
+  blocked.value = res.blocked;
+  showToast(res.blocked ? '已拉黑' : '已解除');
+}
+
+onMounted(async () => {
   load(true);
   timer = setInterval(() => load(), 5000);
+  try {
+    const blocks = await api.myBlocks();
+    blocked.value = blocks.some((b) => b.id === peerId.value);
+  } catch { /* ignore */ }
 });
 onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
   <div class="chat">
-    <van-nav-bar :title="peer?.nickname || '聊天'" left-arrow @click-left="$router.back()" />
+    <van-nav-bar :title="peer?.nickname || '聊天'" left-arrow @click-left="$router.back()">
+      <template #right>
+        <van-icon :name="blocked ? 'lock' : 'ellipsis'" size="18" @click="toggleBlock" />
+      </template>
+    </van-nav-bar>
 
     <div ref="listEl" class="chat__list">
       <div

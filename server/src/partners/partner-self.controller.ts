@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -214,6 +215,43 @@ export class PartnerSelfController {
       status: p.status,
       auditStatus: p.auditStatus,
     };
+  }
+
+  /** 我收到的评价 */
+  @Get('reviews')
+  async reviews(@CurrentUser() userId: string) {
+    const p = await this.mustBePartner(userId);
+    const rows = await this.prisma.review.findMany({
+      where: { partnerId: p.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: { user: { select: { nickname: true, avatar: true } } },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      content: r.content,
+      reply: r.reply,
+      replyAt: r.replyAt,
+      createdAt: r.createdAt,
+      user: r.user,
+    }));
+  }
+
+  /** 回复评价 */
+  @Post('reviews/:id/reply')
+  async replyReview(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: { content: string }) {
+    const p = await this.mustBePartner(userId);
+    const r = await this.prisma.review.findUnique({ where: { id } });
+    if (!r || r.partnerId !== p.id) throw new BadRequestException('评价不存在');
+    if (r.reply) throw new BadRequestException('已回复过该评价');
+    const content = (dto.content ?? '').trim();
+    if (!content) throw new BadRequestException('回复内容不能为空');
+    await this.prisma.review.update({
+      where: { id },
+      data: { reply: content.slice(0, 300), replyAt: new Date() },
+    });
+    return { ok: true };
   }
 
   /** 钱包：余额 + 提现记录 */

@@ -66,7 +66,8 @@ export const ModelName = {
   Message: 'Message',
   Coupon: 'Coupon',
   UserCoupon: 'UserCoupon',
-  Withdrawal: 'Withdrawal'
+  Withdrawal: 'Withdrawal',
+  Block: 'Block'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -188,6 +189,8 @@ export const ReviewScalarFieldEnum = {
   partnerId: 'partnerId',
   rating: 'rating',
   content: 'content',
+  reply: 'reply',
+  replyAt: 'replyAt',
   createdAt: 'createdAt'
 } as const
 
@@ -311,6 +314,16 @@ export const WithdrawalScalarFieldEnum = {
 } as const
 
 export type WithdrawalScalarFieldEnum = (typeof WithdrawalScalarFieldEnum)[keyof typeof WithdrawalScalarFieldEnum]
+
+
+export const BlockScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  blockedId: 'blockedId',
+  createdAt: 'createdAt'
+} as const
+
+export type BlockScalarFieldEnum = (typeof BlockScalarFieldEnum)[keyof typeof BlockScalarFieldEnum]
 
 
 export const SortOrder = {

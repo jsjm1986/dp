@@ -130,6 +130,8 @@ model Review {
   partner   Partner  @relation(fields: [partnerId], references: [id])
   rating    Int
   content   String?
+  reply     String?
+  replyAt   DateTime?
   createdAt DateTime @default(now())
 }
 
@@ -253,4 +255,14 @@ model Withdrawal {
   handledAt DateTime?
 
   partner Partner @relation(fields: [partnerId], references: [id])
+}
+
+// ---------- 拉黑 ----------
+model Block {
+  id        String   @id @default(cuid())
+  userId    String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, blockedId])
 }

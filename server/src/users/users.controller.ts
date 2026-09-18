@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { AuthService } from '../auth/auth.service.js';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -39,6 +39,34 @@ export class UsersController {
       include: { partner: { select: { id: true } } },
     });
     return { ...this.auth.toProfile(user), partnerId: user.partner?.id ?? null };
+  }
+
+  /** 拉黑 */
+  @Post('block/:id')
+  async block(@CurrentUser() userId: string, @Param('id') blockedId: string) {
+    if (blockedId === userId) throw new BadRequestException('不能拉黑自己');
+    await this.prisma.block.upsert({
+      where: { userId_blockedId: { userId, blockedId } },
+      create: { userId, blockedId },
+      update: {},
+    });
+    return { blocked: true };
+  }
+
+  @Delete('block/:id')
+  async unblock(@CurrentUser() userId: string, @Param('id') blockedId: string) {
+    await this.prisma.block.deleteMany({ where: { userId, blockedId } });
+    return { blocked: false };
+  }
+
+  @Get('blocks')
+  async blocks(@CurrentUser() userId: string) {
+    const rows = await this.prisma.block.findMany({ where: { userId } });
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: rows.map((r) => r.blockedId) } },
+      select: { id: true, nickname: true, avatar: true },
+    });
+    return users;
   }
 
   /** 客服账号（第一个管理员） */

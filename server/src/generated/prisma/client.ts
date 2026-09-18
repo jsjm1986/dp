@@ -121,3 +121,8 @@ export type UserCoupon = Prisma.UserCouponModel
  * 
  */
 export type Withdrawal = Prisma.WithdrawalModel
+/**
+ * Model Block
+ * 
+ */
+export type Block = Prisma.BlockModel

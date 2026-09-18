@@ -143,6 +143,7 @@ export class PartnersService {
         id: r.id,
         rating: r.rating,
         content: r.content,
+        reply: r.reply,
         createdAt: r.createdAt,
         user: r.user,
       })),

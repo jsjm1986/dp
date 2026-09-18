@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ArrayMaxSize, IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.guard.js';
+import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class CreateDynamicDto {
@@ -47,12 +48,34 @@ export class DynamicsController {
     @CurrentUser() userId: string | undefined,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('tab') tab?: string,
   ) {
     const p = Math.max(1, page ? Number(page) : 1);
     const size = Math.min(50, pageSize ? Number(pageSize) : 10);
+
+    // 关注流：仅看我关注的玩伴/自己的动态
+    const where: any = {};
+    if (tab === 'follow' && userId) {
+      const follows = await this.prisma.follow.findMany({
+        where: { userId },
+        include: { partner: { select: { userId: true } } },
+      });
+      const authorIds = [...follows.map((f) => f.partner.userId), userId];
+      where.userId = { in: authorIds };
+    }
+    // 拉黑过滤：不看自己拉黑的人、也不看拉黑自己的人的动态
+    if (userId) {
+      const blocks = await this.prisma.block.findMany({
+        where: { OR: [{ userId }, { blockedId: userId }] },
+      });
+      const blocked = new Set(blocks.map((b) => (b.userId === userId ? b.blockedId : b.userId)));
+      if (blocked.size) where.userId = { ...(where.userId ?? {}), notIn: [...blocked] };
+    }
+
     const [total, rows] = await this.prisma.$transaction([
-      this.prisma.dynamic.count(),
+      this.prisma.dynamic.count({ where }),
       this.prisma.dynamic.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip: (p - 1) * size,
         take: size,
@@ -89,6 +112,7 @@ export class DynamicsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@CurrentUser() userId: string, @Body() dto: CreateDynamicDto) {
+    assertClean(dto.content);
     const d = await this.prisma.dynamic.create({
       data: { userId, content: dto.content, images: JSON.stringify(dto.images ?? []), city: dto.city },
     });
@@ -168,6 +192,7 @@ export class DynamicsController {
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async comment(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CommentDto) {
+    assertClean(dto.content, '评论');
     const c = await this.prisma.dynamicComment.create({
       data: { dynamicId: id, userId, content: dto.content },
       include: { user: { select: { nickname: true, avatar: true } } },

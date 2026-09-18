@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class SendMessageDto {
@@ -93,6 +94,16 @@ export class ChatController {
     if (dto.peerId === uid) throw new BadRequestException('不能和自己聊天');
     const peer = await this.prisma.user.findUnique({ where: { id: dto.peerId } });
     if (!peer) throw new NotFoundException('对方用户不存在');
+    const blocked = await this.prisma.block.findFirst({
+      where: {
+        OR: [
+          { userId: uid, blockedId: dto.peerId },
+          { userId: dto.peerId, blockedId: uid },
+        ],
+      },
+    });
+    if (blocked) throw new BadRequestException('消息发送失败，对方无法接收');
+    assertClean(dto.content, '消息');
     const msg = await this.prisma.message.create({
       data: {
         senderId: uid,

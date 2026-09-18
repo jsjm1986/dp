@@ -7,6 +7,7 @@ import { showToast } from 'vant';
 
 const store = useUserStore();
 const items = ref<Dynamic[]>([]);
+const tab = ref<'recommend' | 'follow'>('recommend');
 const page = ref(1);
 const loading = ref(false);
 const finished = ref(false);
@@ -30,7 +31,7 @@ async function load(reset = false) {
   }
   loading.value = true;
   try {
-    const res = await api.dynamics(page.value);
+    const res = await api.dynamics(page.value, tab.value === 'follow' ? 'follow' : undefined);
     items.value = reset ? res.items : [...items.value, ...res.items];
     finished.value = items.value.length >= res.total;
     page.value += 1;
@@ -65,6 +66,11 @@ async function sendComment() {
   }
 }
 
+function onTabChange(name: string | number) {
+  tab.value = name as 'recommend' | 'follow';
+  load(true);
+}
+
 onMounted(() => load(true));
 </script>
 
@@ -76,6 +82,11 @@ onMounted(() => load(true));
       </template>
     </van-nav-bar>
 
+    <van-tabs :active="tab" sticky offset-top="46" @change="onTabChange">
+      <van-tab title="推荐" name="recommend" />
+      <van-tab title="关注" name="follow" />
+    </van-tabs>
+
     <div class="dynamics__list">
       <van-list :loading="loading" :finished="finished" finished-text="没有更多了" @load="load()">
         <DynamicCard
@@ -85,7 +96,7 @@ onMounted(() => load(true));
           @changed="onChanged"
           @comment="openComments"
         />
-        <van-empty v-if="!loading && !items.length" description="还没有动态，来发第一条吧" />
+        <van-empty v-if="!loading && !items.length" :description="tab === 'follow' ? '关注的玩伴还没发动态' : '还没有动态，来发第一条吧'" />
       </van-list>
     </div>
 

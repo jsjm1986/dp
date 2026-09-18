@@ -42,6 +42,32 @@ const withdrawStatusText: Record<string, string> = {
   pending: '审核中', done: '已到账', rejected: '已拒绝',
 };
 
+const reviews = ref<Awaited<ReturnType<typeof api.partnerMyReviews>>>([]);
+const replyFor = ref<{ id: string; show: boolean; text: string }>({ id: '', show: false, text: '' });
+const replying = ref(false);
+const reviewsOpen = ref<string[]>([]);
+
+async function loadReviews() {
+  reviews.value = await api.partnerMyReviews();
+}
+
+function openReply(id: string) {
+  replyFor.value = { id, show: true, text: '' };
+}
+
+async function submitReply() {
+  if (!replyFor.value.text.trim()) return showToast('请输入回复内容');
+  replying.value = true;
+  try {
+    await api.replyReview(replyFor.value.id, replyFor.value.text.trim());
+    replyFor.value.show = false;
+    showToast('已回复');
+    loadReviews();
+  } finally {
+    replying.value = false;
+  }
+}
+
 const tabs = [
   { label: '待接单', value: 'pending_accept' },
   { label: '待服务', value: 'pending_service' },
@@ -101,6 +127,7 @@ onMounted(() => {
   loadStats();
   loadOrders();
   loadWallet();
+  loadReviews();
   poller = setInterval(() => {
     loadStats();
     loadOrders();
@@ -176,6 +203,23 @@ onUnmounted(() => poller && clearInterval(poller));
       </div>
     </div>
 
+    <div class="card pc__reviews">
+      <van-collapse v-model="reviewsOpen">
+        <van-collapse-item title="收到的评价" name="1" :label="`${reviews.length}条`">
+          <div v-for="r in reviews" :key="r.id" class="pc__review">
+            <div class="pc__review-head">
+              <span>{{ r.user.nickname }}</span>
+              <span class="pc__review-stars">{{ '★'.repeat(r.rating) }}</span>
+            </div>
+            <div class="pc__review-content">{{ r.content || '未留言' }}</div>
+            <div v-if="r.reply" class="pc__review-reply">我的回复：{{ r.reply }}</div>
+            <van-button v-else size="mini" plain type="primary" @click="openReply(r.id)">回复</van-button>
+          </div>
+          <van-empty v-if="!reviews.length" description="暂无评价" image-size="60" />
+        </van-collapse-item>
+      </van-collapse>
+    </div>
+
     <van-tabs v-model:active="tab" sticky offset-top="46" color="#ff5a5f" @change="loadOrders">
       <van-tab v-for="t in tabs" :key="t.value" :name="t.value">
         <template #title>
@@ -230,6 +274,10 @@ onUnmounted(() => poller && clearInterval(poller));
         <van-empty v-if="!items.length" description="暂无订单" />
       </template>
     </div>
+
+    <van-dialog v-model:show="replyFor.show" title="回复评价" show-cancel-button :confirm-button-loading="replying" @confirm="submitReply">
+      <van-field v-model="replyFor.text" type="textarea" rows="3" maxlength="300" placeholder="回复用户这条评价" />
+    </van-dialog>
 
     <van-dialog v-model:show="showWithdraw" title="申请提现" show-cancel-button :confirm-button-loading="withdrawing" @confirm="withdraw">
       <div class="pc__withdraw-form">
@@ -372,4 +420,11 @@ onUnmounted(() => poller && clearInterval(poller));
   padding: 8px 16px;
   font-size: 12px;
 }
+.pc__reviews { margin: 0 12px 12px; }
+.pc__review { padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+.pc__review:last-child { border-bottom: 0; }
+.pc__review-head { display: flex; justify-content: space-between; font-size: 13px; }
+.pc__review-stars { color: #ffb21e; }
+.pc__review-content { font-size: 13px; color: #555; margin: 4px 0; }
+.pc__review-reply { font-size: 12px; color: #888; background: #f7f8fa; border-radius: 6px; padding: 6px 8px; }
 </style>

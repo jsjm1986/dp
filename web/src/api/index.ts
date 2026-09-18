@@ -70,7 +70,7 @@ export interface PartnerDetail extends Omit<PartnerCard, 'cover' | 'distance'> {
   viewCount: number;
   wechatId: string | null;
   services: Array<{ id: string; name: string; desc: string | null; price: number; unit: string; miniNum: number }>;
-  reviews: Array<{ id: string; rating: number; content: string | null; createdAt: string; user: { nickname: string; avatar: string | null } }>;
+  reviews: Array<{ id: string; rating: number; content: string | null; reply: string | null; createdAt: string; user: { nickname: string; avatar: string | null } }>;
   reviewCount: number;
   dynamics: Array<{ id: string; content: string; images: string[]; likeCount: number; commentCount: number; createdAt: string }>;
 }
@@ -201,13 +201,20 @@ export const api = {
     http.get<{ balance: number; withdrawals: Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string }> }>('/partner/wallet'),
   partnerWithdraw: (amount: number) => http.post<{ id: string; status: string }>('/partner/withdraw', { amount }),
 
-  dynamics: (page = 1) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page } }),
+  dynamics: (page = 1, tab?: string) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page, tab } }),
   createDynamic: (data: { content: string; images?: string[]; city?: string }) => http.post<{ id: string }>('/dynamics', data),
   likeDynamic: (id: string) => http.post<{ liked: boolean; likeCount: number }>(`/dynamics/${id}/like`),
   unlikeDynamic: (id: string) => http.delete<{ liked: boolean; likeCount: number }>(`/dynamics/${id}/like`),
   comments: (id: string) => http.get<CommentRow[]>(`/dynamics/${id}/comments`),
   comment: (id: string, content: string) =>
     http.post<CommentRow & { commentCount: number }>(`/dynamics/${id}/comments`, { content }),
+  blockUser: (id: string) => http.post<{ blocked: boolean }>(`/user/block/${id}`),
+  unblockUser: (id: string) => http.delete<{ blocked: boolean }>(`/user/block/${id}`),
+  myBlocks: () => http.get<Array<{ id: string; nickname: string; avatar: string | null }>>('/user/blocks'),
+  partnerMyReviews: () =>
+    http.get<Array<{ id: string; rating: number; content: string | null; reply: string | null; replyAt: string | null; createdAt: string; user: { nickname: string; avatar: string | null } }>>('/partner/reviews'),
+  replyReview: (id: string, content: string) => http.post(`/partner/reviews/${id}/reply`, { content }),
+
   myDynamics: () =>
     http.get<Array<{ id: string; content: string; images: string[]; city: string | null; likeCount: number; commentCount: number; createdAt: string }>>('/dynamics/mine'),
   deleteDynamic: (id: string) => http.delete(`/dynamics/${id}`),

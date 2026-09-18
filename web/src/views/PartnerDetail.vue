@@ -167,6 +167,9 @@ onMounted(load);
                 <span class="detail__review-stars">{{ '★'.repeat(r.rating) }}{{ '☆'.repeat(5 - r.rating) }}</span>
               </div>
               <div class="detail__review-text">{{ r.content }}</div>
+              <div v-if="r.reply" class="detail__review-reply">
+                <b>玩伴回复：</b>{{ r.reply }}
+              </div>
             </div>
           </div>
         </template>
@@ -380,5 +383,13 @@ onMounted(load);
 .detail__dyn-meta {
   font-size: 10px;
   margin-top: 2px;
+}
+.detail__review-reply {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #666;
 }
 </style>

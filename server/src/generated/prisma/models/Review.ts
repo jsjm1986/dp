@@ -41,6 +41,8 @@ export type ReviewMinAggregateOutputType = {
   partnerId: string | null
   rating: number | null
   content: string | null
+  reply: string | null
+  replyAt: Date | null
   createdAt: Date | null
 }
 
@@ -51,6 +53,8 @@ export type ReviewMaxAggregateOutputType = {
   partnerId: string | null
   rating: number | null
   content: string | null
+  reply: string | null
+  replyAt: Date | null
   createdAt: Date | null
 }
 
@@ -61,6 +65,8 @@ export type ReviewCountAggregateOutputType = {
   partnerId: number
   rating: number
   content: number
+  reply: number
+  replyAt: number
   createdAt: number
   _all: number
 }
@@ -81,6 +87,8 @@ export type ReviewMinAggregateInputType = {
   partnerId?: true
   rating?: true
   content?: true
+  reply?: true
+  replyAt?: true
   createdAt?: true
 }
 
@@ -91,6 +99,8 @@ export type ReviewMaxAggregateInputType = {
   partnerId?: true
   rating?: true
   content?: true
+  reply?: true
+  replyAt?: true
   createdAt?: true
 }
 
@@ -101,6 +111,8 @@ export type ReviewCountAggregateInputType = {
   partnerId?: true
   rating?: true
   content?: true
+  reply?: true
+  replyAt?: true
   createdAt?: true
   _all?: true
 }
@@ -198,6 +210,8 @@ export type ReviewGroupByOutputType = {
   partnerId: string
   rating: number
   content: string | null
+  reply: string | null
+  replyAt: Date | null
   createdAt: Date
   _count: ReviewCountAggregateOutputType | null
   _avg: ReviewAvgAggregateOutputType | null
@@ -231,6 +245,8 @@ export type ReviewWhereInput = {
   partnerId?: Prisma.StringFilter<"Review"> | string
   rating?: Prisma.IntFilter<"Review"> | number
   content?: Prisma.StringNullableFilter<"Review"> | string | null
+  reply?: Prisma.StringNullableFilter<"Review"> | string | null
+  replyAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -244,6 +260,8 @@ export type ReviewOrderByWithRelationInput = {
   partnerId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   content?: Prisma.SortOrderInput | Prisma.SortOrder
+  reply?: Prisma.SortOrderInput | Prisma.SortOrder
+  replyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   order?: Prisma.OrderOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
@@ -260,6 +278,8 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   partnerId?: Prisma.StringFilter<"Review"> | string
   rating?: Prisma.IntFilter<"Review"> | number
   content?: Prisma.StringNullableFilter<"Review"> | string | null
+  reply?: Prisma.StringNullableFilter<"Review"> | string | null
+  replyAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -273,6 +293,8 @@ export type ReviewOrderByWithAggregationInput = {
   partnerId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   content?: Prisma.SortOrderInput | Prisma.SortOrder
+  reply?: Prisma.SortOrderInput | Prisma.SortOrder
+  replyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ReviewCountOrderByAggregateInput
   _avg?: Prisma.ReviewAvgOrderByAggregateInput
@@ -291,6 +313,8 @@ export type ReviewScalarWhereWithAggregatesInput = {
   partnerId?: Prisma.StringWithAggregatesFilter<"Review"> | string
   rating?: Prisma.IntWithAggregatesFilter<"Review"> | number
   content?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  reply?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  replyAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Review"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
 }
 
@@ -298,6 +322,8 @@ export type ReviewCreateInput = {
   id?: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutReviewInput
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -311,6 +337,8 @@ export type ReviewUncheckedCreateInput = {
   partnerId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -318,6 +346,8 @@ export type ReviewUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutReviewNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -331,6 +361,8 @@ export type ReviewUncheckedUpdateInput = {
   partnerId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -341,6 +373,8 @@ export type ReviewCreateManyInput = {
   partnerId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -348,6 +382,8 @@ export type ReviewUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -358,6 +394,8 @@ export type ReviewUncheckedUpdateManyInput = {
   partnerId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -383,6 +421,8 @@ export type ReviewCountOrderByAggregateInput = {
   partnerId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  reply?: Prisma.SortOrder
+  replyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -397,6 +437,8 @@ export type ReviewMaxOrderByAggregateInput = {
   partnerId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  reply?: Prisma.SortOrder
+  replyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -407,6 +449,8 @@ export type ReviewMinOrderByAggregateInput = {
   partnerId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  reply?: Prisma.SortOrder
+  replyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -534,6 +578,8 @@ export type ReviewCreateWithoutUserInput = {
   id?: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutReviewInput
   partner: Prisma.PartnerCreateNestedOneWithoutReviewsInput
@@ -545,6 +591,8 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   partnerId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -583,6 +631,8 @@ export type ReviewScalarWhereInput = {
   partnerId?: Prisma.StringFilter<"Review"> | string
   rating?: Prisma.IntFilter<"Review"> | number
   content?: Prisma.StringNullableFilter<"Review"> | string | null
+  reply?: Prisma.StringNullableFilter<"Review"> | string | null
+  replyAt?: Prisma.DateTimeNullableFilter<"Review"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
 }
 
@@ -590,6 +640,8 @@ export type ReviewCreateWithoutPartnerInput = {
   id?: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutReviewInput
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -601,6 +653,8 @@ export type ReviewUncheckedCreateWithoutPartnerInput = {
   userId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -633,6 +687,8 @@ export type ReviewCreateWithoutOrderInput = {
   id?: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
   partner: Prisma.PartnerCreateNestedOneWithoutReviewsInput
@@ -644,6 +700,8 @@ export type ReviewUncheckedCreateWithoutOrderInput = {
   partnerId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -667,6 +725,8 @@ export type ReviewUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
   partner?: Prisma.PartnerUpdateOneRequiredWithoutReviewsNestedInput
@@ -678,6 +738,8 @@ export type ReviewUncheckedUpdateWithoutOrderInput = {
   partnerId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -687,6 +749,8 @@ export type ReviewCreateManyUserInput = {
   partnerId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -694,6 +758,8 @@ export type ReviewUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutReviewNestedInput
   partner?: Prisma.PartnerUpdateOneRequiredWithoutReviewsNestedInput
@@ -705,6 +771,8 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   partnerId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -714,6 +782,8 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   partnerId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -723,6 +793,8 @@ export type ReviewCreateManyPartnerInput = {
   userId: string
   rating: number
   content?: string | null
+  reply?: string | null
+  replyAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -730,6 +802,8 @@ export type ReviewUpdateWithoutPartnerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutReviewNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -741,6 +815,8 @@ export type ReviewUncheckedUpdateWithoutPartnerInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -750,6 +826,8 @@ export type ReviewUncheckedUpdateManyWithoutPartnerInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   rating?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reply?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  replyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -762,6 +840,8 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   partnerId?: boolean
   rating?: boolean
   content?: boolean
+  reply?: boolean
+  replyAt?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -775,6 +855,8 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   partnerId?: boolean
   rating?: boolean
   content?: boolean
+  reply?: boolean
+  replyAt?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -788,6 +870,8 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   partnerId?: boolean
   rating?: boolean
   content?: boolean
+  reply?: boolean
+  replyAt?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -801,10 +885,12 @@ export type ReviewSelectScalar = {
   partnerId?: boolean
   rating?: boolean
   content?: boolean
+  reply?: boolean
+  replyAt?: boolean
   createdAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "userId" | "partnerId" | "rating" | "content" | "createdAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "userId" | "partnerId" | "rating" | "content" | "reply" | "replyAt" | "createdAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -835,6 +921,8 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     partnerId: string
     rating: number
     content: string | null
+    reply: string | null
+    replyAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["review"]>
   composites: {}
@@ -1268,6 +1356,8 @@ export interface ReviewFieldRefs {
   readonly partnerId: Prisma.FieldRef<"Review", 'String'>
   readonly rating: Prisma.FieldRef<"Review", 'Int'>
   readonly content: Prisma.FieldRef<"Review", 'String'>
+  readonly reply: Prisma.FieldRef<"Review", 'String'>
+  readonly replyAt: Prisma.FieldRef<"Review", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Review", 'DateTime'>
 }
     

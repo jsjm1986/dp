@@ -25,6 +25,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class ServiceItemDto {
@@ -55,6 +56,12 @@ class ApplyDto {
   @IsString()
   @MaxLength(20)
   city: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(16)
+  @Max(80)
+  age?: number;
 
   @IsOptional()
   @IsString()
@@ -93,35 +100,55 @@ class StatusDto {
   status: 'available' | 'rest';
 }
 
+class ReplyDto {
+  @IsString()
+  @MaxLength(300)
+  content: string;
+}
+
 @Controller('partner')
 @UseGuards(JwtAuthGuard)
 export class PartnerSelfController {
   constructor(private prisma: PrismaService) {}
 
-  /** 申请成为玩伴（提交后待平台审核） */
+  /** 申请成为玩伴（提交后待平台审核；被拒后可重新提交） */
   @Post('apply')
   async apply(@CurrentUser() userId: string, @Body() dto: ApplyDto) {
+    const data = {
+      city: dto.city,
+      district: dto.district,
+      age: dto.age,
+      bio: dto.bio,
+      tags: JSON.stringify(dto.tags ?? []),
+      photos: JSON.stringify(dto.photos ?? []),
+    };
+    const services = {
+      create: dto.services.map((s, i) => ({
+        name: s.name,
+        desc: s.desc,
+        price: s.price,
+        unit: s.unit,
+        miniNum: s.miniNum,
+        sort: i,
+      })),
+    };
     const exists = await this.prisma.partner.findUnique({ where: { userId } });
-    if (exists) throw new BadRequestException('你已是玩伴');
+    if (exists && exists.auditStatus !== 'rejected') {
+      throw new BadRequestException('你已是玩伴，请在资料页修改信息');
+    }
+    if (exists) {
+      // 被拒后重新申请：覆盖资料、重建服务、回到待审核（同一事务）
+      const partner = await this.prisma.$transaction(async (tx) => {
+        await tx.partnerService.deleteMany({ where: { partnerId: exists.id } });
+        return tx.partner.update({
+          where: { id: exists.id },
+          data: { ...data, auditStatus: 'pending', services },
+        });
+      });
+      return { id: partner.id };
+    }
     const partner = await this.prisma.partner.create({
-      data: {
-        userId,
-        city: dto.city,
-        district: dto.district,
-        bio: dto.bio,
-        tags: JSON.stringify(dto.tags ?? []),
-        photos: JSON.stringify(dto.photos ?? []),
-        services: {
-          create: dto.services.map((s, i) => ({
-            name: s.name,
-            desc: s.desc,
-            price: s.price,
-            unit: s.unit,
-            miniNum: s.miniNum,
-            sort: i,
-          })),
-        },
-      },
+      data: { userId, ...data, services },
     });
     return { id: partner.id };
   }
@@ -137,6 +164,7 @@ export class PartnerSelfController {
       id: full.id,
       city: full.city,
       district: full.district,
+      age: full.age,
       bio: full.bio,
       tags: JSON.parse(full.tags) as string[],
       photos: JSON.parse(full.photos) as string[],
@@ -159,26 +187,30 @@ export class PartnerSelfController {
   @Put('profile')
   async update(@CurrentUser() userId: string, @Body() dto: UpdateProfileDto) {
     const p = await this.mustBePartner(userId);
-    await this.prisma.partnerService.deleteMany({ where: { partnerId: p.id } });
-    await this.prisma.partner.update({
-      where: { id: p.id },
-      data: {
-        city: dto.city,
-        district: dto.district,
-        bio: dto.bio,
-        tags: JSON.stringify(dto.tags ?? []),
-        photos: JSON.stringify(dto.photos ?? []),
-        services: {
-          create: dto.services.map((s, i) => ({
-            name: s.name,
-            desc: s.desc,
-            price: s.price,
-            unit: s.unit,
-            miniNum: s.miniNum,
-            sort: i,
-          })),
+    // 重建服务项目与资料更新同一事务，避免部分失败导致服务被清空
+    await this.prisma.$transaction(async (tx) => {
+      await tx.partnerService.deleteMany({ where: { partnerId: p.id } });
+      await tx.partner.update({
+        where: { id: p.id },
+        data: {
+          city: dto.city,
+          district: dto.district,
+          age: dto.age,
+          bio: dto.bio,
+          tags: JSON.stringify(dto.tags ?? []),
+          photos: JSON.stringify(dto.photos ?? []),
+          services: {
+            create: dto.services.map((s, i) => ({
+              name: s.name,
+              desc: s.desc,
+              price: s.price,
+              unit: s.unit,
+              miniNum: s.miniNum,
+              sort: i,
+            })),
+          },
         },
-      },
+      });
     });
     return this.profile(userId);
   }
@@ -186,6 +218,9 @@ export class PartnerSelfController {
   @Put('status')
   async setStatus(@CurrentUser() userId: string, @Body() dto: StatusDto) {
     const p = await this.mustBePartner(userId);
+    if (dto.status === 'available' && p.auditStatus !== 'approved') {
+      throw new BadRequestException('审核通过后才能上线接单');
+    }
     await this.prisma.partner.update({ where: { id: p.id }, data: { status: dto.status } });
     return { status: dto.status };
   }
@@ -240,13 +275,14 @@ export class PartnerSelfController {
 
   /** 回复评价 */
   @Post('reviews/:id/reply')
-  async replyReview(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: { content: string }) {
+  async replyReview(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: ReplyDto) {
     const p = await this.mustBePartner(userId);
     const r = await this.prisma.review.findUnique({ where: { id } });
     if (!r || r.partnerId !== p.id) throw new BadRequestException('评价不存在');
     if (r.reply) throw new BadRequestException('已回复过该评价');
     const content = (dto.content ?? '').trim();
     if (!content) throw new BadRequestException('回复内容不能为空');
+    assertClean(content, '回复');
     await this.prisma.review.update({
       where: { id },
       data: { reply: content.slice(0, 300), replyAt: new Date() },
@@ -275,24 +311,24 @@ export class PartnerSelfController {
     };
   }
 
-  /** 申请提现（先扣余额，拒绝退回） */
+  /** 申请提现（先扣余额，拒绝退回）；事务内复查防并发重复提现/超扣 */
   @Post('withdraw')
   async withdraw(@CurrentUser() userId: string, @Body() dto: { amount: number }) {
     const p = await this.mustBePartner(userId);
     const amount = Math.round(Number(dto.amount) * 100) / 100;
     if (!amount || amount <= 0) throw new BadRequestException('金额无效');
-    if (amount > Number(p.balance)) throw new BadRequestException('余额不足');
-    const pending = await this.prisma.withdrawal.count({
-      where: { partnerId: p.id, status: 'pending' },
-    });
-    if (pending) throw new BadRequestException('有提现申请处理中，请等待审核');
-    const [, w] = await this.prisma.$transaction([
-      this.prisma.partner.update({
-        where: { id: p.id },
+    const w = await this.prisma.$transaction(async (tx) => {
+      const pending = await tx.withdrawal.count({
+        where: { partnerId: p.id, status: 'pending' },
+      });
+      if (pending) throw new BadRequestException('有提现申请处理中，请等待审核');
+      const deducted = await tx.partner.updateMany({
+        where: { id: p.id, balance: { gte: amount } },
         data: { balance: { decrement: amount } },
-      }),
-      this.prisma.withdrawal.create({ data: { partnerId: p.id, amount } }),
-    ]);
+      });
+      if (!deducted.count) throw new BadRequestException('余额不足');
+      return tx.withdrawal.create({ data: { partnerId: p.id, amount } });
+    });
     return { id: w.id, status: w.status };
   }
 

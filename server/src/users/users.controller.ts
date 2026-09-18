@@ -79,17 +79,19 @@ export class UsersController {
     return admin;
   }
 
-  /** 绑定推荐人（只能绑一次，不能绑自己） */
+  /** 绑定推荐人（只能绑一次，不能绑自己）；条件更新防并发重复绑定 */
   @Post('bind-inviter')
   async bindInviter(@CurrentUser() userId: string, @Body() dto: { code: string }) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (user.inviterId) throw new BadRequestException('已绑定过推荐人');
     const inviter = await this.prisma.user.findUnique({
       where: { inviteCode: (dto.code ?? '').trim().toUpperCase() },
     });
     if (!inviter) throw new BadRequestException('邀请码不存在');
     if (inviter.id === userId) throw new BadRequestException('不能绑定自己');
-    await this.prisma.user.update({ where: { id: userId }, data: { inviterId: inviter.id } });
+    const bound = await this.prisma.user.updateMany({
+      where: { id: userId, inviterId: null },
+      data: { inviterId: inviter.id },
+    });
+    if (!bound.count) throw new BadRequestException('已绑定过推荐人');
     return { bound: true, inviter: inviter.nickname };
   }
 
@@ -164,21 +166,23 @@ export class UsersController {
     return { balance: Number(user.balance) };
   }
 
-  /** 充值卡核销：原子占用防重复使用 */
+  /** 充值卡核销：占用与入账同一事务，条件更新防重复使用 */
   @Post('redeem')
   async redeem(@CurrentUser() userId: string, @Body() dto: { code: string }) {
     const code = (dto.code ?? '').trim().toUpperCase();
     if (!code) throw new BadRequestException('请输入卡密');
     const card = await this.prisma.rechargeCard.findUnique({ where: { code } });
     if (!card) throw new BadRequestException('卡密无效');
-    const claim = await this.prisma.rechargeCard.updateMany({
-      where: { code, usedById: null },
-      data: { usedById: userId, usedAt: new Date() },
-    });
-    if (claim.count === 0) throw new BadRequestException('该卡已被使用');
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: { balance: { increment: card.amount } },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const claim = await tx.rechargeCard.updateMany({
+        where: { code, usedById: null },
+        data: { usedById: userId, usedAt: new Date() },
+      });
+      if (claim.count === 0) throw new BadRequestException('该卡已被使用');
+      return tx.user.update({
+        where: { id: userId },
+        data: { balance: { increment: card.amount } },
+      });
     });
     return { balance: Number(user.balance), amount: Number(card.amount) };
   }

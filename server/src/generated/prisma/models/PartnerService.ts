@@ -446,9 +446,9 @@ export type PartnerServiceSumOrderByAggregateInput = {
   sort?: Prisma.SortOrder
 }
 
-export type PartnerServiceScalarRelationFilter = {
-  is?: Prisma.PartnerServiceWhereInput
-  isNot?: Prisma.PartnerServiceWhereInput
+export type PartnerServiceNullableScalarRelationFilter = {
+  is?: Prisma.PartnerServiceWhereInput | null
+  isNot?: Prisma.PartnerServiceWhereInput | null
 }
 
 export type PartnerServiceCreateNestedManyWithoutPartnerInput = {
@@ -499,10 +499,12 @@ export type PartnerServiceCreateNestedOneWithoutItemsInput = {
   connect?: Prisma.PartnerServiceWhereUniqueInput
 }
 
-export type PartnerServiceUpdateOneRequiredWithoutItemsNestedInput = {
+export type PartnerServiceUpdateOneWithoutItemsNestedInput = {
   create?: Prisma.XOR<Prisma.PartnerServiceCreateWithoutItemsInput, Prisma.PartnerServiceUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.PartnerServiceCreateOrConnectWithoutItemsInput
   upsert?: Prisma.PartnerServiceUpsertWithoutItemsInput
+  disconnect?: Prisma.PartnerServiceWhereInput | boolean
+  delete?: Prisma.PartnerServiceWhereInput | boolean
   connect?: Prisma.PartnerServiceWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerServiceUpdateToOneWithWhereWithoutItemsInput, Prisma.PartnerServiceUpdateWithoutItemsInput>, Prisma.PartnerServiceUncheckedUpdateWithoutItemsInput>
 }

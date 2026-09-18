@@ -27,16 +27,22 @@ export class MiscController {
     const [banners, recommend, newest] = await this.prisma.$transaction([
       this.prisma.banner.findMany({ orderBy: { sort: 'asc' } }),
       this.prisma.partner.findMany({
-        where: { auditStatus: 'approved' },
+        where: { auditStatus: 'approved', user: { is: { disabled: false } } },
         orderBy: [{ recommended: 'desc' }, { rating: 'desc' }, { serviceCount: 'desc' }],
         take: 6,
-        include: { user: { select: { nickname: true, avatar: true, gender: true } } },
+        include: {
+          user: { select: { nickname: true, avatar: true, gender: true } },
+          _count: { select: { follows: true } },
+        },
       }),
       this.prisma.partner.findMany({
-        where: { auditStatus: 'approved' },
+        where: { auditStatus: 'approved', user: { is: { disabled: false } } },
         orderBy: { createdAt: 'desc' },
         take: 6,
-        include: { user: { select: { nickname: true, avatar: true, gender: true } } },
+        include: {
+          user: { select: { nickname: true, avatar: true, gender: true } },
+          _count: { select: { follows: true } },
+        },
       }),
     ]);
 
@@ -56,9 +62,13 @@ export class MiscController {
       tags: JSON.parse(p.tags) as string[],
       status: p.status,
       verified: p.verified,
+      recommended: p.recommended,
+      age: p.age,
       rating: p.rating,
       serviceCount: p.serviceCount,
       cover: (JSON.parse(p.photos) as string[])[0] ?? null,
+      followerCount: p._count.follows,
+      distance: null,
       followed: followed.has(p.id),
     });
 

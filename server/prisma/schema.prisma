@@ -117,8 +117,8 @@ model OrderItem {
   id        String         @id @default(cuid())
   orderId   String
   order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  serviceId String
-  service   PartnerService @relation(fields: [serviceId], references: [id])
+  serviceId String?
+  service   PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   name      String
   price     Decimal
   unit      String

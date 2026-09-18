@@ -120,6 +120,7 @@ export interface CommentRow {
 export interface PartnerApplyPayload {
   city: string;
   district?: string;
+  age?: number;
   bio?: string;
   tags?: string[];
   photos?: string[];

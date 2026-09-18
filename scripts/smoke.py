@@ -204,6 +204,118 @@ def main():
         call("POST", f"/admin/withdrawals/{w['id']}/approve", admin_tok, expect=201)
     check("admin.withdrawal-approve", mine_wd is not None)
 
+    # ---------- 业务逻辑回归 ----------
+    # 过去时间下单被拒
+    code, _ = call("POST", "/orders", ua_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+        "appointAt": "2000-01-01T00:00:00.000Z",
+    }, expect=400)
+    check("order.past-appoint 400", code == 400)
+
+    # 重复支付被拒
+    code, _ = call("POST", f"/orders/{oid}/pay", ua_tok, {"method": "balance"}, expect=400)
+    check("order.dup-pay 400", code == 400)
+
+    # 重复评价被拒
+    code, _ = call("POST", f"/orders/{oid}/review", ua_tok, {"rating": 4, "content": "重复评价"}, expect=400)
+    check("order.dup-review 400", code == 400)
+
+    # 未支付取消退券 → 已支付拒单退款退券
+    call("POST", "/user/recharge", ub_tok, {"amount": 1000})
+    code, claimable2 = call("GET", "/coupons/claimable", ub_tok, expect=200)
+    goods = svc2["price"] * svc2["miniNum"]
+    c1 = next((c for c in claimable2 if not c["claimed"] and (c["left"] == -1 or c["left"] > 0) and c["minSpend"] <= goods), None)
+    uc_row = None
+    if c1:
+        call("POST", f"/coupons/{c1['id']}/claim", ub_tok, expect=201)
+        code, mine2 = call("GET", "/coupons/mine", ub_tok, expect=200)
+        uc_row = next((m for m in mine2 if m["title"] == c1["title"] and not m["used"]), None)
+    if uc_row:
+        code, o3 = call("POST", "/orders", ub_tok, {
+            "partnerId": pid2,
+            "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+            "appointAt": "2030-01-03T10:00:00.000Z",
+            "userCouponId": uc_row["id"],
+        }, expect=201)
+        call("POST", f"/orders/{o3['id']}/cancel", ub_tok, {"reason": "不要了"}, expect=201)
+        code, mine3 = call("GET", "/coupons/mine", ub_tok, expect=200)
+        restored = next((m for m in mine3 if m["id"] == uc_row["id"]), None)
+        check("coupon.released-on-cancel", restored is not None and not restored["used"])
+
+        # 用退回的券再下单→余额支付→玩伴拒单→退款退券
+        code, o4 = call("POST", "/orders", ub_tok, {
+            "partnerId": pid2,
+            "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+            "appointAt": "2030-01-03T11:00:00.000Z",
+            "userCouponId": uc_row["id"],
+        }, expect=201)
+        _, b1 = call("GET", "/user/profile", ub_tok, expect=200)
+        call("POST", f"/orders/{o4['id']}/pay", ub_tok, {"method": "balance"}, expect=201)
+        call("POST", f"/partner/orders/{o4['id']}/reject", pw_tok, expect=201)
+        _, b2 = call("GET", "/user/profile", ub_tok, expect=200)
+        code, od4 = call("GET", f"/orders/{o4['id']}", ub_tok, expect=200)
+        check("order.reject-status", od4["status"] == "rejected", od4["status"])
+        check("order.reject-refund", b2["balance"] == b1["balance"], f"{b1['balance']}->{b2['balance']}")
+        code, mine4 = call("GET", "/coupons/mine", ub_tok, expect=200)
+        restored2 = next((m for m in mine4 if m["id"] == uc_row["id"]), None)
+        check("coupon.released-on-reject", restored2 is not None and not restored2["used"])
+    else:
+        check("coupon.released-on-cancel", False, "无可领券")
+        check("order.reject-refund", False, "无可领券")
+        check("coupon.released-on-reject", False, "无可领券")
+
+    # 已支付取消：全额退款
+    code, o5 = call("POST", "/orders", ub_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc2["id"], "num": svc2["miniNum"]}],
+        "appointAt": "2030-01-05T10:00:00.000Z",
+    }, expect=201)
+    _, b1 = call("GET", "/user/profile", ub_tok, expect=200)
+    call("POST", f"/orders/{o5['id']}/pay", ub_tok, {"method": "balance"}, expect=201)
+    call("POST", f"/orders/{o5['id']}/cancel", ub_tok, {"reason": "测试取消"}, expect=201)
+    _, b2 = call("GET", "/user/profile", ub_tok, expect=200)
+    code, od5 = call("GET", f"/orders/{o5['id']}", ub_tok, expect=200)
+    check("order.paid-cancel-refunded", od5["status"] == "refunded", od5["status"])
+    check("order.paid-cancel-refund", b2["balance"] == b1["balance"])
+
+    # 加钟起购校验：玩伴服务改为起购2
+    call("PUT", "/partner/profile", pw_tok, {
+        "city": "上海", "district": "徐汇区", "age": 25, "bio": "冒烟测试玩伴",
+        "tags": ["陪逛"], "photos": [],
+        "services": [{"name": "陪逛", "price": 100, "unit": "小时", "miniNum": 2}],
+    }, expect=200)
+    _, pd3 = call("GET", f"/partners/{pid2}", ua_tok, expect=200)
+    svc3 = pd3["services"][0]
+    code, o6 = call("POST", "/orders", ub_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc3["id"], "num": 2}],
+        "appointAt": "2030-01-06T10:00:00.000Z",
+    }, expect=201)
+    call("POST", f"/orders/{o6['id']}/pay", ub_tok, {"method": "balance"}, expect=201)
+    call("POST", f"/partner/orders/{o6['id']}/accept", pw_tok, expect=201)
+    code, _ = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 1}]}, expect=400)
+    check("order.extend-minNum 400", code == 400)
+    code, _ = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=201)
+    check("order.extend-ok", code == 201)
+
+    # 评价回复：敏感词拦截 + 正常回复
+    code, revs = call("GET", "/partner/reviews", pw_tok, expect=200)
+    rv = next((r for r in revs if r["content"] == "冒烟好评" and not r["reply"]), None)
+    if rv:
+        code, _ = call("POST", f"/partner/reviews/{rv['id']}/reply", pw_tok, {"content": "小心诈骗哦"}, expect=400)
+        check("review.reply-sensitive 400", code == 400)
+        code, _ = call("POST", f"/partner/reviews/{rv['id']}/reply", pw_tok, {"content": "谢谢支持"}, expect=201)
+        check("review.reply-ok", code == 201)
+    else:
+        check("review.reply-ok", False, "no review found")
+
+    # 禁用用户存量 JWT 失效
+    call("PUT", f"/admin/users/{ub_id}/disabled", admin_tok, {"disabled": True}, expect=200)
+    code, _ = call("GET", "/user/profile", ub_tok, expect=401)
+    check("disabled.jwt 401", code == 401)
+    call("PUT", f"/admin/users/{ub_id}/disabled", admin_tok, {"disabled": False}, expect=200)
+
     # ---------- 动态 ----------
     code, d = call("POST", "/dynamics", ua_tok, {"content": f"冒烟动态{RUN}", "city": "上海"}, expect=201)
     check("dynamic.create", code == 201)

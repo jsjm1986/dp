@@ -36,21 +36,21 @@ export class CouponsController {
     }));
   }
 
-  /** 领券 */
+  /** 领券：事务内复查余量与重复领取，防并发超发 */
   @Post(':id/claim')
   async claim(@CurrentUser() uid: string, @Param('id') id: string) {
-    const coupon = await this.prisma.coupon.findUnique({ where: { id } });
-    if (!coupon) throw new NotFoundException('券不存在');
-    if (coupon.expiresAt < new Date()) throw new BadRequestException('券已过期');
-    if (coupon.total >= 0 && coupon.claimed >= coupon.total) throw new BadRequestException('已领完');
-    const exists = await this.prisma.userCoupon.findUnique({
-      where: { userId_couponId: { userId: uid, couponId: id } },
+    const uc = await this.prisma.$transaction(async (tx) => {
+      const coupon = await tx.coupon.findUnique({ where: { id } });
+      if (!coupon) throw new NotFoundException('券不存在');
+      if (coupon.expiresAt < new Date()) throw new BadRequestException('券已过期');
+      if (coupon.total >= 0 && coupon.claimed >= coupon.total) throw new BadRequestException('已领完');
+      const exists = await tx.userCoupon.findUnique({
+        where: { userId_couponId: { userId: uid, couponId: id } },
+      });
+      if (exists) throw new BadRequestException('你已领过这张券');
+      await tx.coupon.update({ where: { id }, data: { claimed: { increment: 1 } } });
+      return tx.userCoupon.create({ data: { userId: uid, couponId: id } });
     });
-    if (exists) throw new BadRequestException('你已领过这张券');
-    const [, uc] = await this.prisma.$transaction([
-      this.prisma.coupon.update({ where: { id }, data: { claimed: { increment: 1 } } }),
-      this.prisma.userCoupon.create({ data: { userId: uid, couponId: id } }),
-    ]);
     return { id: uc.id };
   }
 

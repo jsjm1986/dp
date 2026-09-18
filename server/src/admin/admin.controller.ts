@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { randomBytes } from 'crypto';
 import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -301,29 +302,31 @@ export class AdminController {
   @Post('withdrawals/:id/approve')
   async approveWithdrawal(@Param('id') id: string) {
     const w = await this.prisma.withdrawal.findUnique({ where: { id } });
-    if (!w || w.status !== 'pending') throw new BadRequestException('申请不存在或已处理');
-    await this.prisma.withdrawal.update({
-      where: { id },
+    if (!w) throw new BadRequestException('申请不存在');
+    const res = await this.prisma.withdrawal.updateMany({
+      where: { id, status: 'pending' },
       data: { status: 'done', handledAt: new Date() },
     });
+    if (!res.count) throw new BadRequestException('该申请已处理');
     return { ok: true };
   }
 
   @Post('withdrawals/:id/reject')
   async rejectWithdrawal(@Param('id') id: string, @Body() body: { remark?: string }) {
     const w = await this.prisma.withdrawal.findUnique({ where: { id } });
-    if (!w || w.status !== 'pending') throw new BadRequestException('申请不存在或已处理');
-    await this.prisma.$transaction([
-      this.prisma.withdrawal.update({
-        where: { id },
+    if (!w) throw new BadRequestException('申请不存在');
+    // 条件更新+同事务退款，防并发重复退款
+    await this.prisma.$transaction(async (tx) => {
+      const res = await tx.withdrawal.updateMany({
+        where: { id, status: 'pending' },
         data: { status: 'rejected', remark: body.remark, handledAt: new Date() },
-      }),
-      // 拒绝退回余额
-      this.prisma.partner.update({
+      });
+      if (!res.count) throw new BadRequestException('该申请已处理');
+      await tx.partner.update({
         where: { id: w.partnerId },
         data: { balance: { increment: w.amount } },
-      }),
-    ]);
+      });
+    });
     return { ok: true };
   }
 
@@ -457,6 +460,8 @@ export class AdminController {
 
   @Delete('coupons/:id')
   async deleteCoupon(@Param('id') id: string) {
+    const claimed = await this.prisma.userCoupon.count({ where: { couponId: id } });
+    if (claimed) throw new BadRequestException('该券已被用户领取，不能删除');
     await this.prisma.coupon.delete({ where: { id } });
     return { ok: true };
   }
@@ -489,11 +494,13 @@ export class AdminController {
     if (!amount || Math.abs(amount) > 100000) throw new BadRequestException('金额无效');
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
-    if (Number(user.balance) + amount < 0) throw new BadRequestException('扣减后余额不能为负');
-    const updated = await this.prisma.user.update({
-      where: { id },
+    // 负数调整用条件更新防并发透支
+    const res = await this.prisma.user.updateMany({
+      where: { id, ...(amount < 0 ? { balance: { gte: -amount } } : {}) },
       data: { balance: { increment: amount } },
     });
+    if (!res.count) throw new BadRequestException('扣减后余额不能为负');
+    const updated = await this.prisma.user.findUniqueOrThrow({ where: { id } });
     return { balance: Number(updated.balance) };
   }
 
@@ -549,42 +556,42 @@ export class AdminController {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new BadRequestException('订单不存在');
     if (order.status === 'pending_payment') {
-      await this.prisma.order.update({
-        where: { id },
-        data: { status: 'cancelled', cancelReason: body.reason ?? '管理员取消' },
-      });
-      if (order.userCouponId) {
-        await this.prisma.userCoupon.update({
-          where: { id: order.userCouponId },
-          data: { used: false, usedAt: null, orderId: null },
+      // 状态变更与退券同一事务；条件更新防与支付竞争
+      await this.prisma.$transaction(async (tx) => {
+        const res = await tx.order.updateMany({
+          where: { id, status: 'pending_payment' },
+          data: { status: 'cancelled', cancelReason: body.reason ?? '管理员取消' },
         });
-      }
+        if (!res.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
+        if (order.userCouponId) {
+          await tx.userCoupon.update({
+            where: { id: order.userCouponId },
+            data: { used: false, usedAt: null, orderId: null },
+          });
+        }
+      });
       return { ok: true, status: 'cancelled' };
     }
     if (['pending_accept', 'pending_service'].includes(order.status)) {
-      const ops: any[] = [
-        this.prisma.order.update({
-          where: { id },
+      await this.prisma.$transaction(async (tx) => {
+        const res = await tx.order.updateMany({
+          where: { id, status: order.status },
           data: { status: 'refunded', cancelReason: body.reason ?? '管理员取消' },
-        }),
-      ];
-      if (order.payMethod === 'balance') {
-        ops.push(
-          this.prisma.user.update({
+        });
+        if (!res.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
+        if (order.payMethod === 'balance') {
+          await tx.user.update({
             where: { id: order.userId },
             data: { balance: { increment: order.totalAmount } },
-          }),
-        );
-      }
-      if (order.userCouponId) {
-        ops.push(
-          this.prisma.userCoupon.update({
+          });
+        }
+        if (order.userCouponId) {
+          await tx.userCoupon.update({
             where: { id: order.userCouponId },
             data: { used: false, usedAt: null, orderId: null },
-          }),
-        );
-      }
-      await this.prisma.$transaction(ops);
+          });
+        }
+      });
       return { ok: true, status: 'refunded' };
     }
     throw new BadRequestException('该状态不可取消（服务中/已完成请联系客服处理）');
@@ -650,7 +657,7 @@ export class AdminController {
       Array.from({ length: count }, () =>
         this.prisma.rechargeCard.create({
           data: {
-            code: 'DP' + Math.random().toString(36).slice(2, 10).toUpperCase(),
+            code: 'DP' + randomBytes(5).toString('hex').toUpperCase(),
             amount,
             batch,
           },

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -38,7 +38,10 @@ export class PartnersService {
     const page = Math.max(1, q.page ?? 1);
     const pageSize = Math.min(50, q.pageSize ?? 10);
 
-    const where: Prisma.PartnerWhereInput = { auditStatus: 'approved' };
+    const where: Prisma.PartnerWhereInput = {
+      auditStatus: 'approved',
+      user: { is: { disabled: false } },
+    };
     if (q.city) where.city = { contains: q.city };
     if (q.keyword) {
       where.OR = [
@@ -86,7 +89,7 @@ export class PartnersService {
     const p = await this.prisma.partner.findUnique({
       where: { id },
       include: {
-        user: { select: { nickname: true, avatar: true, gender: true } },
+        user: { select: { nickname: true, avatar: true, gender: true, disabled: true } },
         services: { orderBy: { sort: 'asc' } },
         reviews: {
           orderBy: { createdAt: 'desc' },
@@ -96,7 +99,10 @@ export class PartnersService {
         _count: { select: { follows: true, reviews: true } },
       },
     });
-    if (!p) throw new NotFoundException('玩伴不存在');
+    // 未通过审核或账号被禁用的玩伴不对外展示（本人可预览）
+    if (!p || (p.userId !== viewerId && (p.auditStatus !== 'approved' || p.user.disabled))) {
+      throw new NotFoundException('玩伴不存在');
+    }
     await this.prisma.partner.update({ where: { id }, data: { viewCount: { increment: 1 } } });
 
     const followed = viewerId
@@ -181,7 +187,11 @@ export class PartnersService {
   }
 
   async follow(userId: string, partnerId: string) {
-    await this.prisma.partner.findUniqueOrThrow({ where: { id: partnerId } });
+    const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
+    if (!partner || partner.auditStatus !== 'approved') {
+      throw new NotFoundException('玩伴不存在');
+    }
+    if (partner.userId === userId) throw new BadRequestException('不能关注自己');
     await this.prisma.follow.upsert({
       where: { userId_partnerId: { userId, partnerId } },
       create: { userId, partnerId },

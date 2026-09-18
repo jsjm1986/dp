@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -53,8 +54,8 @@ export class DynamicsController {
     const p = Math.max(1, page ? Number(page) : 1);
     const size = Math.min(50, pageSize ? Number(pageSize) : 10);
 
-    // 关注流：仅看我关注的玩伴/自己的动态
-    const where: any = {};
+    // 关注流：仅看我关注的玩伴/自己的动态；禁用用户的动态不对外展示
+    const where: any = { user: { is: { disabled: false } } };
     if (tab === 'follow' && userId) {
       const follows = await this.prisma.follow.findMany({
         where: { userId },
@@ -112,9 +113,13 @@ export class DynamicsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@CurrentUser() userId: string, @Body() dto: CreateDynamicDto) {
-    assertClean(dto.content);
+    const content = dto.content.trim();
+    if (!content && !(dto.images ?? []).length) {
+      throw new BadRequestException('动态内容不能为空');
+    }
+    if (content) assertClean(content);
     const d = await this.prisma.dynamic.create({
-      data: { userId, content: dto.content, images: JSON.stringify(dto.images ?? []), city: dto.city },
+      data: { userId, content, images: JSON.stringify(dto.images ?? []), city: dto.city },
     });
     return { id: d.id };
   }
@@ -154,6 +159,8 @@ export class DynamicsController {
   @Post(':id/like')
   @UseGuards(JwtAuthGuard)
   async like(@CurrentUser() userId: string, @Param('id') id: string) {
+    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true } });
+    if (!d) throw new NotFoundException('动态不存在');
     await this.prisma.dynamicLike.upsert({
       where: { dynamicId_userId: { dynamicId: id, userId } },
       create: { dynamicId: id, userId },
@@ -192,9 +199,13 @@ export class DynamicsController {
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async comment(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CommentDto) {
-    assertClean(dto.content, '评论');
+    const content = dto.content.trim();
+    if (!content) throw new BadRequestException('评论内容不能为空');
+    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true } });
+    if (!d) throw new NotFoundException('动态不存在');
+    assertClean(content, '评论');
     const c = await this.prisma.dynamicComment.create({
-      data: { dynamicId: id, userId, content: dto.content },
+      data: { dynamicId: id, userId, content },
       include: { user: { select: { nickname: true, avatar: true } } },
     });
     const commentCount = await this.prisma.dynamicComment.count({ where: { dynamicId: id } });

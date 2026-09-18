@@ -23,12 +23,20 @@ async function resolveUser(req: Request, jwt: JwtService): Promise<string | null
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private jwt: JwtService) {}
+  constructor(
+    private jwt: JwtService,
+    private prisma: PrismaService,
+  ) {}
 
   async canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest<Request & { userId?: string }>();
     const userId = await resolveUser(req, this.jwt);
     if (!userId) throw new UnauthorizedException('请先登录');
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { disabled: true },
+    });
+    if (!user || user.disabled) throw new UnauthorizedException('账号已被禁用');
     req.userId = userId;
     return true;
   }
@@ -36,11 +44,22 @@ export class JwtAuthGuard implements CanActivate {
 
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
-  constructor(private jwt: JwtService) {}
+  constructor(
+    private jwt: JwtService,
+    private prisma: PrismaService,
+  ) {}
 
   async canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest<Request & { userId?: string }>();
-    req.userId = (await resolveUser(req, this.jwt)) ?? undefined;
+    const userId = await resolveUser(req, this.jwt);
+    if (userId) {
+      // 禁用账号按匿名处理，不注入身份
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { disabled: true },
+      });
+      if (user && !user.disabled) req.userId = userId;
+    }
     return true;
   }
 }
@@ -55,9 +74,11 @@ export class AdminGuard implements CanActivate {
     if (!req.userId) throw new UnauthorizedException('请先登录');
     const user = await this.prisma.user.findUnique({
       where: { id: req.userId },
-      select: { role: true },
+      select: { role: true, disabled: true },
     });
-    if (user?.role !== 'admin') throw new ForbiddenException('需要管理员权限');
+    if (user?.role !== 'admin' || user.disabled) {
+      throw new ForbiddenException('需要管理员权限');
+    }
     return true;
   }
 }

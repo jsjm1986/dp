@@ -92,8 +92,11 @@ export class ChatController {
   @Post('send')
   async send(@CurrentUser('id') uid: string, @Body() dto: SendMessageDto) {
     if (dto.peerId === uid) throw new BadRequestException('不能和自己聊天');
+    const content = dto.content.trim();
+    if (!content) throw new BadRequestException('消息内容不能为空');
     const peer = await this.prisma.user.findUnique({ where: { id: dto.peerId } });
     if (!peer) throw new NotFoundException('对方用户不存在');
+    if (peer.disabled) throw new BadRequestException('对方账号不可用');
     const blocked = await this.prisma.block.findFirst({
       where: {
         OR: [
@@ -103,12 +106,12 @@ export class ChatController {
       },
     });
     if (blocked) throw new BadRequestException('消息发送失败，对方无法接收');
-    assertClean(dto.content, '消息');
+    assertClean(content, '消息');
     const msg = await this.prisma.message.create({
       data: {
         senderId: uid,
         receiverId: dto.peerId,
-        content: dto.content.trim(),
+        content,
         orderId: dto.orderId || null,
       },
     });

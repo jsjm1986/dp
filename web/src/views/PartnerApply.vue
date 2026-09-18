@@ -11,6 +11,7 @@ const editMode = ref(false);
 
 const city = ref('');
 const district = ref('');
+const age = ref<number | undefined>();
 const bio = ref('');
 const tagInput = ref('');
 const tags = ref<string[]>([]);
@@ -57,6 +58,7 @@ async function submit() {
     const payload = {
       city: city.value,
       district: district.value || undefined,
+      age: age.value || undefined,
       bio: bio.value || undefined,
       tags: tags.value,
       photos: photos.value,
@@ -88,6 +90,7 @@ onMounted(async () => {
     const p: PartnerProfile = await api.partnerProfile();
     city.value = p.city;
     district.value = p.district ?? '';
+    age.value = p.age ?? undefined;
     bio.value = p.bio ?? '';
     tags.value = p.tags ?? [];
     photos.value = p.photos ?? [];
@@ -109,6 +112,7 @@ onMounted(async () => {
       <div class="pa__title">基本信息</div>
       <van-cell title="常驻城市" :value="city || '请选择'" is-link @click="showCityPicker = true" />
       <van-field v-model="district" label="常驻区域" placeholder="如 徐汇区" />
+      <van-field v-model.number="age" type="digit" label="年龄" placeholder="如 24" />
       <van-field
         v-model="bio"
         label="个人介绍"

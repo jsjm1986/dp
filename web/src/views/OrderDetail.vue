@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showConfirmDialog, showToast } from 'vant';
 import { api, type Order } from '../api';
@@ -18,6 +18,11 @@ const showExtend = ref(false);
 const extendServices = ref<Array<{ id: string; name: string; price: number; unit: string; miniNum: number }>>([]);
 const extendQty = ref<Record<string, number>>({});
 const extending = ref(false);
+// 催单冷却 60s（与后端限制一致），不是永久禁用
+const urgeCooling = computed(() => {
+  const t = order.value?.urgedAt;
+  return !!t && Date.now() - new Date(t).getTime() < 60_000;
+});
 let poller: ReturnType<typeof setInterval> | null = null;
 
 async function load() {
@@ -185,8 +190,8 @@ onUnmounted(() => poller && clearInterval(poller));
       <template v-else-if="['pending_accept', 'pending_service'].includes(order.status)">
         <van-button v-if="order.status === 'pending_service'" round plain @click="openExtend">加钟</van-button>
         <van-button round plain @click="cancel">申请退款</van-button>
-        <van-button round type="primary" class="od__bar-main" :disabled="!!order.urgedAt" @click="urge">
-          {{ order.urgedAt ? '已催单' : '催服务' }}
+        <van-button round type="primary" class="od__bar-main" :disabled="urgeCooling" @click="urge">
+          {{ urgeCooling ? '已催单' : '催服务' }}
         </van-button>
       </template>
       <template v-else-if="order.status === 'serving'">

@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
@@ -57,21 +58,20 @@ const DYNAMICS = [
 
 async function main() {
   const prisma = new PrismaClient({
-    adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? 'file:./dev.db' }),
+    adapter: new PrismaBetterSqlite3({
+      url: process.env.DATABASE_URL ?? `file:${join(process.cwd(), 'dev.db')}`,
+    }),
   });
 
-  // 清库
-  await prisma.$executeRawUnsafe('DELETE FROM "OrderItem"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Review"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Order"');
-  await prisma.$executeRawUnsafe('DELETE FROM "DynamicLike"');
-  await prisma.$executeRawUnsafe('DELETE FROM "DynamicComment"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Dynamic"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Follow"');
-  await prisma.$executeRawUnsafe('DELETE FROM "PartnerService"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Partner"');
-  await prisma.$executeRawUnsafe('DELETE FROM "User"');
-  await prisma.$executeRawUnsafe('DELETE FROM "Banner"');
+  // 清库：按外键依赖顺序删除全部业务表（Setting 配置保留）
+  for (const t of [
+    'Message', 'Commission', 'UserCoupon', 'Withdrawal', 'RechargeCard',
+    'SmsCode', 'Block', 'OrderItem', 'Review', 'Order',
+    'DynamicLike', 'DynamicComment', 'Dynamic', 'Follow',
+    'PartnerService', 'Partner', 'User', 'Coupon', 'Banner',
+  ]) {
+    await prisma.$executeRawUnsafe(`DELETE FROM "${t}"`);
+  }
 
   for (let i = 0; i < PARTNERS.length; i++) {
     const p = PARTNERS[i];

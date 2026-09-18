@@ -111,8 +111,8 @@ onMounted(async () => {
     <div class="card pa__block">
       <div class="pa__title">基本信息</div>
       <van-cell title="常驻城市" :value="city || '请选择'" is-link @click="showCityPicker = true" />
-      <van-field v-model="district" label="常驻区域" placeholder="如 徐汇区" />
-      <van-field v-model.number="age" type="digit" label="年龄" placeholder="如 24" />
+      <van-field v-model="district" label="常驻区域" placeholder="如 徐汇区" maxlength="30" />
+      <van-field v-model.number="age" type="digit" label="年龄" placeholder="如 24" maxlength="2" />
       <van-field
         v-model="bio"
         label="个人介绍"
@@ -129,7 +129,7 @@ onMounted(async () => {
       <div class="pa__tags">
         <span v-for="t in tags" :key="t" class="tag-chip" @click="tags.splice(tags.indexOf(t), 1)">{{ t }} ×</span>
       </div>
-      <van-field v-model="tagInput" placeholder="输入标签后回车添加" @keydown.enter.prevent="addTag(tagInput)" />
+      <van-field v-model="tagInput" placeholder="输入标签后回车添加" maxlength="20" @keydown.enter.prevent="addTag(tagInput)" />
       <div class="pa__quick">
         <span v-for="t in quickTags" :key="t" class="pa__quick-tag" @click="addTag(t)">{{ t }}</span>
       </div>
@@ -153,7 +153,7 @@ onMounted(async () => {
       </div>
       <div v-for="(s, i) in services" :key="i" class="pa__svc">
         <div class="pa__svc-head">
-          <van-field v-model="s.name" placeholder="服务名称，如 城市陪同漫步" />
+          <van-field v-model="s.name" placeholder="服务名称，如 城市陪同漫步" maxlength="30" />
           <van-icon name="cross" color="#999" @click="services.splice(i, 1)" />
         </div>
         <div class="pa__svc-row">

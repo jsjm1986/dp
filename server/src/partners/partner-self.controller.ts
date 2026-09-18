@@ -40,6 +40,7 @@ class ServiceItemDto {
 
   @IsNumber()
   @Min(0)
+  @Max(99999)
   price: number;
 
   @IsString()
@@ -77,13 +78,42 @@ class ApplyDto {
   @IsArray()
   @ArrayMaxSize(8)
   @IsString({ each: true })
+  @MaxLength(20, { each: true })
   tags?: string[];
 
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(9)
   @IsString({ each: true })
+  @MaxLength(300, { each: true })
   photos?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(100)
+  @Max(250)
+  height?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(25)
+  @Max(300)
+  weight?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  constellation?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  education?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  wechatId?: string;
 
   @IsArray()
   @ArrayMinSize(1)
@@ -106,6 +136,13 @@ class ReplyDto {
   content: string;
 }
 
+class WithdrawDto {
+  @IsNumber()
+  @Min(1)
+  @Max(100000)
+  amount: number;
+}
+
 @Controller('partner')
 @UseGuards(JwtAuthGuard)
 export class PartnerSelfController {
@@ -114,14 +151,7 @@ export class PartnerSelfController {
   /** 申请成为玩伴（提交后待平台审核；被拒后可重新提交） */
   @Post('apply')
   async apply(@CurrentUser() userId: string, @Body() dto: ApplyDto) {
-    const data = {
-      city: dto.city,
-      district: dto.district,
-      age: dto.age,
-      bio: dto.bio,
-      tags: JSON.stringify(dto.tags ?? []),
-      photos: JSON.stringify(dto.photos ?? []),
-    };
+    const data = this.buildPartnerData(dto);
     const services = {
       create: dto.services.map((s, i) => ({
         name: s.name,
@@ -166,6 +196,11 @@ export class PartnerSelfController {
       district: full.district,
       age: full.age,
       bio: full.bio,
+      height: full.height,
+      weight: full.weight,
+      constellation: full.constellation,
+      education: full.education,
+      wechatId: full.wechatId,
       tags: JSON.parse(full.tags) as string[],
       photos: JSON.parse(full.photos) as string[],
       status: full.status,
@@ -187,18 +222,15 @@ export class PartnerSelfController {
   @Put('profile')
   async update(@CurrentUser() userId: string, @Body() dto: UpdateProfileDto) {
     const p = await this.mustBePartner(userId);
-    // 重建服务项目与资料更新同一事务，避免部分失败导致服务被清空
+    const data = this.buildPartnerData(dto);
+    // 重建服务项目与资料更新同一事务；资料变更需重新审核（待审期间公开展示下线）
     await this.prisma.$transaction(async (tx) => {
       await tx.partnerService.deleteMany({ where: { partnerId: p.id } });
       await tx.partner.update({
         where: { id: p.id },
         data: {
-          city: dto.city,
-          district: dto.district,
-          age: dto.age,
-          bio: dto.bio,
-          tags: JSON.stringify(dto.tags ?? []),
-          photos: JSON.stringify(dto.photos ?? []),
+          ...data,
+          auditStatus: 'pending',
           services: {
             create: dto.services.map((s, i) => ({
               name: s.name,
@@ -283,10 +315,11 @@ export class PartnerSelfController {
     const content = (dto.content ?? '').trim();
     if (!content) throw new BadRequestException('回复内容不能为空');
     assertClean(content, '回复');
-    await this.prisma.review.update({
-      where: { id },
+    const res = await this.prisma.review.updateMany({
+      where: { id, reply: null },
       data: { reply: content.slice(0, 300), replyAt: new Date() },
     });
+    if (!res.count) throw new BadRequestException('已回复过该评价');
     return { ok: true };
   }
 
@@ -313,9 +346,10 @@ export class PartnerSelfController {
 
   /** 申请提现（先扣余额，拒绝退回）；事务内复查防并发重复提现/超扣 */
   @Post('withdraw')
-  async withdraw(@CurrentUser() userId: string, @Body() dto: { amount: number }) {
+  async withdraw(@CurrentUser() userId: string, @Body() dto: WithdrawDto) {
     const p = await this.mustBePartner(userId);
-    const amount = Math.round(Number(dto.amount) * 100) / 100;
+    if (p.auditStatus !== 'approved') throw new BadRequestException('审核通过后才能提现');
+    const amount = Math.round(dto.amount * 100) / 100;
     if (!amount || amount <= 0) throw new BadRequestException('金额无效');
     const w = await this.prisma.$transaction(async (tx) => {
       const pending = await tx.withdrawal.count({
@@ -330,6 +364,29 @@ export class PartnerSelfController {
       return tx.withdrawal.create({ data: { partnerId: p.id, amount } });
     });
     return { id: w.id, status: w.status };
+  }
+
+  /** 构建持久化字段 + 文本内容敏感词校验（bio/标签/服务名/城市） */
+  private buildPartnerData(dto: ApplyDto) {
+    if (dto.bio) assertClean(dto.bio, '个人简介');
+    for (const t of dto.tags ?? []) assertClean(t, '标签');
+    for (const s of dto.services) {
+      assertClean(s.name, '服务名称');
+      if (s.desc) assertClean(s.desc, '服务描述');
+    }
+    return {
+      city: dto.city,
+      district: dto.district,
+      age: dto.age,
+      bio: dto.bio,
+      height: dto.height,
+      weight: dto.weight,
+      constellation: dto.constellation,
+      education: dto.education,
+      wechatId: dto.wechatId,
+      tags: JSON.stringify(dto.tags ?? []),
+      photos: JSON.stringify(dto.photos ?? []),
+    };
   }
 
   private async mustBePartner(userId: string) {

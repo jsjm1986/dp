@@ -8,7 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import { CancelOrderDto, CreateOrderDto, OrderItemDto, PayOrderDto, ReviewDto } from './dto.js';
+import { toInt } from '../common/params.js';
+import { CancelOrderDto, CreateOrderDto, ExtendOrderDto, PayOrderDto, ReviewDto } from './dto.js';
 import { OrdersService } from './orders.service.js';
 
 @Controller()
@@ -28,7 +29,7 @@ export class OrdersController {
     @Query('status') status?: string,
     @Query('page') page?: string,
   ) {
-    return this.orders.myOrders(userId, status, page ? Number(page) : 1);
+    return this.orders.myOrders(userId, status, toInt(page, { def: 1, min: 1 }));
   }
 
   @Get('orders/:id')
@@ -48,7 +49,7 @@ export class OrdersController {
 
   /** 加钟 */
   @Post('orders/:id/extend')
-  extend(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: { items: OrderItemDto[] }) {
+  extend(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: ExtendOrderDto) {
     return this.orders.extend(userId, id, dto);
   }
 

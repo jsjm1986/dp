@@ -8,6 +8,6 @@ export default defineConfig({
   },
   migrations: {
     path: 'prisma/migrations',
-    seed: 'ts-node --compiler-options {"module":"CommonJS"} prisma/seed.ts',
+    seed: 'esbuild prisma/seed.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/dp-seed.mjs --external:@prisma/client --external:@prisma/adapter-better-sqlite3 --external:better-sqlite3 && node node_modules/.cache/dp-seed.mjs',
   },
 });

@@ -21,7 +21,7 @@ const router = createRouter({
     { path: '/partner/console', component: () => import('../views/PartnerConsole.vue'), meta: { auth: true } },
     { path: '/chats', component: () => import('../views/Chats.vue'), meta: { auth: true } },
     { path: '/chat/:peerId', component: () => import('../views/Chat.vue'), meta: { auth: true } },
-    { path: '/admin', component: () => import('../views/Admin.vue'), meta: { auth: true } },
+    { path: '/admin', component: () => import('../views/Admin.vue'), meta: { auth: true, admin: true } },
     { path: '/coupons', component: () => import('../views/Coupons.vue'), meta: { auth: true } },
     { path: '/my-dynamics', component: () => import('../views/MyDynamics.vue'), meta: { auth: true } },
     { path: '/referral', component: () => import('../views/Referral.vue'), meta: { auth: true } },
@@ -32,6 +32,9 @@ router.beforeEach((to) => {
   const store = useUserStore();
   if (to.meta.auth && !store.loggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } };
+  }
+  if (to.meta.admin && store.user?.role !== 'admin') {
+    return { path: '/mine' };
   }
 });
 

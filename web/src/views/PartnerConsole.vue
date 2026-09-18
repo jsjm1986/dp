@@ -196,7 +196,10 @@ onUnmounted(() => poller && clearInterval(poller));
     </div>
     <div v-if="wallet?.withdrawals.length" class="card pc__withdrawals">
       <div v-for="w in wallet.withdrawals" :key="w.id" class="pc__withdrawal">
-        <span>提现 ¥{{ w.amount.toFixed(2) }}</span>
+        <div>
+          <span>提现 ¥{{ w.amount.toFixed(2) }}</span>
+          <div v-if="w.status === 'rejected' && w.remark" class="muted pc__withdrawal-remark">{{ w.remark }}</div>
+        </div>
         <van-tag :type="w.status === 'done' ? 'success' : w.status === 'rejected' ? 'danger' : 'warning'">
           {{ withdrawStatusText[w.status] || w.status }}
         </van-tag>
@@ -413,6 +416,7 @@ onUnmounted(() => poller && clearInterval(poller));
   padding: 8px 0;
   font-size: 13px;
 }
+.pc__withdrawal-remark { font-size: 12px; margin-top: 2px; }
 .pc__withdraw-form {
   padding: 8px 0;
 }

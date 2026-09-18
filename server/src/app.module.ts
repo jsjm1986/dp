@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin/admin.controller.js';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ChatController } from './chat/chat.controller.js';
 import { CouponsController } from './coupons/coupons.controller.js';
@@ -16,6 +18,7 @@ import { UsersController } from './users/users.controller.js';
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [
+    AppController,
     AdminController,
     UsersController,
     PartnersController,
@@ -26,6 +29,6 @@ import { UsersController } from './users/users.controller.js';
     DynamicsController,
     MiscController,
   ],
-  providers: [PartnersService, OrdersService],
+  providers: [AppService, PartnersService, OrdersService],
 })
 export class AppModule {}

@@ -1,8 +1,10 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsDateString,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -28,6 +30,7 @@ export class CreateOrderDto {
 
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(10)
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
@@ -50,8 +53,17 @@ export class CreateOrderDto {
   userCouponId?: string;
 }
 
+export class ExtendOrderDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  items: OrderItemDto[];
+}
+
 export class PayOrderDto {
-  @IsString()
+  @IsIn(['balance', 'mock'])
   method: 'balance' | 'mock';
 }
 

@@ -15,7 +15,14 @@ import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.g
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads');
-const ALLOWED = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+// SVG 可携带脚本造成存储型 XSS（同源 /uploads 静态服务），只允许位图
+const ALLOWED = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const MAGIC: Array<{ ext: string[]; bytes: number[] }> = [
+  { ext: ['.jpg', '.jpeg'], bytes: [0xff, 0xd8, 0xff] },
+  { ext: ['.png'], bytes: [0x89, 0x50, 0x4e, 0x47] },
+  { ext: ['.webp'], bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF....WEBP
+  { ext: ['.gif'], bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF8
+];
 
 @Controller()
 export class MiscController {
@@ -87,6 +94,11 @@ export class MiscController {
     if (!file) throw new BadRequestException('缺少文件');
     const ext = extname(file.originalname).toLowerCase();
     if (!ALLOWED.includes(ext)) throw new BadRequestException('不支持的文件类型');
+    // 魔数校验：防止改扩展名上传伪装文件
+    const sig = MAGIC.find((m) => m.ext.includes(ext));
+    if (sig && !sig.bytes.every((b, i) => file.buffer[i] === b)) {
+      throw new BadRequestException('文件内容与类型不符');
+    }
     mkdirSync(UPLOAD_DIR, { recursive: true });
     const name = `${randomUUID()}${ext}`;
     writeFileSync(join(UPLOAD_DIR, name), file.buffer);

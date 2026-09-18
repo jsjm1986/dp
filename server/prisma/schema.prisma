@@ -68,6 +68,8 @@ model Partner {
   reviews     Review[]
   follows     Follow[]
   withdrawals Withdrawal[]
+
+  @@index([auditStatus, city])
 }
 
 model PartnerService {
@@ -100,6 +102,7 @@ model Order {
   userCouponId String?
   payMethod    String?
   parentId     String?
+  commissionRate Float?
   status       String    @default("pending_payment")
   cancelReason String?
   urgedAt      DateTime?
@@ -111,6 +114,10 @@ model Order {
 
   review   Review?
   messages Message[]
+
+  @@index([userId, status])
+  @@index([partnerId, status])
+  @@index([parentId])
 }
 
 model OrderItem {
@@ -139,6 +146,8 @@ model Review {
   reply     String?
   replyAt   DateTime?
   createdAt DateTime @default(now())
+
+  @@index([partnerId])
 }
 
 model Dynamic {
@@ -154,6 +163,8 @@ model Dynamic {
 
   likes    DynamicLike[]
   comments DynamicComment[]
+
+  @@index([userId])
 }
 
 model DynamicLike {
@@ -174,6 +185,8 @@ model DynamicComment {
   user      User     @relation(fields: [userId], references: [id])
   content   String
   createdAt DateTime @default(now())
+
+  @@index([dynamicId])
 }
 
 model Follow {
@@ -185,6 +198,7 @@ model Follow {
   createdAt DateTime @default(now())
 
   @@unique([userId, partnerId])
+  @@index([partnerId])
 }
 
 model Banner {
@@ -201,6 +215,8 @@ model SmsCode {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([mobile])
 }
 
 // ---------- 私信聊天 ----------
@@ -248,6 +264,7 @@ model UserCoupon {
   coupon Coupon @relation(fields: [couponId], references: [id])
 
   @@unique([userId, couponId])
+  @@index([orderId])
 }
 
 // ---------- 提现 ----------
@@ -261,6 +278,8 @@ model Withdrawal {
   handledAt DateTime?
 
   partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@index([partnerId])
 }
 
 // ---------- 拉黑 ----------
@@ -284,6 +303,8 @@ model Commission {
   createdAt DateTime @default(now())
 
   inviter User @relation("InviterCommissions", fields: [inviterId], references: [id])
+
+  @@index([inviterId])
 }
 
 // ---------- 平台配置 ----------
@@ -303,4 +324,6 @@ model RechargeCard {
   createdAt DateTime  @default(now())
 
   usedBy User? @relation(fields: [usedById], references: [id])
+
+  @@index([usedById])
 }

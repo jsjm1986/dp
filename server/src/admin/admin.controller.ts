@@ -10,9 +10,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { randomBytes } from 'crypto';
 import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { toInt } from '../common/params.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -38,20 +39,25 @@ class CouponDto {
 
   @IsNumber()
   @Min(0.1)
+  @Max(100000)
   amount: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(1000000)
   minSpend?: number;
 
   /** 限量张数，-1 不限量 */
   @IsInt()
+  @Min(-1)
+  @Max(100000)
   total: number;
 
   /** 有效天数 */
   @IsInt()
   @Min(1)
+  @Max(3650)
   days: number;
 }
 
@@ -70,7 +76,7 @@ export class AdminController {
     const [
       userCount, partnerApproved, partnerPending, orderCount, todayOrders,
       doneAgg, dynamicCount, messageCount, pendingAccept, serving,
-      pendingWithdrawalAgg, commissionAgg, couponClaimed, reviewCount, disabledUsers,
+      pendingWithdrawalAgg, commissionAgg, couponClaimed, reviewCount, disabledUsers, couponUsed,
     ] = await this.prisma.$transaction([
       this.prisma.user.count(),
       this.prisma.partner.count({ where: { auditStatus: 'approved' } }),
@@ -84,9 +90,10 @@ export class AdminController {
       this.prisma.order.count({ where: { status: 'serving' } }),
       this.prisma.withdrawal.aggregate({ where: { status: 'pending' }, _sum: { amount: true }, _count: true }),
       this.prisma.commission.aggregate({ _sum: { amount: true }, _count: true }),
-      this.prisma.userCoupon.count({ where: { used: true } }),
+      this.prisma.userCoupon.count(),
       this.prisma.review.count(),
       this.prisma.user.count({ where: { disabled: true } }),
+      this.prisma.userCoupon.count({ where: { used: true } }),
     ]);
     return {
       userCount,
@@ -105,6 +112,7 @@ export class AdminController {
       commissionTotal: Number(commissionAgg._sum.amount ?? 0),
       commissionCount: commissionAgg._count,
       couponClaimed,
+      couponUsed,
       reviewCount,
       disabledUsers,
     };
@@ -121,7 +129,7 @@ export class AdminController {
       this.prisma.user.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         select: { ...userBrief, balance: true, partner: { select: { id: true, auditStatus: true } }, _count: { select: { orders: true } } },
       }),
@@ -149,7 +157,7 @@ export class AdminController {
       this.prisma.partner.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         include: {
           user: { select: { nickname: true, avatar: true, mobile: true, gender: true } },
@@ -184,19 +192,22 @@ export class AdminController {
 
   @Post('partners/:id/approve')
   async approve(@Param('id') id: string) {
-    await this.prisma.partner.update({ where: { id }, data: { auditStatus: 'approved' } });
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'approved' } });
+    if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
 
   @Post('partners/:id/reject')
   async reject(@Param('id') id: string) {
-    await this.prisma.partner.update({ where: { id }, data: { auditStatus: 'rejected' } });
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'rejected' } });
+    if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
 
   @Put('partners/:id/verify')
   async verify(@Param('id') id: string, @Body() body: { verified: boolean }) {
-    await this.prisma.partner.update({ where: { id }, data: { verified: !!body.verified } });
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { verified: !!body.verified } });
+    if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
 
@@ -215,7 +226,7 @@ export class AdminController {
       this.prisma.order.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         include: {
           user: { select: { nickname: true, mobile: true } },
@@ -246,7 +257,7 @@ export class AdminController {
       this.prisma.dynamic.count(),
       this.prisma.dynamic.findMany({
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         include: { user: { select: { nickname: true, avatar: true } } },
       }),
@@ -269,7 +280,8 @@ export class AdminController {
 
   @Delete('dynamics/:id')
   async deleteDynamic(@Param('id') id: string) {
-    await this.prisma.dynamic.delete({ where: { id } });
+    const res = await this.prisma.dynamic.deleteMany({ where: { id } });
+    if (!res.count) throw new BadRequestException('动态不存在');
     return { ok: true };
   }
 
@@ -348,7 +360,8 @@ export class AdminController {
 
   @Delete('banners/:id')
   async deleteBanner(@Param('id') id: string) {
-    await this.prisma.banner.delete({ where: { id } });
+    const res = await this.prisma.banner.deleteMany({ where: { id } });
+    if (!res.count) throw new BadRequestException('Banner不存在');
     return { ok: true };
   }
 
@@ -395,7 +408,7 @@ export class AdminController {
       this.prisma.commission.count(),
       this.prisma.commission.findMany({
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         include: { inviter: { select: { nickname: true, mobile: true } } },
       }),
@@ -460,9 +473,13 @@ export class AdminController {
 
   @Delete('coupons/:id')
   async deleteCoupon(@Param('id') id: string) {
-    const claimed = await this.prisma.userCoupon.count({ where: { couponId: id } });
-    if (claimed) throw new BadRequestException('该券已被用户领取，不能删除');
-    await this.prisma.coupon.delete({ where: { id } });
+    // 领取数复查与删除同一事务，防与并发领券竞争
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.userCoupon.count({ where: { couponId: id } });
+      if (claimed) throw new BadRequestException('该券已被用户领取，不能删除');
+      const res = await tx.coupon.deleteMany({ where: { id } });
+      if (!res.count) throw new BadRequestException('券不存在');
+    });
     return { ok: true };
   }
 
@@ -483,6 +500,7 @@ export class AdminController {
     if (!['user', 'admin'].includes(body.role)) throw new BadRequestException('非法角色');
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
+    if (user.role === 'admin') throw new BadRequestException('不能修改其他管理员的角色');
     await this.prisma.user.update({ where: { id }, data: { role: body.role } });
     return { ok: true };
   }
@@ -550,51 +568,58 @@ export class AdminController {
     };
   }
 
-  /** 管理员强制取消订单：已支付则退款 */
+  /** 管理员强制取消/仲裁退款：未支付→取消，已支付(含服务中)→全额退款；级联处理加钟子订单 */
   @Post('orders/:id/cancel')
   async forceCancelOrder(@Param('id') id: string, @Body() body: { reason?: string }) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new BadRequestException('订单不存在');
-    if (order.status === 'pending_payment') {
-      // 状态变更与退券同一事务；条件更新防与支付竞争
-      await this.prisma.$transaction(async (tx) => {
-        const res = await tx.order.updateMany({
-          where: { id, status: 'pending_payment' },
-          data: { status: 'cancelled', cancelReason: body.reason ?? '管理员取消' },
-        });
-        if (!res.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
-        if (order.userCouponId) {
-          await tx.userCoupon.update({
-            where: { id: order.userCouponId },
-            data: { used: false, usedAt: null, orderId: null },
-          });
-        }
-      });
-      return { ok: true, status: 'cancelled' };
+    const reason = body.reason?.trim() || '管理员取消';
+    const refundStatuses = ['pending_accept', 'pending_service', 'serving'];
+    if (order.status !== 'pending_payment' && !refundStatuses.includes(order.status)) {
+      throw new BadRequestException('该状态不可取消（已完成订单请线下处理）');
     }
-    if (['pending_accept', 'pending_service'].includes(order.status)) {
-      await this.prisma.$transaction(async (tx) => {
-        const res = await tx.order.updateMany({
-          where: { id, status: order.status },
-          data: { status: 'refunded', cancelReason: body.reason ?? '管理员取消' },
-        });
-        if (!res.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
-        if (order.payMethod === 'balance') {
-          await tx.user.update({
-            where: { id: order.userId },
-            data: { balance: { increment: order.totalAmount } },
-          });
-        }
-        if (order.userCouponId) {
-          await tx.userCoupon.update({
-            where: { id: order.userCouponId },
-            data: { used: false, usedAt: null, orderId: null },
-          });
-        }
+    const target = order.status === 'pending_payment' ? 'cancelled' : 'refunded';
+    await this.prisma.$transaction(async (tx) => {
+      const res = await tx.order.updateMany({
+        where: { id, status: order.status },
+        data: { status: target, cancelReason: reason },
       });
-      return { ok: true, status: 'refunded' };
-    }
-    throw new BadRequestException('该状态不可取消（服务中/已完成请联系客服处理）');
+      if (!res.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
+      if (target === 'refunded' && order.payMethod === 'balance') {
+        await tx.user.update({
+          where: { id: order.userId },
+          data: { balance: { increment: order.totalAmount } },
+        });
+      }
+      if (order.userCouponId) {
+        await tx.userCoupon.update({
+          where: { id: order.userCouponId },
+          data: { used: false, usedAt: null, orderId: null },
+        });
+      }
+      // 级联：未支付子单取消、在途子单退款
+      const children = await tx.order.findMany({ where: { parentId: id } });
+      for (const c of children) {
+        if (c.status === 'pending_payment') {
+          await tx.order.updateMany({
+            where: { id: c.id, status: 'pending_payment' },
+            data: { status: 'cancelled', cancelReason: `主订单${reason}` },
+          });
+        } else if (refundStatuses.includes(c.status)) {
+          const cr = await tx.order.updateMany({
+            where: { id: c.id, status: c.status },
+            data: { status: 'refunded', cancelReason: `主订单${reason}` },
+          });
+          if (cr.count && c.payMethod === 'balance') {
+            await tx.user.update({
+              where: { id: c.userId },
+              data: { balance: { increment: c.totalAmount } },
+            });
+          }
+        }
+      }
+    });
+    return { ok: true, status: target };
   }
 
   /** ---------- 评价管理 ---------- */
@@ -604,7 +629,7 @@ export class AdminController {
       this.prisma.review.count(),
       this.prisma.review.findMany({
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 20,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 20,
         take: 20,
         include: {
           user: { select: { nickname: true, avatar: true } },
@@ -634,14 +659,17 @@ export class AdminController {
   async deleteReview(@Param('id') id: string) {
     const review = await this.prisma.review.findUnique({ where: { id } });
     if (!review) throw new BadRequestException('评价不存在');
-    await this.prisma.review.delete({ where: { id } });
-    const agg = await this.prisma.review.aggregate({
-      where: { partnerId: review.partnerId },
-      _avg: { rating: true },
-    });
-    await this.prisma.partner.update({
-      where: { id: review.partnerId },
-      data: { rating: Math.round((agg._avg.rating ?? 5) * 10) / 10 },
+    // 删除、重算、回写评分同一事务，防并发下评分过期
+    await this.prisma.$transaction(async (tx) => {
+      await tx.review.delete({ where: { id } });
+      const agg = await tx.review.aggregate({
+        where: { partnerId: review.partnerId },
+        _avg: { rating: true },
+      });
+      await tx.partner.update({
+        where: { id: review.partnerId },
+        data: { rating: Math.round((agg._avg.rating ?? 5) * 10) / 10 },
+      });
     });
     return { ok: true };
   }
@@ -653,17 +681,22 @@ export class AdminController {
     const count = Math.min(Math.max(Math.floor(Number(body.count) || 1), 1), 500);
     if (!amount || amount <= 0 || amount > 100000) throw new BadRequestException('面额无效');
     const batch = `B${Date.now().toString(36).toUpperCase()}`;
-    const cards = await this.prisma.$transaction(
-      Array.from({ length: count }, () =>
-        this.prisma.rechargeCard.create({
-          data: {
-            code: 'DP' + randomBytes(5).toString('hex').toUpperCase(),
-            amount,
-            batch,
-          },
-        }),
-      ),
-    );
+    // 64bit 随机卡密；整批唯一约束碰撞时重新生成（最多 3 次）
+    let cards: { code: string }[] = [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        cards = await this.prisma.$transaction(
+          Array.from({ length: count }, () =>
+            this.prisma.rechargeCard.create({
+              data: { code: 'DP' + randomBytes(8).toString('hex').toUpperCase(), amount, batch },
+            }),
+          ),
+        );
+        break;
+      } catch (e) {
+        if (attempt === 2) throw e;
+      }
+    }
     return { batch, count: cards.length, codes: cards.map((c) => c.code) };
   }
 
@@ -675,7 +708,7 @@ export class AdminController {
       this.prisma.rechargeCard.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (Math.max(1, +page) - 1) * 30,
+        skip: ((toInt(page, { def: 1, min: 1 }) ?? 1) - 1) * 30,
         take: 30,
         include: { usedBy: { select: { nickname: true, mobile: true } } },
       }),
@@ -699,23 +732,28 @@ export class AdminController {
 
   @Delete('recharge-cards/:id')
   async deleteRechargeCard(@Param('id') id: string) {
-    const card = await this.prisma.rechargeCard.findUnique({ where: { id } });
-    if (!card) throw new BadRequestException('卡不存在');
-    if (card.usedById) throw new BadRequestException('已使用的卡不能删除');
-    await this.prisma.rechargeCard.delete({ where: { id } });
+    // 条件删除：已被核销的卡不可删（防与并发核销竞争）
+    const res = await this.prisma.rechargeCard.deleteMany({ where: { id, usedById: null } });
+    if (!res.count) throw new BadRequestException('卡不存在或已被使用');
     return { ok: true };
   }
 
   /** ---------- 玩伴推荐位/强制下线 ---------- */
   @Put('partners/:id/recommend')
   async recommendPartner(@Param('id') id: string, @Body() body: { recommended: boolean }) {
-    await this.prisma.partner.update({ where: { id }, data: { recommended: !!body.recommended } });
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { recommended: !!body.recommended } });
+    if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
 
   @Put('partners/:id/status')
   async setPartnerStatus(@Param('id') id: string, @Body() body: { status: string }) {
     if (!['available', 'rest'].includes(body.status)) throw new BadRequestException('非法状态');
+    const partner = await this.prisma.partner.findUnique({ where: { id }, select: { auditStatus: true } });
+    if (!partner) throw new BadRequestException('玩伴不存在');
+    if (body.status === 'available' && partner.auditStatus !== 'approved') {
+      throw new BadRequestException('审核通过后才能上线');
+    }
     await this.prisma.partner.update({ where: { id }, data: { status: body.status } });
     return { ok: true };
   }

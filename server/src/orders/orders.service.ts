@@ -3,11 +3,12 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { CancelOrderDto, CreateOrderDto, OrderItemDto, PayOrderDto, ReviewDto } from './dto.js';
+import { CancelOrderDto, CreateOrderDto, ExtendOrderDto, PayOrderDto, ReviewDto } from './dto.js';
 
 export const ORDER_STATUS = {
   PENDING_PAYMENT: 'pending_payment',
@@ -20,9 +21,14 @@ export const ORDER_STATUS = {
   REFUNDED: 'refunded',
 } as const;
 
-// 演示模式：支付后自动流转 待接单→已接单(待服务)→服务中→已完成
-const DEMO_AUTO_FLOW = process.env.DEMO_AUTO_FLOW !== 'false';
+const IS_PROD = process.env.NODE_ENV === 'production';
+// 演示模式：支付后自动流转 待接单→已接单(待服务)→服务中→已完成；生产环境强制关闭
+const DEMO_AUTO_FLOW = !IS_PROD && process.env.DEMO_AUTO_FLOW !== 'false';
 const DEMO_DELAY = { accept: 10_000, start: 30_000, finish: 90_000 };
+// 待支付订单超时时间（与前端"请在30分钟内完成支付"一致）
+const PAY_TIMEOUT_MS = 30 * 60 * 1000;
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const ORDER_INCLUDE = {
   items: true,
@@ -33,8 +39,22 @@ const ORDER_INCLUDE = {
 } as const;
 
 @Injectable()
-export class OrdersService {
+export class OrdersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  /** 进程重启后恢复演示自动流转：setTimeout 只活在进程内，重启补调度存量在途订单 */
+  async onModuleInit() {
+    if (!DEMO_AUTO_FLOW) return;
+    try {
+      const stuck = await this.prisma.order.findMany({
+        where: { status: { in: [ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING] } },
+        select: { id: true },
+      });
+      for (const o of stuck) this.scheduleAutoFlow(o.id);
+    } catch {
+      /* best-effort */
+    }
+  }
 
   async create(userId: string, dto: CreateOrderDto) {
     const partner = await this.prisma.partner.findUnique({
@@ -64,10 +84,10 @@ export class OrdersService {
         price: svc.price,
         unit: svc.unit,
         num: it.num,
-        subtotal: Number(svc.price) * it.num,
+        subtotal: round2(Number(svc.price) * it.num),
       };
     });
-    const goodsAmount = items.reduce((sum, i) => sum + i.subtotal, 0);
+    const goodsAmount = round2(items.reduce((sum, i) => sum + i.subtotal, 0));
     if (dto.remark) assertClean(dto.remark, '备注');
 
     // 优惠券抵扣
@@ -84,10 +104,22 @@ export class OrdersService {
       if (goodsAmount < Number(uc.coupon.minSpend)) {
         throw new BadRequestException(`满 ¥${Number(uc.coupon.minSpend)} 可用该券`);
       }
-      discount = Math.min(Number(uc.coupon.amount), goodsAmount);
+      discount = round2(Math.min(Number(uc.coupon.amount), goodsAmount));
       userCouponId = uc.id;
     }
-    const totalAmount = goodsAmount - discount;
+    const totalAmount = round2(goodsAmount - discount);
+
+    // 分销佣金率快照：下单时锁定，后续后台调比例不影响存量订单
+    const buyer = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { inviterId: true },
+    });
+    let commissionRate: number | undefined;
+    if (buyer?.inviterId) {
+      const rateRow = await this.prisma.setting.findUnique({ where: { key: 'commissionRate' } });
+      const r = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
+      if (r > 0) commissionRate = r;
+    }
 
     // 下单与占券同一事务，条件更新防止并发重复用券
     const order = await this.prisma.$transaction(async (tx) => {
@@ -98,19 +130,17 @@ export class OrdersService {
         });
         if (!claim.count) throw new BadRequestException('优惠券已被使用');
       }
-      const created = await tx.order.create({
-        data: {
-          orderNo: genOrderNo(),
-          userId,
-          partnerId: dto.partnerId,
-          appointAt,
-          address: dto.address,
-          remark: dto.remark,
-          totalAmount,
-          discount,
-          userCouponId,
-          items: { create: items },
-        },
+      const created = await this.createOrderRow(tx, {
+        userId,
+        partnerId: dto.partnerId,
+        appointAt,
+        address: dto.address,
+        remark: dto.remark,
+        totalAmount,
+        discount,
+        userCouponId,
+        commissionRate,
+        items: { create: items },
       });
       if (userCouponId) {
         await tx.userCoupon.update({
@@ -127,6 +157,7 @@ export class OrdersService {
   }
 
   async myOrders(userId: string, status?: string, page = 1, pageSize = 10) {
+    await this.expireStalePayments({ userId });
     const where = { userId, ...(status ? { status } : {}) };
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.order.count({ where }),
@@ -142,6 +173,7 @@ export class OrdersService {
   }
 
   async detail(userId: string, id: string) {
+    await this.expireStalePayments({ id });
     const order = await this.prisma.order.findUnique({ where: { id }, include: ORDER_INCLUDE });
     if (!order) throw new NotFoundException('订单不存在');
     if (order.userId !== userId) {
@@ -169,11 +201,22 @@ export class OrdersService {
   /** 支付：balance 余额扣款 / mock 模拟第三方支付；条件更新防并发重复支付 */
   async pay(userId: string, id: string, dto: PayOrderDto) {
     const order = await this.mustOwn(userId, id);
-    const method = dto.method === 'balance' ? 'balance' : 'mock';
+    if (dto.method === 'mock' && IS_PROD) {
+      throw new BadRequestException('模拟支付仅限演示环境');
+    }
+    if (order.status === ORDER_STATUS.PENDING_PAYMENT) {
+      if (Date.now() - order.createdAt.getTime() > PAY_TIMEOUT_MS) {
+        await this.expireStalePayments({ id });
+        throw new BadRequestException('订单已超时取消，请重新下单');
+      }
+      if (order.appointAt.getTime() <= Date.now()) {
+        throw new BadRequestException('预约时间已过，无法支付');
+      }
+    }
     const total = Number(order.totalAmount);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      if (method === 'balance') {
+      if (dto.method === 'balance') {
         const res = await tx.user.updateMany({
           where: { id: userId, balance: { gte: total } },
           data: { balance: { decrement: total } },
@@ -182,7 +225,7 @@ export class OrdersService {
       }
       const pay = await tx.order.updateMany({
         where: { id, status: ORDER_STATUS.PENDING_PAYMENT },
-        data: { status: ORDER_STATUS.PENDING_ACCEPT, paidAt: new Date(), payMethod: method },
+        data: { status: ORDER_STATUS.PENDING_ACCEPT, paidAt: new Date(), payMethod: dto.method },
       });
       if (!pay.count) throw new BadRequestException('订单状态不可支付');
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
@@ -199,8 +242,9 @@ export class OrdersService {
         ? ORDER_STATUS.REFUNDED
         : null;
     if (!target) throw new BadRequestException('当前状态不可取消');
+    if (dto.reason) assertClean(dto.reason, '取消原因');
 
-    // 状态变更、余额退款、券释放在同一事务内；条件更新防止与支付/重复取消竞争
+    // 状态变更、余额退款、券释放、子订单级联在同一事务内；条件更新防止与支付/重复取消竞争
     const updated = await this.prisma.$transaction(async (tx) => {
       const transitioned = await tx.order.updateMany({
         where: { id, status: order.status },
@@ -219,14 +263,16 @@ export class OrdersService {
           data: { used: false, usedAt: null, orderId: null },
         });
       }
+      await this.cascadeChildren(tx, id, '主订单已取消');
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     });
     return this.toDto(updated);
   }
 
-  /** 加钟：服务中追加项目，生成关联子订单走正常支付 */
-  async extend(userId: string, id: string, dto: { items: OrderItemDto[] }) {
+  /** 加钟：服务中追加项目，生成关联子订单走正常支付；父单状态在事务内复查防竞态 */
+  async extend(userId: string, id: string, dto: ExtendOrderDto) {
     const order = await this.mustOwn(userId, id);
+    if (order.parentId) throw new BadRequestException('加钟订单不可再次加钟');
     if (![ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING].includes(order.status as never)) {
       throw new BadRequestException('仅待服务或服务中的订单可以加钟');
     }
@@ -247,14 +293,18 @@ export class OrdersService {
         price: svc.price,
         unit: svc.unit,
         num: it.num,
-        subtotal: Number(svc.price) * it.num,
+        subtotal: round2(Number(svc.price) * it.num),
       };
     });
     if (!items.length) throw new BadRequestException('请选择加钟项目');
-    const totalAmount = items.reduce((sum, i) => sum + i.subtotal, 0);
-    const child = await this.prisma.order.create({
-      data: {
-        orderNo: genOrderNo(),
+    const totalAmount = round2(items.reduce((sum, i) => sum + i.subtotal, 0));
+    const child = await this.prisma.$transaction(async (tx) => {
+      // 事务内复查：父单可能在此期间被玩伴/管理员推进到终态
+      const fresh = await tx.order.findUnique({ where: { id }, select: { status: true } });
+      if (!fresh || ![ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING].includes(fresh.status as never)) {
+        throw new BadRequestException('父订单状态已变化，无法加钟');
+      }
+      const created = await this.createOrderRow(tx, {
         userId,
         partnerId: order.partnerId,
         appointAt: order.appointAt,
@@ -263,30 +313,38 @@ export class OrdersService {
         totalAmount,
         parentId: order.id,
         items: { create: items },
-      },
-      include: ORDER_INCLUDE,
+      });
+      return tx.order.findUniqueOrThrow({ where: { id: created.id }, include: ORDER_INCLUDE });
     });
     return this.toDto(child);
   }
 
-  /** 催服务 */
+  /** 催服务：支付5分钟后可催，60秒内不可重复；条件更新防并发 */
   async urge(userId: string, id: string) {
     const order = await this.mustOwn(userId, id);
-    if (![ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE].includes(order.status as never)) {
-      throw new BadRequestException('当前状态不可催单');
-    }
-    const elapsed = Date.now() - order.createdAt.getTime();
-    if (elapsed < 5 * 60 * 1000) throw new BadRequestException('下单5分钟之后才能催服务哦~');
-    if (order.urgedAt && Date.now() - order.urgedAt.getTime() < 60 * 1000) {
+    const elapsed = Date.now() - (order.paidAt ?? order.createdAt).getTime();
+    if (elapsed < 5 * 60 * 1000) throw new BadRequestException('支付5分钟之后才能催服务哦~');
+    const res = await this.prisma.order.updateMany({
+      where: {
+        id,
+        status: { in: [ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE] },
+        OR: [{ urgedAt: null }, { urgedAt: { lt: new Date(Date.now() - 60 * 1000) } }],
+      },
+      data: { urgedAt: new Date() },
+    });
+    if (!res.count) {
+      if (![ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE].includes(order.status as never)) {
+        throw new BadRequestException('当前状态不可催单');
+      }
       throw new BadRequestException('已催过单啦，请稍后再试');
     }
-    await this.prisma.order.update({ where: { id }, data: { urgedAt: new Date() } });
     return { ok: true };
   }
 
   /** 评价：一单一条（orderId 唯一约束兜底），评价与评分重算同一事务 */
   async review(userId: string, id: string, dto: ReviewDto) {
     const order = await this.mustOwn(userId, id);
+    if (order.parentId) throw new BadRequestException('加钟订单请通过主订单评价');
     this.mustBe(order.status, ORDER_STATUS.DONE, '订单完成后才能评价');
     if (dto.content) assertClean(dto.content, '评价');
     try {
@@ -324,7 +382,7 @@ export class OrdersService {
         items: true,
         partner: { include: { user: { select: { nickname: true, avatar: true } } } },
         review: true,
-        user: { select: { id: true, nickname: true, avatar: true, mobile: true } },
+        user: { select: { id: true, nickname: true, avatar: true } },
       },
       take: 50,
     });
@@ -333,6 +391,9 @@ export class OrdersService {
 
   async partnerAct(userId: string, id: string, action: 'accept' | 'reject' | 'start' | 'finish') {
     const partner = await this.mustBePartner(userId);
+    if (partner.auditStatus === 'rejected') {
+      throw new ForbiddenException('入驻审核已被拒绝，无法操作订单');
+    }
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order || order.partnerId !== partner.id) throw new NotFoundException('订单不存在');
 
@@ -354,6 +415,7 @@ export class OrdersService {
           status: t.to,
           ...(action === 'accept' ? { acceptedAt: new Date() } : {}),
           ...(action === 'finish' ? { finishedAt: new Date() } : {}),
+          ...(action === 'reject' ? { cancelReason: '玩伴拒单' } : {}),
         },
       });
       if (!transitioned.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
@@ -371,6 +433,7 @@ export class OrdersService {
             data: { used: false, usedAt: null, orderId: null },
           });
         }
+        await this.cascadeChildren(tx, id, '主订单被拒单');
       }
       if (action === 'finish') {
         await this.settleFinish(tx, order);
@@ -385,7 +448,7 @@ export class OrdersService {
   /** 完单结算（在调用方事务内执行）：玩伴入账 + 服务数 + 分销佣金 */
   private async settleFinish(
     tx: Prisma.TransactionClient,
-    order: { id: string; userId: string; partnerId: string; totalAmount: unknown },
+    order: { id: string; userId: string; partnerId: string; totalAmount: unknown; commissionRate: number | null },
   ) {
     await tx.partner.update({
       where: { id: order.partnerId },
@@ -402,16 +465,25 @@ export class OrdersService {
     if (!buyer?.inviterId) return;
     const exists = await tx.commission.findUnique({ where: { orderId: order.id } });
     if (exists) return;
-    const rateRow = await tx.setting.findUnique({ where: { key: 'commissionRate' } });
-    const rate = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
+    const inviter = await tx.user.findUnique({
+      where: { id: buyer.inviterId },
+      select: { id: true, disabled: true },
+    });
+    if (!inviter || inviter.disabled) return; // 推荐人已注销/禁用则不结算
+    // 优先用下单时的快照佣金率；存量无快照订单回退到当前全局配置
+    let rate = order.commissionRate;
+    if (rate == null) {
+      const rateRow = await tx.setting.findUnique({ where: { key: 'commissionRate' } });
+      rate = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
+    }
     if (rate <= 0) return;
-    const amount = Math.round(Number(order.totalAmount) * rate * 100) / 100;
+    const amount = round2(Number(order.totalAmount) * rate);
     if (amount <= 0) return;
     await tx.commission.create({
-      data: { inviterId: buyer.inviterId, inviteeId: order.userId, orderId: order.id, amount, rate },
+      data: { inviterId: inviter.id, inviteeId: order.userId, orderId: order.id, amount, rate },
     });
     await tx.user.update({
-      where: { id: buyer.inviterId },
+      where: { id: inviter.id },
       data: { balance: { increment: amount } },
     });
   }
@@ -455,6 +527,74 @@ export class OrdersService {
           /* demo flow best-effort */
         }
       }, step.delay);
+    }
+  }
+
+  /** 创建订单行：orderNo 理论可碰撞，P2002 时换新号重试 */
+  private async createOrderRow(
+    tx: Prisma.TransactionClient,
+    data: Omit<Prisma.OrderUncheckedCreateInput, 'orderNo'>,
+  ) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        return await tx.order.create({ data: { ...data, orderNo: genOrderNo() } });
+      } catch (e) {
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002')) throw e;
+      }
+    }
+    throw new BadRequestException('订单号生成失败，请重试');
+  }
+
+  /** 懒过期：超时未支付订单转取消并释放优惠券（带条件更新，可安全并发调用） */
+  private async expireStalePayments(scope: { userId?: string; id?: string }) {
+    const stale = await this.prisma.order.findMany({
+      where: {
+        ...scope,
+        status: ORDER_STATUS.PENDING_PAYMENT,
+        createdAt: { lt: new Date(Date.now() - PAY_TIMEOUT_MS) },
+      },
+      select: { id: true, userCouponId: true },
+      take: 50,
+    });
+    for (const o of stale) {
+      await this.prisma.$transaction(async (tx) => {
+        const res = await tx.order.updateMany({
+          where: { id: o.id, status: ORDER_STATUS.PENDING_PAYMENT },
+          data: { status: ORDER_STATUS.CANCELLED, cancelReason: '支付超时自动取消' },
+        });
+        if (res.count && o.userCouponId) {
+          await tx.userCoupon.updateMany({
+            where: { id: o.userCouponId, used: true },
+            data: { used: false, usedAt: null, orderId: null },
+          });
+        }
+      });
+    }
+  }
+
+  /** 级联清理子订单：父单取消/拒单/退款时，未支付子单取消、已支付子单退款 */
+  private async cascadeChildren(tx: Prisma.TransactionClient, parentId: string, reason: string) {
+    const children = await tx.order.findMany({ where: { parentId } });
+    for (const c of children) {
+      if (c.status === ORDER_STATUS.PENDING_PAYMENT) {
+        await tx.order.updateMany({
+          where: { id: c.id, status: ORDER_STATUS.PENDING_PAYMENT },
+          data: { status: ORDER_STATUS.CANCELLED, cancelReason: reason },
+        });
+      } else if (
+        [ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING].includes(c.status as never)
+      ) {
+        const res = await tx.order.updateMany({
+          where: { id: c.id, status: c.status },
+          data: { status: ORDER_STATUS.REFUNDED, cancelReason: reason },
+        });
+        if (res.count && c.payMethod === 'balance') {
+          await tx.user.update({
+            where: { id: c.userId },
+            data: { balance: { increment: c.totalAmount } },
+          });
+        }
+      }
     }
   }
 

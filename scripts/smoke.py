@@ -279,12 +279,16 @@ def main():
     check("order.paid-cancel-refunded", od5["status"] == "refunded", od5["status"])
     check("order.paid-cancel-refund", b2["balance"] == b1["balance"])
 
-    # 加钟起购校验：玩伴服务改为起购2
+    # 加钟起购校验：玩伴服务改为起购2（改资料回炉审核 → 管理端重新通过）
     call("PUT", "/partner/profile", pw_tok, {
         "city": "上海", "district": "徐汇区", "age": 25, "bio": "冒烟测试玩伴",
         "tags": ["陪逛"], "photos": [],
         "services": [{"name": "陪逛", "price": 100, "unit": "小时", "miniNum": 2}],
     }, expect=200)
+    _, pprof2 = call("GET", "/partner/profile", pw_tok, expect=200)
+    check("partner.reaudit-pending", pprof2["auditStatus"] == "pending", pprof2["auditStatus"])
+    call("POST", f"/admin/partners/{pid2}/approve", admin_tok, expect=201)
+    call("PUT", "/partner/status", pw_tok, {"status": "available"}, expect=200)
     _, pd3 = call("GET", f"/partners/{pid2}", ua_tok, expect=200)
     svc3 = pd3["services"][0]
     code, o6 = call("POST", "/orders", ub_tok, {
@@ -316,14 +320,46 @@ def main():
     check("disabled.jwt 401", code == 401)
     call("PUT", f"/admin/users/{ub_id}/disabled", admin_tok, {"disabled": False}, expect=200)
 
+    # 加钟级联：父单取消 → 未支付子单同步取消；子订单禁止再加钟/评价
+    code, child = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=201)
+    if code == 201:
+        cid = child["id"]
+        code, _ = call("POST", f"/orders/{cid}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=400)
+        check("order.extend-grandchild 400", code == 400)
+        code, _ = call("POST", f"/orders/{cid}/review", ub_tok, {"rating": 5, "content": "x"}, expect=400)
+        check("order.child-review 400", code == 400)
+        call("POST", f"/orders/{o6['id']}/cancel", ub_tok, {"reason": "级联测试"}, expect=201)
+        _, cd = call("GET", f"/orders/{cid}", ub_tok, expect=200)
+        check("order.cascade-child-cancelled", cd["status"] == "cancelled", cd["status"])
+    else:
+        check("order.extend-grandchild 400", False, "extend failed")
+
+    # 分销环：uc 已绑 ua 为推荐人，ua 再绑 uc 应被拒（成环）
+    _, refc2 = call("GET", "/user/referral", uc_tok, expect=200)
+    code, _ = call("POST", "/user/bind-inviter", ua_tok, {"inviteCode": refc2["inviteCode"]}, expect=400)
+    check("referral.cycle 400", code == 400)
+
     # ---------- 动态 ----------
     code, d = call("POST", "/dynamics", ua_tok, {"content": f"冒烟动态{RUN}", "city": "上海"}, expect=201)
     check("dynamic.create", code == 201)
     did = d["id"]
     code, _ = call("POST", f"/dynamics/{did}/like", ub_tok, expect=201)
     check("dynamic.like", code == 201)
-    code, _ = call("POST", f"/dynamics/{did}/comments", ub_tok, {"content": "冒烟评论"}, expect=201)
+    code, cmt = call("POST", f"/dynamics/{did}/comments", ub_tok, {"content": "冒烟评论"}, expect=201)
     check("dynamic.comment", code == 201)
+    # 评论删除：本人可删
+    code, _ = call("DELETE", f"/dynamics/comments/{cmt['id']}", ub_tok, expect=200)
+    check("dynamic.comment-delete", code == 200)
+    call("POST", f"/dynamics/{did}/comments", ub_tok, {"content": "再评一条"}, expect=201)
+    # 拉黑阻断：ua 拉黑 ub 后，ub 点赞/评论/私信均被拒
+    call("POST", f"/user/block/{ub_id}", ua_tok, expect=201)
+    code, _ = call("POST", f"/dynamics/{did}/like", ub_tok, expect=403)
+    check("block.like 403", code == 403)
+    code, _ = call("POST", f"/dynamics/{did}/comments", ub_tok, {"content": "被拉黑"}, expect=403)
+    check("block.comment 403", code == 403)
+    code, _ = call("POST", "/chat/send", ub_tok, {"peerId": prof["id"], "content": "在吗"}, expect=400)
+    check("block.chat 400", code == 400)
+    call("DELETE", f"/user/block/{ub_id}", ua_tok, expect=200)
     code, _ = call("GET", f"/dynamics/{did}/comments", ua_tok, expect=200)
     check("dynamic.comments", code == 200)
     code, fd = call("GET", "/dynamics?tab=follow", ua_tok, expect=200)

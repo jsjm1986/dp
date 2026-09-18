@@ -103,7 +103,18 @@ export class PartnersService {
     if (!p || (p.userId !== viewerId && (p.auditStatus !== 'approved' || p.user.disabled))) {
       throw new NotFoundException('玩伴不存在');
     }
-    await this.prisma.partner.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    // 拉黑即双向不可见
+    if (viewerId && viewerId !== p.userId) {
+      const blocked = await this.prisma.block.findFirst({
+        where: { OR: [{ userId: viewerId, blockedId: p.userId }, { userId: p.userId, blockedId: viewerId }] },
+        select: { id: true },
+      });
+      if (blocked) throw new NotFoundException('玩伴不存在');
+    }
+    // 浏览量：本人查看不计数（防自刷）
+    if (p.userId !== viewerId) {
+      await this.prisma.partner.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    }
 
     const followed = viewerId
       ? !!(await this.prisma.follow.findUnique({
@@ -136,7 +147,8 @@ export class PartnersService {
       viewCount: p.viewCount + 1,
       rating: p.rating,
       followerCount: p._count.follows,
-      wechatId: p.wechatId,
+      // 微信号仅登录用户可见（匿名抓取防护）
+      wechatId: viewerId ? p.wechatId : null,
       followed,
       services: p.services.map((s) => ({
         id: s.id,
@@ -173,6 +185,14 @@ export class PartnersService {
   }
 
   async reviews(id: string, page = 1, pageSize = 10) {
+    // 仅审核通过且未禁用的玩伴公开评价
+    const partner = await this.prisma.partner.findUnique({
+      where: { id },
+      select: { auditStatus: true, user: { select: { disabled: true } } },
+    });
+    if (!partner || partner.auditStatus !== 'approved' || partner.user.disabled) {
+      throw new NotFoundException('玩伴不存在');
+    }
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.review.count({ where: { partnerId: id } }),
       this.prisma.review.findMany({
@@ -187,11 +207,20 @@ export class PartnersService {
   }
 
   async follow(userId: string, partnerId: string) {
-    const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
-    if (!partner || partner.auditStatus !== 'approved') {
+    const partner = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      include: { user: { select: { disabled: true } } },
+    });
+    if (!partner || partner.auditStatus !== 'approved' || partner.user.disabled) {
       throw new NotFoundException('玩伴不存在');
     }
     if (partner.userId === userId) throw new BadRequestException('不能关注自己');
+    // 双向拉黑不可关注
+    const blocked = await this.prisma.block.findFirst({
+      where: { OR: [{ userId, blockedId: partner.userId }, { userId: partner.userId, blockedId: userId }] },
+      select: { id: true },
+    });
+    if (blocked) throw new BadRequestException('无法关注该玩伴');
     await this.prisma.follow.upsert({
       where: { userId_partnerId: { userId, partnerId } },
       create: { userId, partnerId },

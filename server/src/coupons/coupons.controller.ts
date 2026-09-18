@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { toNum } from '../common/params.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Controller('coupons')
@@ -57,7 +58,7 @@ export class CouponsController {
   /** 我的券；带 amount 参数时返回该金额下是否可用 */
   @Get('mine')
   async mine(@CurrentUser() uid: string, @Query('amount') amount?: string) {
-    const total = amount ? Number(amount) : null;
+    const total = toNum(amount) ?? null;
     const rows = await this.prisma.userCoupon.findMany({
       where: { userId: uid },
       include: { coupon: true },

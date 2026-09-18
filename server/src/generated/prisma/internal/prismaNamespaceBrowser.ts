@@ -162,6 +162,7 @@ export const OrderScalarFieldEnum = {
   userCouponId: 'userCouponId',
   payMethod: 'payMethod',
   parentId: 'parentId',
+  commissionRate: 'commissionRate',
   status: 'status',
   cancelReason: 'cancelReason',
   urgedAt: 'urgedAt',

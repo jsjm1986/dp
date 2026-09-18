@@ -241,7 +241,7 @@ export const api = {
 
   /* 管理后台 */
   adminDashboard: () =>
-    http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number; pendingWithdrawals: number; pendingWithdrawalAmount: number; commissionTotal: number; commissionCount: number; couponClaimed: number; reviewCount: number; disabledUsers: number }>('/admin/dashboard'),
+    http.get<{ userCount: number; partnerApproved: number; partnerPending: number; orderCount: number; todayOrders: number; doneCount: number; gmv: number; dynamicCount: number; messageCount: number; pendingAccept: number; serving: number; pendingWithdrawals: number; pendingWithdrawalAmount: number; commissionTotal: number; commissionCount: number; couponClaimed: number; couponUsed: number; reviewCount: number; disabledUsers: number }>('/admin/dashboard'),
   adminUsers: (page = 1, keyword?: string) =>
     http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; disabled: boolean; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
   adminPartners: (auditStatus = 'pending', page = 1) =>

@@ -25,6 +25,7 @@ class CreateDynamicDto {
   @IsArray()
   @ArrayMaxSize(9)
   @IsString({ each: true })
+  @MaxLength(300, { each: true })
   images?: string[];
 
   @IsOptional()
@@ -51,11 +52,14 @@ export class DynamicsController {
     @Query('pageSize') pageSize?: string,
     @Query('tab') tab?: string,
   ) {
-    const p = Math.max(1, page ? Number(page) : 1);
-    const size = Math.min(50, pageSize ? Number(pageSize) : 10);
+    const p = Math.max(1, page && Number.isFinite(Number(page)) ? Math.floor(Number(page)) : 1);
+    const size = Math.min(50, Math.max(1, pageSize && Number.isFinite(Number(pageSize)) ? Math.floor(Number(pageSize)) : 10));
 
-    // 关注流：仅看我关注的玩伴/自己的动态；禁用用户的动态不对外展示
+    // 关注流：仅看我关注的玩伴/自己的动态；禁用用户的动态不对外展示；未登录返回空
     const where: any = { user: { is: { disabled: false } } };
+    if (tab === 'follow' && !userId) {
+      return { total: 0, page: p, pageSize: size, items: [] };
+    }
     if (tab === 'follow' && userId) {
       const follows = await this.prisma.follow.findMany({
         where: { userId },
@@ -84,7 +88,7 @@ export class DynamicsController {
           user: {
             select: { nickname: true, avatar: true, partner: { select: { id: true } } },
           },
-          likes: { select: { userId: true } },
+          likes: { where: { userId: userId ?? '' }, select: { userId: true } },
         },
       }),
     ]);
@@ -118,6 +122,7 @@ export class DynamicsController {
       throw new BadRequestException('动态内容不能为空');
     }
     if (content) assertClean(content);
+    if (dto.city) assertClean(dto.city, '城市');
     const d = await this.prisma.dynamic.create({
       data: { userId, content, images: JSON.stringify(dto.images ?? []), city: dto.city },
     });
@@ -159,8 +164,9 @@ export class DynamicsController {
   @Post(':id/like')
   @UseGuards(JwtAuthGuard)
   async like(@CurrentUser() userId: string, @Param('id') id: string) {
-    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true } });
+    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true, userId: true } });
     if (!d) throw new NotFoundException('动态不存在');
+    await this.assertNotBlocked(userId, d.userId);
     await this.prisma.dynamicLike.upsert({
       where: { dynamicId_userId: { dynamicId: id, userId } },
       create: { dynamicId: id, userId },
@@ -174,6 +180,8 @@ export class DynamicsController {
   @Delete(':id/like')
   @UseGuards(JwtAuthGuard)
   async unlike(@CurrentUser() userId: string, @Param('id') id: string) {
+    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true } });
+    if (!d) throw new NotFoundException('动态不存在');
     await this.prisma.dynamicLike.deleteMany({ where: { dynamicId: id, userId } });
     const likeCount = await this.prisma.dynamicLike.count({ where: { dynamicId: id } });
     await this.prisma.dynamic.update({ where: { id }, data: { likeCount } });
@@ -181,15 +189,25 @@ export class DynamicsController {
   }
 
   @Get(':id/comments')
-  async comments(@Param('id') id: string) {
+  @UseGuards(OptionalAuthGuard)
+  async comments(@CurrentUser() userId: string | undefined, @Param('id') id: string) {
+    const where: any = { dynamicId: id, user: { is: { disabled: false } } };
+    if (userId) {
+      const blocks = await this.prisma.block.findMany({
+        where: { OR: [{ userId }, { blockedId: userId }] },
+      });
+      const blocked = blocks.map((b) => (b.userId === userId ? b.blockedId : b.userId));
+      if (blocked.length) where.userId = { notIn: blocked };
+    }
     const rows = await this.prisma.dynamicComment.findMany({
-      where: { dynamicId: id },
+      where,
       orderBy: { createdAt: 'asc' },
       include: { user: { select: { nickname: true, avatar: true } } },
       take: 100,
     });
     return rows.map((c) => ({
       id: c.id,
+      userId: c.userId,
       content: c.content,
       createdAt: c.createdAt,
       user: c.user,
@@ -201,8 +219,9 @@ export class DynamicsController {
   async comment(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CommentDto) {
     const content = dto.content.trim();
     if (!content) throw new BadRequestException('评论内容不能为空');
-    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true } });
+    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true, userId: true } });
     if (!d) throw new NotFoundException('动态不存在');
+    await this.assertNotBlocked(userId, d.userId);
     assertClean(content, '评论');
     const c = await this.prisma.dynamicComment.create({
       data: { dynamicId: id, userId, content },
@@ -211,5 +230,36 @@ export class DynamicsController {
     const commentCount = await this.prisma.dynamicComment.count({ where: { dynamicId: id } });
     await this.prisma.dynamic.update({ where: { id }, data: { commentCount } });
     return { id: c.id, content: c.content, createdAt: c.createdAt, user: c.user, commentCount };
+  }
+
+  /** 删除评论：评论者本人 / 动态作者 / 管理员；删除后重算计数 */
+  @Delete('comments/:id')
+  @UseGuards(JwtAuthGuard)
+  async removeComment(@CurrentUser() userId: string, @Param('id') id: string) {
+    const c = await this.prisma.dynamicComment.findUnique({
+      where: { id },
+      include: { dynamic: { select: { userId: true } } },
+    });
+    if (!c) throw new NotFoundException('评论不存在');
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (c.userId !== userId && c.dynamic.userId !== userId && me?.role !== 'admin') {
+      throw new ForbiddenException('无权删除该评论');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.dynamicComment.delete({ where: { id } });
+      const commentCount = await tx.dynamicComment.count({ where: { dynamicId: c.dynamicId } });
+      await tx.dynamic.update({ where: { id: c.dynamicId }, data: { commentCount } });
+    });
+    return { ok: true };
+  }
+
+  /** 双向拉黑校验：任一方向拉黑即禁止互动 */
+  private async assertNotBlocked(a: string, b: string) {
+    if (a === b) return;
+    const hit = await this.prisma.block.findFirst({
+      where: { OR: [{ userId: a, blockedId: b }, { userId: b, blockedId: a }] },
+      select: { id: true },
+    });
+    if (hit) throw new ForbiddenException('你们已互相拉黑，无法互动');
   }
 }

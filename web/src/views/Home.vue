@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { api, type PartnerCard } from '../api';
+
+const router = useRouter();
 import PartnerCardView from '../components/PartnerCard.vue';
 
 const city = ref(localStorage.getItem('dp_city') || '上海');
+
+function openBanner(b: { link: string | null }) {
+  if (!b.link) return;
+  if (b.link.startsWith('http')) window.open(b.link, '_blank');
+  else router.push(b.link);
+}
 const cities = ref<string[]>([]);
-const banners = ref<Array<{ id: string; image: string }>>([]);
+const banners = ref<Array<{ id: string; image: string; link: string | null }>>([]);
 const recommend = ref<PartnerCard[]>([]);
 const newest = ref<PartnerCard[]>([]);
 const showCityPicker = ref(false);
@@ -52,7 +61,7 @@ onMounted(load);
 
     <van-swipe class="home__swipe" :autoplay="3500" indicator-color="#ff5a5f" lazy-render>
       <van-swipe-item v-for="b in banners" :key="b.id">
-        <img :src="b.image" class="home__banner" alt="" />
+        <img :src="b.image" class="home__banner" alt="" @click="openBanner(b)" />
       </van-swipe-item>
     </van-swipe>
 

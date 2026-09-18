@@ -33,20 +33,32 @@ const userBrief = { id: true, nickname: true, avatar: true } as const;
 export class ChatController {
   constructor(private prisma: PrismaService) {}
 
-  /** 会话列表：按对方分组，取最新消息 + 未读数 */
+  /** 会话列表：按对方分组，取最新消息 + 未读数；过滤拉黑/禁用对端，限量取数 */
   @Get('conversations')
   async conversations(@CurrentUser('id') uid: string) {
-    const msgs = await this.prisma.message.findMany({
-      where: { OR: [{ senderId: uid }, { receiverId: uid }] },
-      orderBy: { createdAt: 'desc' },
-      include: { sender: { select: userBrief }, receiver: { select: userBrief } },
-    });
+    const [msgs, blocks] = await Promise.all([
+      this.prisma.message.findMany({
+        where: { OR: [{ senderId: uid }, { receiverId: uid }] },
+        orderBy: { createdAt: 'desc' },
+        take: 1000,
+        include: {
+          sender: { select: { ...userBrief, disabled: true } },
+          receiver: { select: { ...userBrief, disabled: true } },
+        },
+      }),
+      this.prisma.block.findMany({
+        where: { OR: [{ userId: uid }, { blockedId: uid }] },
+        select: { userId: true, blockedId: true },
+      }),
+    ]);
+    const blocked = new Set(blocks.map((b) => (b.userId === uid ? b.blockedId : b.userId)));
     const map = new Map<string, any>();
     for (const m of msgs) {
       const peer = m.senderId === uid ? m.receiver : m.sender;
+      if (blocked.has(peer.id) || peer.disabled) continue;
       if (!map.has(peer.id)) {
         map.set(peer.id, {
-          peer,
+          peer: { id: peer.id, nickname: peer.nickname, avatar: peer.avatar },
           lastMessage: { content: m.content, createdAt: m.createdAt, fromMe: m.senderId === uid },
           unread: 0,
         });
@@ -71,18 +83,24 @@ export class ChatController {
         { senderId: peerId, receiverId: uid },
       ],
     };
-    if (before) where.createdAt = { lt: new Date(before) };
+    if (before) {
+      const t = new Date(before);
+      if (Number.isNaN(t.getTime())) throw new BadRequestException('before 格式无效');
+      where.createdAt = { lt: t };
+    }
+    // 标记已读的边界取读取时刻之前，避免读/写竞态把新到的消息误标
+    const readBound = new Date();
     const [items, peer] = await Promise.all([
       this.prisma.message.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        take: Math.min(+limit || 30, 100),
+        take: Math.min(Math.max(+limit || 30, 1), 100),
       }),
       this.prisma.user.findUnique({ where: { id: peerId }, select: userBrief }),
     ]);
     if (!peer) throw new NotFoundException('用户不存在');
     await this.prisma.message.updateMany({
-      where: { senderId: peerId, receiverId: uid, readAt: null },
+      where: { senderId: peerId, receiverId: uid, readAt: null, createdAt: { lte: readBound } },
       data: { readAt: new Date() },
     });
     return { peer, items: items.reverse() };
@@ -107,22 +125,43 @@ export class ChatController {
     });
     if (blocked) throw new BadRequestException('消息发送失败，对方无法接收');
     assertClean(content, '消息');
+    // 订单关联校验：订单须真实存在且会话双方恰为该单的买家与玩伴
+    let orderId: string | null = null;
+    if (dto.orderId) {
+      const order = await this.prisma.order.findUnique({
+        where: { id: dto.orderId },
+        include: { partner: { select: { userId: true } } },
+      });
+      const pair = order ? new Set([order.userId, order.partner.userId]) : null;
+      if (!order || !pair?.has(uid) || !pair.has(dto.peerId)) {
+        throw new BadRequestException('关联订单无效');
+      }
+      orderId = order.id;
+    }
     const msg = await this.prisma.message.create({
       data: {
         senderId: uid,
         receiverId: dto.peerId,
         content,
-        orderId: dto.orderId || null,
+        orderId,
       },
     });
     return msg;
   }
 
-  /** 总未读数（角标） */
+  /** 总未读数（角标）；不统计我拉黑的人发来的消息 */
   @Get('unread')
   async unread(@CurrentUser('id') uid: string) {
+    const blocks = await this.prisma.block.findMany({
+      where: { userId: uid },
+      select: { blockedId: true },
+    });
     const count = await this.prisma.message.count({
-      where: { receiverId: uid, readAt: null },
+      where: {
+        receiverId: uid,
+        readAt: null,
+        ...(blocks.length ? { senderId: { notIn: blocks.map((b) => b.blockedId) } } : {}),
+      },
     });
     return { count };
   }

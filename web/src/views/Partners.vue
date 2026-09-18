@@ -77,7 +77,19 @@ function pickCity(c: string) {
   load(true);
 }
 
-watch(keyword, () => load(true));
+// 搜索防抖：仅 watch 驱动加载（不再同时绑 @update），300ms 合并键击
+let kwTimer: ReturnType<typeof setTimeout> | undefined;
+watch(keyword, () => {
+  clearTimeout(kwTimer);
+  kwTimer = setTimeout(() => load(true), 300);
+});
+// 路由 query 变化（首页快捷入口跳不同 sort）需响应
+watch(
+  () => route.query.sort,
+  (v) => {
+    if (v && v !== sort.value) pickSort(v as string);
+  },
+);
 onMounted(() => {
   locate();
   load(true);
@@ -92,7 +104,6 @@ onMounted(() => {
         v-model="keyword"
         shape="round"
         placeholder="搜索昵称 / 技能标签"
-        @update:model-value="load(true)"
       />
       <div class="partners__bar">
         <span

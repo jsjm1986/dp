@@ -25,9 +25,13 @@ async function send() {
     const timer = setInterval(() => {
       if (--countdown.value <= 0) clearInterval(timer);
     }, 1000);
-    // 开发环境验证码直接回显
-    code.value = res.devCode;
-    showToast(`验证码已发送（开发环境：${res.devCode}）`);
+    // 开发环境验证码直接回显（生产环境不返回 devCode，走真实短信）
+    if (res.devCode) {
+      code.value = res.devCode;
+      showToast(`验证码已发送（开发环境：${res.devCode}）`);
+    } else {
+      showToast('验证码已发送，请注意查收');
+    }
   } finally {
     sending.value = false;
   }

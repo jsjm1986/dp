@@ -10,6 +10,7 @@ const partnerId = route.params.partnerId as string;
 const p = ref<PartnerDetail | null>(null);
 const qty = ref<Record<string, number>>({});
 const appointAt = ref('');
+const appointHour = ref<number | null>(null);
 const showCalendar = ref(false);
 const address = ref('');
 const remark = ref('');
@@ -49,21 +50,35 @@ function fmtDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// 可选时段：10:00-23:00 整点；选今天时过滤掉不足 1 小时提前量的时段
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 10);
+const isToday = computed(() => appointAt.value === fmtDate(new Date()));
+const slots = computed(() => {
+  if (!appointAt.value) return HOURS;
+  const minHour = new Date(Date.now() + 3600_000).getHours() + 1;
+  return isToday.value ? HOURS.filter((h) => h >= minHour) : HOURS;
+});
+
 function onCalendarConfirm(values: Date[]) {
   appointAt.value = fmtDate(values[0]);
+  appointHour.value = null;
   showCalendar.value = false;
 }
 
 async function submit() {
   if (!chosen.value.length) return showToast('请选择服务项目');
   if (!appointAt.value) return showToast('请选择预约日期');
+  if (appointHour.value == null) return showToast('请选择预约时段');
+  if (!slots.value.length) return showToast('今天已无可约时段，请改约明天');
+  const appointDate = new Date(`${appointAt.value}T${String(appointHour.value).padStart(2, '0')}:00:00`);
+  if (appointDate.getTime() <= Date.now()) return showToast('预约时间已过，请重新选择');
   if (!agreed.value) return showToast('请先阅读并同意《平台交易规则》');
   submitting.value = true;
   try {
     const order = await api.createOrder({
       partnerId,
       items: chosen.value.map((s) => ({ serviceId: s.id, num: s.num })),
-      appointAt: new Date(`${appointAt.value}T10:00:00`).toISOString(),
+      appointAt: appointDate.toISOString(),
       address: address.value || undefined,
       remark: remark.value || undefined,
       userCouponId: pickedCoupon.value && discount.value > 0 ? pickedCoupon.value.id : undefined,
@@ -112,12 +127,25 @@ onMounted(async () => {
 
     <div class="card oc__block">
       <van-cell title="预约日期" :value="appointAt || '请选择'" is-link @click="showCalendar = true" />
-      <van-field v-model="address" label="碰面地点" placeholder="选填，如商场/地铁站" />
+      <div v-if="appointAt" class="oc__slots">
+        <div v-if="!slots.length" class="muted oc__slots-empty">今天已无可约时段，请改约明天</div>
+        <div
+          v-for="h in slots"
+          :key="h"
+          class="oc__slot"
+          :class="{ 'oc__slot--on': appointHour === h }"
+          @click="appointHour = h"
+        >
+          {{ String(h).padStart(2, '0') }}:00
+        </div>
+      </div>
+      <van-field v-model="address" label="碰面地点" placeholder="选填，如商场/地铁站" maxlength="200" />
       <van-field
         v-model="remark"
         label="备注"
         type="textarea"
         rows="2"
+        maxlength="200"
         placeholder="想玩什么、有什么要求，告诉Ta"
       />
     </div>
@@ -304,5 +332,25 @@ onMounted(async () => {
 }
 .oc__discount {
   color: #ff5a5f;
+}
+.oc__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 16px 14px;
+}
+.oc__slot {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #f5f6f8;
+  font-size: 13px;
+}
+.oc__slot--on {
+  background: #ffecec;
+  color: #ff5a5f;
+  font-weight: 700;
+}
+.oc__slots-empty {
+  padding: 6px 0;
 }
 </style>

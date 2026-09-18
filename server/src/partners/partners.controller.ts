@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.guard.js';
+import { toInt, toNum } from '../common/params.js';
 import { PartnersService } from './partners.service.js';
 
 @Controller('partners')
@@ -31,10 +32,10 @@ export class PartnersController {
         city,
         keyword,
         sort,
-        lat: lat ? Number(lat) : undefined,
-        lng: lng ? Number(lng) : undefined,
-        page: page ? Number(page) : undefined,
-        pageSize: pageSize ? Number(pageSize) : undefined,
+        lat: toNum(lat),
+        lng: toNum(lng),
+        page: toInt(page, { min: 1 }),
+        pageSize: toInt(pageSize, { min: 1, max: 50 }),
       },
       userId,
     );
@@ -54,8 +55,8 @@ export class PartnersController {
   ) {
     return this.partners.reviews(
       id,
-      page ? Number(page) : 1,
-      pageSize ? Number(pageSize) : 10,
+      toInt(page, { def: 1, min: 1 }) ?? 1,
+      toInt(pageSize, { def: 10, min: 1, max: 50 }) ?? 10,
     );
   }
 

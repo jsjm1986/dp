@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { showConfirmDialog, showImagePreview, showToast } from 'vant';
 import { api } from '../api';
 
@@ -50,7 +50,7 @@ const uploading = ref(false);
 
 const statusMap: Record<string, string> = {
   pending_payment: '待支付', pending_accept: '待接单', pending_service: '待服务',
-  serving: '服务中', done: '已完成', cancelled: '已取消', rejected: '已拒绝', refunding: '退款中', refunded: '已退款',
+  serving: '服务中', done: '已完成', cancelled: '已取消', rejected: '已拒绝', refunded: '已退款',
 };
 const orderStatusOptions = [
   { text: '全部状态', value: '' },
@@ -62,12 +62,33 @@ const auditMap: Record<string, { text: string; color: string }> = {
   rejected: { text: '已拒绝', color: '#ee0a24' },
 };
 
+// 分页状态：每页 20 条（充值卡 30）
+const pages = reactive({ orders: 1, users: 1, dynamics: 1, reviews: 1, cards: 1 });
+const totals = reactive({ orders: 0, users: 0, dynamics: 0, reviews: 0, cards: 0 });
+function resetAndLoad(key: keyof typeof pages) {
+  pages[key] = 1;
+  ({ orders: loadOrders, users: loadUsers, dynamics: loadDynamics, reviews: loadReviews, cards: loadCards })[key]();
+}
+function pageOf(total: number, size = 20) { return Math.max(1, Math.ceil(total / size)); }
+
 async function loadDash() { dash.value = await api.adminDashboard(); }
 async function loadPartners() { partners.value = (await api.adminPartners(partnerTab.value)).items; }
-async function loadOrders() { orders.value = (await api.adminOrders(1, orderStatus.value || undefined, orderKeyword.value || undefined)).items; }
-async function loadDynamics() { dynamics.value = (await api.adminDynamics()).items; }
-async function loadUsers() { users.value = (await api.adminUsers(1, userKeyword.value || undefined)).items; }
-async function loadReviews() { reviews.value = (await api.adminReviews()).items; }
+async function loadOrders() {
+  const r = await api.adminOrders(pages.orders, orderStatus.value || undefined, orderKeyword.value || undefined);
+  orders.value = r.items; totals.orders = r.total;
+}
+async function loadDynamics() {
+  const r = await api.adminDynamics(pages.dynamics);
+  dynamics.value = r.items; totals.dynamics = r.total;
+}
+async function loadUsers() {
+  const r = await api.adminUsers(pages.users, userKeyword.value || undefined);
+  users.value = r.items; totals.users = r.total;
+}
+async function loadReviews() {
+  const r = await api.adminReviews(pages.reviews);
+  reviews.value = r.items; totals.reviews = r.total;
+}
 
 async function adminCancel(o: OrderRow) {
   try {
@@ -155,17 +176,20 @@ async function saveWords() {
 async function loadCoupons() { coupons.value = await api.adminCoupons(); }
 
 async function loadCards() {
-  const r = await api.adminRechargeCards(cardStatus.value === 'all' ? undefined : cardStatus.value);
+  const r = await api.adminRechargeCards(cardStatus.value === 'all' ? undefined : cardStatus.value, pages.cards);
   cards.value = r.items;
   cardUnused.value = r.unusedCount;
+  totals.cards = r.total;
 }
 
 async function genCards() {
   if (!genForm.value.amount || genForm.value.amount <= 0) return showToast('请输入面额');
   if (!genForm.value.count || genForm.value.count < 1) return showToast('请输入数量');
+  const count = Math.min(genForm.value.count, 500);
+  if (genForm.value.count > 500) showToast('单次最多生成 500 张，已自动调整');
   generating.value = true;
   try {
-    const r = await api.adminGenCards(genForm.value.amount, genForm.value.count);
+    const r = await api.adminGenCards(genForm.value.amount, count);
     genCodes.value = r.codes;
     showToast(`已生成 ${r.count} 张`);
     loadCards();
@@ -194,6 +218,9 @@ async function removeCard(id: string) {
 
 async function createCoupon() {
   if (!couponEdit.value.title.trim()) return showToast('请输入券名称');
+  if (!(couponEdit.value.amount >= 0.1)) return showToast('面额至少 ¥0.1');
+  if (!(couponEdit.value.days >= 1)) return showToast('有效期至少 1 天');
+  if (couponEdit.value.total < -1 || couponEdit.value.total === 0) return showToast('限量需为 -1（不限量）或正整数');
   await api.adminCreateCoupon({
     title: couponEdit.value.title.trim(),
     amount: couponEdit.value.amount,
@@ -387,9 +414,9 @@ function onTabChange(name: string | number) {
       <!-- 订单 -->
       <van-tab title="订单" name="orders">
         <van-dropdown-menu active-color="#ff5a5f">
-          <van-dropdown-item v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
+          <van-dropdown-item v-model="orderStatus" :options="orderStatusOptions" @change="resetAndLoad('orders')" />
         </van-dropdown-menu>
-        <van-search v-model="orderKeyword" placeholder="搜索订单号" @search="loadOrders" @clear="loadOrders" />
+        <van-search v-model="orderKeyword" placeholder="搜索订单号" @search="resetAndLoad('orders')" @clear="resetAndLoad('orders')" />
         <div class="admin__list">
           <van-cell v-for="o in orders" :key="o.id" :title="`${o.customer} → ${o.partner}`" :label="`${o.orderNo} · ${fmt(o.createdAt)}`">
             <template #value>
@@ -397,7 +424,7 @@ function onTabChange(name: string | number) {
                 <div>¥{{ o.totalAmount }}</div>
                 <van-tag>{{ statusMap[o.status] || o.status }}</van-tag>
                 <van-button
-                  v-if="['pending_payment', 'pending_accept', 'pending_service'].includes(o.status)"
+                  v-if="['pending_payment', 'pending_accept', 'pending_service', 'serving'].includes(o.status)"
                   size="mini" type="danger" plain round
                   @click="adminCancel(o)"
                 >
@@ -407,12 +434,17 @@ function onTabChange(name: string | number) {
             </template>
           </van-cell>
           <van-empty v-if="!orders.length" description="暂无订单" image-size="70" />
+          <div v-if="totals.orders > 20" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.orders <= 1" @click="pages.orders--; loadOrders()">上一页</van-button>
+            <span class="muted">{{ pages.orders }} / {{ pageOf(totals.orders) }}</span>
+            <van-button size="mini" round :disabled="pages.orders >= pageOf(totals.orders)" @click="pages.orders++; loadOrders()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 
       <!-- 用户 -->
       <van-tab title="用户" name="users">
-        <van-search v-model="userKeyword" placeholder="搜索昵称/手机号" @search="loadUsers" @clear="loadUsers" />
+        <van-search v-model="userKeyword" placeholder="搜索昵称/手机号" @search="resetAndLoad('users')" @clear="resetAndLoad('users')" />
         <div class="admin__list">
           <div v-for="u in users" :key="u.id" class="card admin__user">
             <div class="admin__user-head">
@@ -438,6 +470,11 @@ function onTabChange(name: string | number) {
             </div>
           </div>
           <van-empty v-if="!users.length" description="暂无用户" image-size="70" />
+          <div v-if="totals.users > 20" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.users <= 1" @click="pages.users--; loadUsers()">上一页</van-button>
+            <span class="muted">{{ pages.users }} / {{ pageOf(totals.users) }}</span>
+            <van-button size="mini" round :disabled="pages.users >= pageOf(totals.users)" @click="pages.users++; loadUsers()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 
@@ -457,6 +494,11 @@ function onTabChange(name: string | number) {
             <div v-if="r.reply" class="admin__review-reply">玩伴回复：{{ r.reply }}</div>
           </div>
           <van-empty v-if="!reviews.length" description="暂无评价" image-size="70" />
+          <div v-if="totals.reviews > 20" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.reviews <= 1" @click="pages.reviews--; loadReviews()">上一页</van-button>
+            <span class="muted">{{ pages.reviews }} / {{ pageOf(totals.reviews) }}</span>
+            <van-button size="mini" round :disabled="pages.reviews >= pageOf(totals.reviews)" @click="pages.reviews++; loadReviews()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 
@@ -474,6 +516,11 @@ function onTabChange(name: string | number) {
             <div class="muted">❤ {{ d.likeCount }} · 💬 {{ d.commentCount }} · {{ fmt(d.createdAt) }}</div>
           </div>
           <van-empty v-if="!dynamics.length" description="暂无动态" image-size="70" />
+          <div v-if="totals.dynamics > 20" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.dynamics <= 1" @click="pages.dynamics--; loadDynamics()">上一页</van-button>
+            <span class="muted">{{ pages.dynamics }} / {{ pageOf(totals.dynamics) }}</span>
+            <van-button size="mini" round :disabled="pages.dynamics >= pageOf(totals.dynamics)" @click="pages.dynamics++; loadDynamics()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 
@@ -560,7 +607,7 @@ function onTabChange(name: string | number) {
           </div>
 
           <div class="admin__card-filter">
-            <van-tabs v-model:active="cardStatus" type="card" @change="loadCards">
+            <van-tabs v-model:active="cardStatus" type="card" @change="resetAndLoad('cards')">
               <van-tab title="未使用" name="unused" />
               <van-tab title="已使用" name="used" />
               <van-tab title="全部" name="all" />
@@ -581,6 +628,11 @@ function onTabChange(name: string | number) {
             <van-button v-else size="mini" type="danger" plain @click="removeCard(c.id)">删除</van-button>
           </div>
           <van-empty v-if="!cards.length" description="暂无充值卡" image-size="70" />
+          <div v-if="totals.cards > 30" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.cards <= 1" @click="pages.cards--; loadCards()">上一页</van-button>
+            <span class="muted">{{ pages.cards }} / {{ pageOf(totals.cards, 30) }}</span>
+            <van-button size="mini" round :disabled="pages.cards >= pageOf(totals.cards, 30)" @click="pages.cards++; loadCards()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 
@@ -729,6 +781,7 @@ function onTabChange(name: string | number) {
 .admin__review-reply { font-size: 12px; color: #888; background: #f7f8fa; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
 .admin__card-filter { margin-bottom: 10px; }
 .admin__card-count { text-align: right; font-size: 12px; padding: 6px 4px 0; }
+.admin__pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 0 4px; }
 .admin__card { display: flex; align-items: center; gap: 10px; padding: 12px; margin-bottom: 8px; }
 .admin__card-code { font-family: monospace; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
 .admin__card-info { flex: 1; font-size: 13px; }

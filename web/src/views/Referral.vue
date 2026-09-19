@@ -1,15 +1,29 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { showToast } from 'vant';
+import QRCode from 'qrcode';
 import { api } from '../api';
 
 const data = ref<Awaited<ReturnType<typeof api.referral>> | null>(null);
 const bindCode = ref('');
 const binding = ref(false);
 const tab = ref(0);
+const qrUrl = ref('');
+const qrOpen = ref(false);
+
+const inviteUrl = computed(() =>
+  data.value?.inviteCode ? `${location.origin}/login?invite=${data.value.inviteCode}` : '',
+);
 
 async function load() {
   data.value = await api.referral();
+  if (inviteUrl.value) {
+    qrUrl.value = await QRCode.toDataURL(inviteUrl.value, {
+      width: 480,
+      margin: 1,
+      color: { dark: '#323233', light: '#ffffff' },
+    });
+  }
 }
 
 async function copyCode() {
@@ -20,6 +34,16 @@ async function copyCode() {
     showToast('邀请码已复制');
   } catch {
     showToast(`邀请码：${code}`);
+  }
+}
+
+async function copyLink() {
+  if (!inviteUrl.value) return;
+  try {
+    await navigator.clipboard.writeText(inviteUrl.value);
+    showToast('邀请链接已复制');
+  } catch {
+    showToast(inviteUrl.value);
   }
 }
 
@@ -57,6 +81,21 @@ onMounted(load);
       </div>
       <div class="ref__hero-hint">好友注册时填写，或让好友在我的页面绑定</div>
       <div class="ref__rate">当前佣金比例 {{ ((data?.rate ?? 0) * 100).toFixed(0) }}%</div>
+    </div>
+
+    <!-- 二维码邀请 -->
+    <div class="card ref__qr">
+      <div class="ref__qr-title">扫码邀请好友</div>
+      <div class="ref__qr-box" @click="qrOpen = true">
+        <van-image v-if="qrUrl" :src="qrUrl" width="150" height="150" />
+        <van-loading v-else size="28" />
+      </div>
+      <div class="muted ref__qr-hint">好友扫码进入注册页，自动绑定你为推荐人</div>
+      <div class="ref__qr-actions">
+        <van-button size="small" round plain type="primary" @click="qrOpen = true">查看大图</van-button>
+        <van-button size="small" round plain type="primary" @click="copyLink">复制邀请链接</van-button>
+      </div>
+      <div class="ref__qr-link muted">{{ inviteUrl }}</div>
     </div>
 
     <!-- 数据卡 -->
@@ -111,6 +150,19 @@ onMounted(load);
         </div>
       </van-tab>
     </van-tabs>
+
+    <!-- 二维码大图弹层 -->
+    <van-popup v-model:show="qrOpen" round class="ref__poster">
+      <div class="ref__poster-inner">
+        <div class="ref__poster-logo">城市玩伴</div>
+        <div class="ref__poster-slogan">找个本地人，带你玩点不一样的</div>
+        <van-image v-if="qrUrl" :src="qrUrl" width="220" height="220" />
+        <div class="ref__poster-code">邀请码 {{ data?.inviteCode }}</div>
+        <div class="muted">扫码注册，即成为我的好友</div>
+        <van-button round block type="primary" class="ref__poster-btn" @click="copyLink">复制邀请链接</van-button>
+        <div class="muted ref__poster-tip">长按图片可保存二维码</div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
@@ -183,6 +235,71 @@ onMounted(load);
   margin: 12px;
   padding: 14px;
   font-size: 14px;
+}
+.ref__qr {
+  margin: 12px;
+  padding: 18px 14px;
+  text-align: center;
+}
+.ref__qr-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.ref__qr-box {
+  display: inline-flex;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+.ref__qr-hint {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.ref__qr-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.ref__qr-link {
+  margin-top: 10px;
+  font-size: 11px;
+  word-break: break-all;
+}
+.ref__poster {
+  width: 82vw;
+  max-width: 340px;
+}
+.ref__poster-inner {
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+.ref__poster-logo {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--dp-primary);
+  letter-spacing: 2px;
+}
+.ref__poster-slogan {
+  font-size: 12px;
+  color: var(--dp-text-2);
+  margin: 6px 0 18px;
+}
+.ref__poster-code {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 14px 0 4px;
+}
+.ref__poster-btn {
+  margin-top: 16px;
+}
+.ref__poster-tip {
+  margin-top: 10px;
+  font-size: 11px;
 }
 .ref__list {
   padding: 12px;

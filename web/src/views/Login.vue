@@ -7,6 +7,7 @@ import { useUserStore } from '../stores/user';
 
 const mobile = ref('');
 const code = ref('');
+const inviteAuto = ref(!!new URLSearchParams(location.search).get('invite'));
 const inviteCode = ref((new URLSearchParams(location.search).get('invite') || '').toUpperCase());
 const agreed = ref(false);
 const sending = ref(false);
@@ -85,6 +86,9 @@ async function submit() {
         placeholder="邀请码（选填，新用户可绑定推荐人）"
         left-icon="gift-o"
       />
+      <div v-if="inviteAuto" class="login__invite-tip">
+        <van-icon name="checked" /> 已识别邀请码，注册后自动绑定推荐人
+      </div>
       <van-button block round type="primary" size="large" :loading="loading" class="login__btn" @click="submit">
         登录 / 注册
       </van-button>
@@ -136,5 +140,13 @@ async function submit() {
   text-align: center;
   font-size: 12px;
   margin-top: 12px;
+}
+.login__invite-tip {
+  margin: -6px 0 12px;
+  font-size: 12px;
+  color: var(--dp-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>

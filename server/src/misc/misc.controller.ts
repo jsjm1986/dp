@@ -31,7 +31,7 @@ export class MiscController {
   @Get('home')
   @UseGuards(OptionalAuthGuard)
   async home(@CurrentUser() userId?: string) {
-    const [banners, recommend, newest] = await this.prisma.$transaction([
+    const [banners, recommend, newest, announcement] = await this.prisma.$transaction([
       this.prisma.banner.findMany({ orderBy: { sort: 'asc' } }),
       this.prisma.partner.findMany({
         where: { auditStatus: 'approved', user: { is: { disabled: false } } },
@@ -51,6 +51,7 @@ export class MiscController {
           _count: { select: { follows: true } },
         },
       }),
+      this.prisma.announcement.findFirst({ where: { enabled: true }, orderBy: { createdAt: 'desc' } }),
     ]);
 
     let followed = new Set<string>();
@@ -84,6 +85,7 @@ export class MiscController {
       recommend: recommend.map(card),
       newest: newest.map(card),
       cities: ['上海', '北京', '杭州', '成都', '广州', '深圳'],
+      announcement: announcement ? { id: announcement.id, title: announcement.title, content: announcement.content } : null,
     };
   }
 

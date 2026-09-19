@@ -56,6 +56,8 @@ model Partner {
   auditStatus   String   @default("pending")
   verified      Boolean  @default(false)
   recommended   Boolean  @default(false)
+  realName      String?  // 实名认证：仅本人与管理端可见
+  idCard        String?
   balance       Decimal  @default(0)
   serviceCount  Int      @default(0)
   viewCount     Int      @default(0)
@@ -342,4 +344,54 @@ model RechargeCard {
   usedBy User? @relation(fields: [usedById], references: [id])
 
   @@index([usedById])
+}
+
+// ---------- 站内通知 ----------
+model Notice {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // order / audit / wallet / commission / system
+  title     String
+  content   String
+  refId     String?   // 关联对象 id（订单号/提现单等）
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+// ---------- 举报 ----------
+model Report {
+  id         String    @id @default(cuid())
+  userId     String
+  targetType String    // user / partner / dynamic / comment / order
+  targetId   String
+  reason     String
+  detail     String?
+  status     String    @default("pending") // pending / processed / rejected
+  remark     String?
+  createdAt  DateTime  @default(now())
+  handledAt  DateTime?
+
+  @@index([status, createdAt])
+}
+
+// ---------- 平台公告 ----------
+model Announcement {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  enabled   Boolean   @default(true)
+  createdAt DateTime  @default(now())
+}
+
+// ---------- 玩伴休息日 ----------
+model PartnerOffDate {
+  id        String    @id @default(cuid())
+  partnerId String
+  date      String    // 北京时间 YYYY-MM-DD
+  createdAt DateTime  @default(now())
+
+  @@unique([partnerId, date])
 }

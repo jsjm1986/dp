@@ -13,6 +13,8 @@ type WithdrawalRow = Awaited<ReturnType<typeof api.adminWithdrawals>>[number];
 type Settings = Awaited<ReturnType<typeof api.adminSettings>>;
 type CommissionRow = Awaited<ReturnType<typeof api.adminCommissions>>['items'][number];
 type CouponRow = Awaited<ReturnType<typeof api.adminCoupons>>[number];
+type ReportRow = Awaited<ReturnType<typeof api.adminReports>>['items'][number];
+type AnnouncementRow = Awaited<ReturnType<typeof api.adminAnnouncements>>[number];
 
 const tab = ref('dash');
 const dash = ref<Dash | null>(null);
@@ -47,6 +49,13 @@ const bannerEdit = ref<{ show: boolean; id?: string; image: string; link: string
   show: false, image: '', link: '', sort: 0,
 });
 const uploading = ref(false);
+const reports = ref<ReportRow[]>([]);
+const reportStatus = ref('pending');
+const reportTotal = ref(0);
+const reportPage = ref(1);
+const announcements = ref<AnnouncementRow[]>([]);
+const annEdit = ref({ show: false, title: '', content: '' });
+const annSaving = ref(false);
 
 const statusMap: Record<string, string> = {
   pending_payment: '待支付', pending_accept: '待接单', pending_service: '待服务',
@@ -88,6 +97,46 @@ async function loadUsers() {
 async function loadReviews() {
   const r = await api.adminReviews(pages.reviews);
   reviews.value = r.items; totals.reviews = r.total;
+}
+async function loadReports() {
+  const r = await api.adminReports(reportPage.value, reportStatus.value || undefined);
+  reports.value = r.items; reportTotal.value = r.total;
+}
+async function handleReport(r: ReportRow, action: 'processed' | 'rejected') {
+  try {
+    await showConfirmDialog({
+      title: action === 'processed' ? '核实处理' : '驳回举报',
+      message: `${r.reason}｜举报人：${r.reporter?.nickname ?? '-'}，确定${action === 'processed' ? '已核实处理' : '驳回'}？`,
+    });
+  } catch { return; }
+  await api.adminHandleReport(r.id, action);
+  showToast('已处理');
+  loadReports();
+}
+async function loadAnnouncements() { announcements.value = await api.adminAnnouncements(); }
+async function saveAnnouncement() {
+  if (!annEdit.value.title.trim() || !annEdit.value.content.trim()) return showToast('标题和内容必填');
+  annSaving.value = true;
+  try {
+    await api.adminCreateAnnouncement(annEdit.value.title.trim(), annEdit.value.content.trim());
+    annEdit.value.show = false;
+    annEdit.value.title = ''; annEdit.value.content = '';
+    showToast('公告已发布');
+    loadAnnouncements();
+  } finally {
+    annSaving.value = false;
+  }
+}
+async function toggleAnnouncement(a: AnnouncementRow) {
+  await api.adminUpdateAnnouncement(a.id, { enabled: !a.enabled });
+  a.enabled = !a.enabled;
+}
+async function removeAnnouncement(a: AnnouncementRow) {
+  try {
+    await showConfirmDialog({ title: '删除公告', message: `删除「${a.title}」？` });
+  } catch { return; }
+  await api.adminDeleteAnnouncement(a.id);
+  announcements.value = announcements.value.filter((x) => x.id !== a.id);
 }
 
 async function adminCancel(o: OrderRow) {
@@ -330,6 +379,8 @@ function onTabChange(name: string | number) {
   if (name === 'cards') loadCards();
   if (name === 'reviews') loadReviews();
   if (name === 'settings') loadSettings();
+  if (name === 'reports') loadReports();
+  if (name === 'announcements') loadAnnouncements();
 }
 </script>
 
@@ -374,6 +425,7 @@ function onTabChange(name: string | number) {
               <div class="admin__partner-info">
                 <div><b>{{ p.nickname }}</b> <van-tag :color="auditMap[p.auditStatus]?.color" plain>{{ auditMap[p.auditStatus]?.text }}</van-tag></div>
                 <div class="muted">{{ p.mobile }} · {{ p.city }}{{ p.district ? '·' + p.district : '' }}</div>
+                <div v-if="p.realName || p.idCard" class="muted">实名：{{ p.realName || '未填' }} {{ p.idCard ? `｜${p.idCard}` : '' }}</div>
               </div>
               <van-tag v-if="p.verified" type="primary" plain>已实名</van-tag>
             </div>
@@ -677,7 +729,69 @@ function onTabChange(name: string | number) {
           </div>
         </div>
       </van-tab>
+
+      <!-- 举报处理 -->
+      <van-tab title="举报" name="reports">
+        <van-tabs v-model:active="reportStatus" type="card" @change="reportPage = 1; loadReports()">
+          <van-tab title="待处理" name="pending" />
+          <van-tab title="已处理" name="processed" />
+          <van-tab title="已驳回" name="rejected" />
+          <van-tab title="全部" name="" />
+        </van-tabs>
+        <div class="admin__list">
+          <div v-for="r in reports" :key="r.id" class="card admin__report">
+            <div class="admin__report-head">
+              <van-tag type="warning">{{ ({ user: '用户', partner: '玩伴', dynamic: '动态', comment: '评论', order: '订单' } as Record<string, string>)[r.targetType] || r.targetType }}</van-tag>
+              <b>{{ r.reason }}</b>
+              <span class="muted">{{ fmt(r.createdAt) }}</span>
+            </div>
+            <div class="muted">举报人：{{ r.reporter?.nickname ?? '-' }}（{{ r.reporter?.mobile ?? '' }}）</div>
+            <div class="muted">对象ID：{{ r.targetId }}</div>
+            <div v-if="r.detail" class="admin__report-detail">{{ r.detail }}</div>
+            <div v-if="r.status === 'pending'" class="admin__report-ops">
+              <van-button size="small" type="success" round @click="handleReport(r, 'processed')">核实处理</van-button>
+              <van-button size="small" round plain @click="handleReport(r, 'rejected')">驳回</van-button>
+            </div>
+            <div v-else class="muted">已{{ r.status === 'processed' ? '处理' : '驳回' }}{{ r.remark ? `：${r.remark}` : '' }}</div>
+          </div>
+          <van-empty v-if="!reports.length" description="暂无举报" image-size="70" />
+          <div v-if="reportTotal > 20" class="admin__pager">
+            <van-button size="small" :disabled="reportPage <= 1" @click="reportPage--; loadReports()">上一页</van-button>
+            <span class="muted">{{ reportPage }}/{{ pageOf(reportTotal) }}</span>
+            <van-button size="small" :disabled="reportPage >= pageOf(reportTotal)" @click="reportPage++; loadReports()">下一页</van-button>
+          </div>
+        </div>
+      </van-tab>
+
+      <!-- 公告管理 -->
+      <van-tab title="公告" name="announcements">
+        <div class="admin__list">
+          <div class="card">
+            <van-button block round type="primary" icon="plus" @click="annEdit.show = true">发布公告</van-button>
+          </div>
+          <div v-for="a in announcements" :key="a.id" class="card admin__ann">
+            <div class="admin__ann-head">
+              <b>{{ a.title }}</b>
+              <van-tag :type="a.enabled ? 'success' : 'default'">{{ a.enabled ? '展示中' : '已下线' }}</van-tag>
+            </div>
+            <div class="admin__ann-content">{{ a.content }}</div>
+            <div class="muted">{{ fmt(a.createdAt) }}</div>
+            <div class="admin__report-ops">
+              <van-button size="small" round plain @click="toggleAnnouncement(a)">{{ a.enabled ? '下线' : '上线' }}</van-button>
+              <van-button size="small" round plain type="danger" @click="removeAnnouncement(a)">删除</van-button>
+            </div>
+          </div>
+          <van-empty v-if="!announcements.length" description="暂无公告" image-size="70" />
+        </div>
+      </van-tab>
     </van-tabs>
+
+    <van-dialog v-model:show="annEdit.show" title="发布公告" show-cancel-button :loading="annSaving" @confirm="saveAnnouncement">
+      <div class="admin__banner-form">
+        <van-field v-model="annEdit.title" label="标题" maxlength="50" placeholder="公告标题" />
+        <van-field v-model="annEdit.content" type="textarea" rows="3" maxlength="500" placeholder="公告内容" />
+      </div>
+    </van-dialog>
 
     <van-dialog v-model:show="bannerEdit.show" title="Banner" show-cancel-button @confirm="saveBanner">
       <div class="admin__banner-form">
@@ -788,4 +902,12 @@ function onTabChange(name: string | number) {
 .admin__gen-result { margin-top: 10px; background: #f7f8fa; border-radius: 8px; padding: 10px; }
 .admin__gen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .admin__gen-codes { font-family: monospace; font-size: 12px; color: #555; word-break: break-all; line-height: 1.8; user-select: all; }
+.admin__report { padding: 12px; margin-bottom: 10px; }
+.admin__report-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.admin__report-head .muted { margin-left: auto; font-size: 11px; }
+.admin__report-detail { font-size: 13px; background: #f7f8fa; border-radius: 6px; padding: 8px; margin-top: 6px; }
+.admin__report-ops { display: flex; gap: 8px; margin-top: 10px; }
+.admin__ann { padding: 12px; margin-bottom: 10px; }
+.admin__ann-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.admin__ann-content { font-size: 13px; color: #555; margin: 6px 0; line-height: 1.6; }
 </style>

@@ -93,6 +93,8 @@ export interface Order {
   cancelReason: string | null;
   urgedAt: string | null;
   paidAt: string | null;
+  acceptedAt: string | null;
+  finishedAt: string | null;
   reviewed: boolean;
   createdAt: string;
   children?: Array<{ id: string; orderNo: string; status: string; totalAmount: number; items: Array<{ name: string; num: number }>; createdAt: string }>;
@@ -133,6 +135,8 @@ export interface PartnerApplyPayload {
   tags?: string[];
   photos?: string[];
   services: Array<{ name: string; desc?: string; price: number; unit: string; miniNum: number }>;
+  realName?: string;
+  idCard?: string;
 }
 
 export interface PartnerProfile extends PartnerApplyPayload {
@@ -153,6 +157,28 @@ export interface PartnerStats {
   rating: number;
   status: string;
   auditStatus: string;
+}
+
+export interface AdminReport {
+  id: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  detail: string | null;
+  status: string;
+  remark: string | null;
+  createdAt: string;
+  reporter: { id: string; nickname: string; mobile: string } | null;
+}
+
+export interface NoticeItem {
+  id: string;
+  type: 'order' | 'audit' | 'wallet' | 'commission' | 'system';
+  title: string;
+  content: string;
+  refId: string | null;
+  read: boolean;
+  createdAt: string;
 }
 
 export interface UserProfile {
@@ -177,7 +203,7 @@ export const api = {
   myFollows: () => http.get<PartnerCard[]>('/user/follows'),
 
   home: () =>
-    http.get<{ banners: Array<{ id: string; image: string; link: string | null }>; recommend: PartnerCard[]; newest: PartnerCard[]; cities: string[] }>('/home'),
+    http.get<{ banners: Array<{ id: string; image: string; link: string | null }>; recommend: PartnerCard[]; newest: PartnerCard[]; cities: string[]; announcement: { id: string; title: string; content: string } | null }>('/home'),
   partners: (params: Record<string, string | number>) =>
     http.get<{ total: number; page: number; pageSize: number; items: PartnerCard[] }>('/partners', { params }),
   partner: (id: string) => http.get<PartnerDetail>(`/partners/${id}`),
@@ -215,8 +241,19 @@ export const api = {
     }>('/partner/wallet'),
   partnerWithdraw: (amount: number, account?: string) => http.post<{ id: string; status: string }>('/partner/withdraw', { amount, account }),
   partnerBusy: (id: string, date: string) => http.get<{ allDay: boolean; hours: number[] }>(`/partners/${id}/busy`, { params: { date } }),
+  partnerOffDates: () => http.get<{ dates: string[] }>('/partner/off-dates'),
+  addOffDate: (date: string) => http.post('/partner/off-dates', { date }),
+  removeOffDate: (date: string) => http.delete(`/partner/off-dates/${date}`),
   userWallet: (page = 1) =>
     http.get<{ balance: number; total: number; items: BalanceLogItem[] }>('/user/wallet', { params: { page } }),
+
+  /* 通知 & 举报 */
+  notices: (page = 1) =>
+    http.get<{ total: number; unread: number; page: number; pageSize: number; items: NoticeItem[] }>('/user/notices', { params: { page } }),
+  noticeUnread: () => http.get<{ count: number }>('/user/notices/unread'),
+  readNotices: (id?: string) => http.post('/user/notices/read', id ? { id } : {}),
+  report: (data: { targetType: 'user' | 'partner' | 'dynamic' | 'comment' | 'order'; targetId: string; reason: string; detail?: string }) =>
+    http.post('/user/reports', data),
 
   dynamics: (page = 1, tab?: string) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page, tab } }),
   createDynamic: (data: { content: string; images?: string[]; city?: string }) => http.post<{ id: string }>('/dynamics', data),
@@ -261,9 +298,9 @@ export const api = {
   adminUsers: (page = 1, keyword?: string) =>
     http.get<{ total: number; items: Array<{ id: string; mobile: string; nickname: string; avatar: string | null; city: string | null; role: string; disabled: boolean; balance: number; partnerId: string | null; auditStatus: string | null; orderCount: number; createdAt: string }> }>('/admin/users', { params: { page, keyword } }),
   adminPartners: (auditStatus = 'pending', page = 1) =>
-    http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; recommended: boolean; rating: number; serviceCount: number; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
+    http.get<{ total: number; items: Array<{ id: string; userId: string; nickname: string; avatar: string | null; mobile: string; city: string; district: string | null; bio: string | null; tags: string[]; photos: string[]; auditStatus: string; status: string; verified: boolean; recommended: boolean; rating: number; serviceCount: number; realName: string | null; idCard: string | null; age: number | null; createdAt: string; services: Array<{ name: string; price: number; unit: string; miniNum: number }> }> }>('/admin/partners', { params: { auditStatus, page } }),
   adminApprove: (id: string) => http.post(`/admin/partners/${id}/approve`),
-  adminReject: (id: string) => http.post(`/admin/partners/${id}/reject`),
+  adminReject: (id: string, reason?: string) => http.post(`/admin/partners/${id}/reject`, { reason }),
   adminVerify: (id: string, verified: boolean) => http.put(`/admin/partners/${id}/verify`, { verified }),
   adminOrders: (page = 1, status?: string, keyword?: string) =>
     http.get<{ total: number; items: Array<{ id: string; orderNo: string; customer: string; customerMobile: string; partner: string; city: string; totalAmount: number; status: string; createdAt: string }> }>('/admin/orders', { params: { page, status, keyword } }),
@@ -313,6 +350,16 @@ export const api = {
   adminGenCards: (amount: number, count: number) =>
     http.post<{ batch: string; count: number; codes: string[] }>('/admin/recharge-cards', { amount, count }),
   adminDeleteCard: (id: string) => http.delete(`/admin/recharge-cards/${id}`),
+  adminReports: (page = 1, status?: string) =>
+    http.get<{ total: number; page: number; items: AdminReport[] }>('/admin/reports', { params: { page, status } }),
+  adminHandleReport: (id: string, action: 'processed' | 'rejected', remark?: string) =>
+    http.post(`/admin/reports/${id}/handle`, { action, remark }),
+  adminAnnouncements: () =>
+    http.get<Array<{ id: string; title: string; content: string; enabled: boolean; createdAt: string }>>('/admin/announcements'),
+  adminCreateAnnouncement: (title: string, content: string) => http.post('/admin/announcements', { title, content }),
+  adminUpdateAnnouncement: (id: string, data: { enabled?: boolean; title?: string; content?: string }) =>
+    http.put(`/admin/announcements/${id}`, data),
+  adminDeleteAnnouncement: (id: string) => http.delete(`/admin/announcements/${id}`),
   redeemCard: (code: string) => http.post<{ balance: number; amount: number }>('/user/redeem', { code }),
 
   bindInviter: (code: string) => http.post<{ bound: boolean; inviter: string }>('/user/bind-inviter', { code }),

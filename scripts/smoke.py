@@ -434,6 +434,58 @@ def main():
     code, _ = call("GET", "/admin/dashboard", ua_tok, expect=403)
     check("admin.non-admin 403", code == 403)
 
+    # ---------- 通知 / 举报 / 公告 / 休息日 ----------
+    # 玩伴应已收到「新订单待接单」通知（前面订单支付触发）
+    _, nres = call("GET", "/user/notices", pw_tok, expect=200)
+    check("notice.partner-neworder", any("接单" in n["title"] for n in nres["items"]), [n["title"] for n in nres["items"][:3]])
+    check("notice.unread", nres["unread"] > 0, nres["unread"])
+    code, _ = call("POST", "/user/notices/read", pw_tok, {}, expect=201)
+    _, nres2 = call("GET", "/user/notices/unread", pw_tok, expect=200)
+    check("notice.read-all", nres2["count"] == 0, nres2["count"])
+
+    # 举报：ub 举报玩伴 → 管理端处理 → 举报人收到系统通知
+    code, _ = call("POST", "/user/reports", ub_tok, {"targetType": "partner", "targetId": pid2, "reason": "虚假信息", "detail": "冒烟举报"}, expect=201)
+    check("report.create", code == 201)
+    code, r = call("POST", "/user/reports", ub_tok, {"targetType": "partner", "targetId": pid2, "reason": "虚假信息"}, expect=400)
+    check("report.dup-400", code == 400)
+    _, rlist = call("GET", "/admin/reports?status=pending", admin_tok, expect=200)
+    rid = next((x["id"] for x in rlist["items"] if x["targetId"] == pid2), None)
+    check("report.admin-list", rid is not None)
+    code, _ = call("POST", f"/admin/reports/{rid}/handle", admin_tok, {"action": "processed", "remark": "已警告"}, expect=201)
+    check("report.handle", code == 201)
+    _, un2 = call("GET", "/user/notices", ub_tok, expect=200)
+    check("notice.report-result", any("举报" in n["title"] for n in un2["items"]))
+
+    # 公告：发布→home 返回→下线→home 不再返回
+    _, ann = call("POST", "/admin/announcements", admin_tok, {"title": "冒烟公告", "content": "测试公告内容"}, expect=201)
+    check("announcement.create", "id" in ann)
+    _, home2 = call("GET", "/home", expect=200)
+    check("announcement.home", home2.get("announcement", {}).get("title") == "冒烟公告")
+    call("PUT", f"/admin/announcements/{ann['id']}", admin_tok, {"enabled": False}, expect=200)
+    _, home3 = call("GET", "/home", expect=200)
+    check("announcement.off", (home3.get("announcement") or {}).get("id") != ann["id"])
+    call("DELETE", f"/admin/announcements/{ann['id']}", admin_tok, expect=200)
+
+    # 休息日：玩伴设 2030-01-08 休息 → busy 全天占用 → 当天下单 400
+    OFFD, OFF_APPOINT = "2030-01-08", "2030-01-08T02:00:00.000Z"  # 北京10点
+    call("POST", "/partner/off-dates", pw_tok, {"date": OFFD}, expect=201)
+    _, busy2 = call("GET", f"/partners/{pid2}/busy?date={OFFD}", expect=200)
+    check("offdate.busy-allday", busy2["allDay"] is True, busy2)
+    _, psvc = call("GET", "/partner/profile", pw_tok, expect=200)
+    off_items = [{"serviceId": psvc["services"][0]["id"], "num": psvc["services"][0]["miniNum"]}]
+    code, r = call("POST", "/orders", ub_tok, {"partnerId": pid2, "items": off_items, "appointAt": OFF_APPOINT}, expect=400)
+    check("offdate.order-400", code == 400 and "休息" in r.get("message", ""), r.get("message", ""))
+    call("DELETE", f"/partner/off-dates/{OFFD}", pw_tok, expect=200)
+
+    # 实名信息：玩伴资料更新带 realName → 管理端可见（资料更新会回炉 pending，随后重新审核通过）
+    call("PUT", "/partner/profile", pw_tok, {**{k: psvc[k] for k in ("city",)}, "district": psvc.get("district"), "age": psvc.get("age"), "bio": psvc.get("bio"), "tags": psvc.get("tags"), "photos": psvc.get("photos"), "realName": "测试实名", "idCard": "110101199001011234", "services": [{"name": s["name"], "desc": s.get("desc"), "price": s["price"], "unit": s["unit"], "miniNum": s["miniNum"]} for s in psvc["services"]]}, expect=200)
+    _, plist = call("GET", "/admin/partners?auditStatus=pending", admin_tok, expect=200)
+    prow = next((x for x in plist["items"] if x["id"] == pid2), None)
+    check("partner.realname-admin", prow is not None and prow.get("realName") == "测试实名", prow and prow.get("realName"))
+    call("POST", f"/admin/partners/{pid2}/approve", admin_tok, expect=201)
+    _, pn = call("GET", "/user/notices", pw_tok, expect=200)
+    check("notice.audit-approved", any("审核通过" in n["title"] for n in pn["items"]))
+
     print(f"\n=== {len(PASS)} passed, {len(FAIL)} failed ===")
     for f in FAIL:
         print("FAIL:", f)

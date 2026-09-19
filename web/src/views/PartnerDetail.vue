@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { showConfirmDialog, showImagePreview, showToast } from 'vant';
 import { api, type PartnerDetail } from '../api';
 import { useUserStore } from '../stores/user';
+import ReportSheet from '../components/ReportSheet.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -11,6 +12,7 @@ const store = useUserStore();
 const id = route.params.id as string;
 const p = ref<PartnerDetail | null>(null);
 const showPhone = ref(false);
+const reportOpen = ref(false);
 
 const statusText: Record<string, string> = { available: '可接单', rest: '休息中', busy: '服务中' };
 
@@ -67,6 +69,11 @@ function book() {
   router.push(`/order/create/${id}`);
 }
 
+function openReport() {
+  if (!store.loggedIn) return router.push({ path: '/login', query: { redirect: route.fullPath } });
+  reportOpen.value = true;
+}
+
 async function copyWx() {
   try {
     await navigator.clipboard.writeText(p.value?.wechatId || '');
@@ -89,7 +96,11 @@ onMounted(load);
         <div class="detail__photo detail__photo--empty" />
       </van-swipe-item>
     </van-swipe>
-    <van-nav-bar left-arrow :border="false" class="detail__nav" @click-left="$router.back()" />
+    <van-nav-bar left-arrow :border="false" class="detail__nav" @click-left="$router.back()">
+      <template #right>
+        <van-icon name="warning-o" size="18" color="#fff" @click="openReport" />
+      </template>
+    </van-nav-bar>
 
     <div class="detail__main">
       <div class="detail__head card">
@@ -196,6 +207,8 @@ onMounted(load);
     <van-dialog v-model:show="showPhone" title="Ta的微信号" confirm-button-text="一键复制" @confirm="copyWx">
       <div class="detail__wx">{{ p.wechatId || '对方暂未设置' }}</div>
     </van-dialog>
+
+    <ReportSheet v-model:show="reportOpen" target-type="partner" :target-id="id" />
   </div>
 </template>
 

@@ -33,6 +33,12 @@ export function bjDayStart(d: Date) {
   return new Date(t.getTime() - BJ_OFFSET);
 }
 
+/** 北京时间日期串 YYYY-MM-DD */
+export function bjDateKey(d: Date) {
+  const t = new Date(d.getTime() + BJ_OFFSET);
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+}
+
 /** 订单占用的小时段集合（北京时间）：appointAt 起按 items 展开；含「天」返回 null 表示全天占用 */
 export function orderHours(appointAt: Date, items: Array<{ unit: string; num: number }>): number[] | null {
   if (items.some((i) => i.unit === '天')) return null;

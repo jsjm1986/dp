@@ -1,13 +1,21 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { api, type Dynamic } from '../api';
 import { useUserStore } from '../stores/user';
 import { showImagePreview, showToast } from 'vant';
 import { useRouter } from 'vue-router';
+import ReportSheet from './ReportSheet.vue';
 
 const props = defineProps<{ item: Dynamic }>();
 const emit = defineEmits<{ changed: [item: Dynamic]; comment: [id: string] }>();
 const store = useUserStore();
 const router = useRouter();
+const reportOpen = ref(false);
+
+function openReport() {
+  if (!store.loggedIn) return showToast('请先登录');
+  reportOpen.value = true;
+}
 
 async function toggleLike() {
   if (!store.loggedIn) return showToast('请先登录');
@@ -46,6 +54,7 @@ function fmtTime(iso: string) {
         </div>
         <div class="muted">{{ fmtTime(item.createdAt) }}<template v-if="item.city"> · {{ item.city }}</template></div>
       </div>
+      <van-icon name="ellipsis" class="dcard__more" @click="openReport" />
     </div>
     <div class="dcard__content">{{ item.content }}</div>
     <div v-if="item.images.length" class="dcard__imgs" :class="{ 'dcard__imgs--single': item.images.length === 1 }">
@@ -66,6 +75,7 @@ function fmtTime(iso: string) {
         <van-icon name="comment-o" /> {{ item.commentCount || '评论' }}
       </span>
     </div>
+    <ReportSheet v-model:show="reportOpen" target-type="dynamic" :target-id="item.id" />
   </div>
 </template>
 
@@ -77,6 +87,14 @@ function fmtTime(iso: string) {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+.dcard__who {
+  flex: 1;
+  min-width: 0;
+}
+.dcard__more {
+  color: var(--dp-text-3, #c8c9cc);
+  padding: 4px;
 }
 .dcard__name {
   font-weight: 600;

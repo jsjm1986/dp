@@ -12,6 +12,8 @@ const editMode = ref(false);
 const city = ref('');
 const district = ref('');
 const age = ref<number | undefined>();
+const realName = ref('');
+const idCard = ref('');
 const bio = ref('');
 const tagInput = ref('');
 const tags = ref<string[]>([]);
@@ -62,6 +64,8 @@ async function submit() {
       bio: bio.value || undefined,
       tags: tags.value,
       photos: photos.value,
+      realName: realName.value.trim() || undefined,
+      idCard: idCard.value.trim() || undefined,
       services: services.value.map((s) => ({
         name: s.name.trim(),
         price: Number(s.price),
@@ -91,6 +95,8 @@ onMounted(async () => {
     city.value = p.city;
     district.value = p.district ?? '';
     age.value = p.age ?? undefined;
+    realName.value = p.realName ?? '';
+    idCard.value = p.idCard ?? '';
     bio.value = p.bio ?? '';
     tags.value = p.tags ?? [];
     photos.value = p.photos ?? [];
@@ -113,6 +119,8 @@ onMounted(async () => {
       <van-cell title="常驻城市" :value="city || '请选择'" is-link @click="showCityPicker = true" />
       <van-field v-model="district" label="常驻区域" placeholder="如 徐汇区" maxlength="30" />
       <van-field v-model.number="age" type="digit" label="年龄" placeholder="如 24" maxlength="2" />
+      <van-field v-model="realName" label="真实姓名" placeholder="实名认证，仅平台审核可见" maxlength="20" />
+      <van-field v-model="idCard" label="身份证号" placeholder="实名认证，仅平台审核可见" maxlength="18" />
       <van-field
         v-model="bio"
         label="个人介绍"

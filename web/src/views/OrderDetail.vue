@@ -119,6 +119,18 @@ function fmt(iso: string | null) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+// 订单进度时间线：按已有时间戳倒序展示（最新在上）
+const timeline = computed(() => {
+  if (!order.value) return [];
+  const o = order.value;
+  const steps: Array<{ label: string; time: string }> = [];
+  if (o.finishedAt) steps.push({ label: '服务完成', time: fmt(o.finishedAt) });
+  if (o.acceptedAt) steps.push({ label: '玩伴接单', time: fmt(o.acceptedAt) });
+  if (o.paidAt) steps.push({ label: '支付成功', time: fmt(o.paidAt) });
+  steps.push({ label: '提交订单', time: fmt(o.createdAt) });
+  return steps;
+});
+
 onMounted(() => {
   load();
   // 演示模式下订单会自动流转，轮询状态
@@ -145,6 +157,16 @@ onUnmounted(() => poller && clearInterval(poller));
         <template v-else-if="order.status === 'done'">服务已完成，评价一下吧</template>
         <template v-else>{{ order.cancelReason || '' }}</template>
       </div>
+    </div>
+
+    <div v-if="timeline.length > 1" class="card od__block">
+      <div class="od__title">订单进度</div>
+      <van-steps direction="vertical" :active="0" active-color="#07c160">
+        <van-step v-for="(s, i) in timeline" :key="i">
+          <h4>{{ s.label }}</h4>
+          <p class="muted">{{ s.time }}</p>
+        </van-step>
+      </van-steps>
     </div>
 
     <div class="card od__block" @click="router.push(`/partner/${order.partnerId}`)">

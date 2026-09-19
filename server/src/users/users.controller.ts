@@ -3,6 +3,7 @@ import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class
 import { AuthService } from '../auth/auth.service.js';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { logBalance } from '../common/ledger.js';
+import { toInt } from '../common/params.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -48,6 +49,25 @@ class RedeemDto {
   @IsString()
   @MaxLength(30)
   code: string;
+}
+
+class ReportDto {
+  @IsString()
+  @MaxLength(20)
+  targetType: string;
+
+  @IsString()
+  @MaxLength(40)
+  targetId: string;
+
+  @IsString()
+  @MaxLength(50)
+  reason: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  detail?: string;
 }
 
 @Controller('user')
@@ -326,5 +346,102 @@ export class UsersController {
       distance: null,
       followed: true,
     }));
+  }
+
+  /* ---------- 站内通知 ---------- */
+
+  @Get('notices')
+  async notices(@CurrentUser() userId: string, @Query('page') page?: string) {
+    const p = toInt(page, { def: 1, min: 1 })!;
+    const size = 20;
+    const where = { userId };
+    const [total, rows, unread] = await this.prisma.$transaction([
+      this.prisma.notice.count({ where }),
+      this.prisma.notice.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * size,
+        take: size,
+      }),
+      this.prisma.notice.count({ where: { userId, readAt: null } }),
+    ]);
+    return {
+      total,
+      unread,
+      page: p,
+      pageSize: size,
+      items: rows.map((n) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        content: n.content,
+        refId: n.refId,
+        read: !!n.readAt,
+        createdAt: n.createdAt,
+      })),
+    };
+  }
+
+  /** 未读数（供角标轮询，轻量） */
+  @Get('notices/unread')
+  async noticeUnread(@CurrentUser() userId: string) {
+    const count = await this.prisma.notice.count({ where: { userId, readAt: null } });
+    return { count };
+  }
+
+  @Post('notices/read')
+  async readNotices(@CurrentUser() userId: string, @Body() body: { id?: string }) {
+    await this.prisma.notice.updateMany({
+      where: { userId, readAt: null, ...(body?.id ? { id: body.id } : {}) },
+      data: { readAt: new Date() },
+    });
+    return { ok: true };
+  }
+
+  /* ---------- 举报 ---------- */
+
+  @Post('reports')
+  async report(@CurrentUser() userId: string, @Body() dto: ReportDto) {
+    if (!['user', 'partner', 'dynamic', 'comment', 'order'].includes(dto.targetType)) {
+      throw new BadRequestException('举报类型无效');
+    }
+    assertClean(dto.reason, '举报原因');
+    if (dto.detail) assertClean(dto.detail, '举报描述');
+    // 目标存在性校验 + 不可举报自己
+    if (dto.targetType === 'user') {
+      const t = await this.prisma.user.findUnique({ where: { id: dto.targetId }, select: { id: true } });
+      if (!t) throw new BadRequestException('对象不存在');
+      if (t.id === userId) throw new BadRequestException('不能举报自己');
+    } else if (dto.targetType === 'partner') {
+      const t = await this.prisma.partner.findUnique({ where: { id: dto.targetId }, select: { userId: true } });
+      if (!t) throw new BadRequestException('对象不存在');
+      if (t.userId === userId) throw new BadRequestException('不能举报自己');
+    } else if (dto.targetType === 'dynamic') {
+      const t = await this.prisma.dynamic.findUnique({ where: { id: dto.targetId }, select: { userId: true } });
+      if (!t) throw new BadRequestException('对象不存在');
+      if (t.userId === userId) throw new BadRequestException('不能举报自己');
+    } else if (dto.targetType === 'comment') {
+      const t = await this.prisma.dynamicComment.findUnique({ where: { id: dto.targetId }, select: { userId: true } });
+      if (!t) throw new BadRequestException('对象不存在');
+      if (t.userId === userId) throw new BadRequestException('不能举报自己');
+    } else {
+      const t = await this.prisma.order.findUnique({ where: { id: dto.targetId }, select: { userId: true } });
+      if (!t) throw new BadRequestException('对象不存在');
+    }
+    // 同目标防重复举报（未处理时）
+    const dup = await this.prisma.report.findFirst({
+      where: { userId, targetType: dto.targetType, targetId: dto.targetId, status: 'pending' },
+    });
+    if (dup) throw new BadRequestException('已举报过，请等待处理');
+    await this.prisma.report.create({
+      data: {
+        userId,
+        targetType: dto.targetType,
+        targetId: dto.targetId,
+        reason: dto.reason.trim(),
+        detail: dto.detail?.trim(),
+      },
+    });
+    return { ok: true };
   }
 }

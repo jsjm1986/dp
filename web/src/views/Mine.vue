@@ -12,6 +12,7 @@ const nickname = ref('');
 const gender = ref<'male' | 'female'>('female');
 const uploadingAvatar = ref(false);
 const unread = ref(0);
+const noticeUnread = ref(0);
 const showRecharge = ref(false);
 const rechargeAmount = ref(100);
 const recharging = ref(false);
@@ -57,6 +58,7 @@ async function uploadAvatar(file: File) {
 onMounted(() => {
   store.refresh().catch(() => {});
   api.unreadCount().then((r) => (unread.value = r.count)).catch(() => {});
+  api.noticeUnread().then((r) => (noticeUnread.value = r.count)).catch(() => {});
 });
 
 function openEdit() {
@@ -137,6 +139,12 @@ async function logout() {
       <van-cell title="消息" is-link icon="chat-o" @click="router.push('/chats')">
         <template #right-icon>
           <van-badge v-if="unread" :content="unread" class="mine__unread" />
+          <van-icon name="arrow" class="van-cell__right-icon" />
+        </template>
+      </van-cell>
+      <van-cell title="通知" is-link icon="bell" @click="router.push('/notices')">
+        <template #right-icon>
+          <van-badge v-if="noticeUnread" :content="noticeUnread" class="mine__unread" />
           <van-icon name="arrow" class="van-cell__right-icon" />
         </template>
       </van-cell>

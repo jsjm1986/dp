@@ -49,6 +49,34 @@ const replyFor = ref<{ id: string; show: boolean; text: string }>({ id: '', show
 const replying = ref(false);
 const reviewsOpen = ref<string[]>([]);
 const logsOpen = ref<string[]>([]);
+const offOpen = ref<string[]>([]);
+const offDates = ref<string[]>([]);
+const calendarOpen = ref(false);
+const minDate = new Date();
+const maxDate = new Date(Date.now() + 90 * 86400_000);
+
+async function loadOffDates() {
+  offDates.value = (await api.partnerOffDates()).dates;
+}
+
+function toDateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+async function addOff(d: Date) {
+  calendarOpen.value = false;
+  const key = toDateKey(d);
+  await api.addOffDate(key);
+  if (!offDates.value.includes(key)) offDates.value.push(key);
+  offDates.value.sort();
+  showToast('已添加休息日');
+}
+
+async function removeOff(d: string) {
+  await api.removeOffDate(d);
+  offDates.value = offDates.value.filter((x) => x !== d);
+  showToast('已取消休息日');
+}
 const LOG_TYPE_TEXT: Record<string, string> = {
   income: '完单入账', withdraw: '提现申请', withdraw_refund: '提现驳回返还',
   pay: '订单支付', refund: '订单退款', commission: '邀请佣金', recharge: '余额充值', card: '充值卡兑换', adjust: '平台调整',
@@ -153,6 +181,7 @@ onMounted(() => {
   loadOrders();
   loadWallet();
   loadReviews();
+  loadOffDates();
   poller = setInterval(() => {
     loadStats();
     loadOrders();
@@ -246,6 +275,23 @@ onUnmounted(() => poller && clearInterval(poller));
         </van-collapse-item>
       </van-collapse>
     </div>
+
+    <div class="card pc__withdrawals">
+      <van-collapse v-model="offOpen">
+        <van-collapse-item title="休息日设置" name="1" :label="offDates.length ? `${offDates.length}天` : '未设置'">
+          <div class="muted pc__off-tip">休息日当天用户无法预约你，已占用时段不受影响</div>
+          <div v-if="offDates.length" class="pc__off-list">
+            <van-tag v-for="d in offDates" :key="d" closeable size="medium" type="primary" @close="removeOff(d)">
+              {{ d.slice(5) }}
+            </van-tag>
+          </div>
+          <van-button size="small" round plain type="primary" block class="pc__off-add" @click="calendarOpen = true">
+            添加休息日
+          </van-button>
+        </van-collapse-item>
+      </van-collapse>
+    </div>
+    <van-calendar v-model:show="calendarOpen" :min-date="minDate" :max-date="maxDate" @confirm="addOff" />
 
     <div class="card pc__reviews">
       <van-collapse v-model="reviewsOpen">
@@ -475,6 +521,9 @@ onUnmounted(() => poller && clearInterval(poller));
   font-size: 13px;
 }
 .pc__withdrawal-remark { font-size: 12px; margin-top: 2px; }
+.pc__off-tip { font-size: 12px; margin-bottom: 10px; }
+.pc__off-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.pc__off-add { margin-top: 4px; }
 .pc__withdraw-form {
   padding: 8px 0;
 }

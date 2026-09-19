@@ -15,6 +15,7 @@ function openBanner(b: { link: string | null }) {
 }
 const cities = ref<string[]>([]);
 const banners = ref<Array<{ id: string; image: string; link: string | null }>>([]);
+const announcement = ref<{ id: string; title: string; content: string } | null>(null);
 const recommend = ref<PartnerCard[]>([]);
 const newest = ref<PartnerCard[]>([]);
 const showCityPicker = ref(false);
@@ -29,6 +30,7 @@ async function load() {
     recommend.value = res.recommend;
     newest.value = res.newest;
     cities.value = res.cities;
+    announcement.value = res.announcement;
   } finally {
     loading.value = false;
   }
@@ -64,6 +66,16 @@ onMounted(load);
         <img :src="b.image" class="home__banner" alt="" @click="openBanner(b)" />
       </van-swipe-item>
     </van-swipe>
+
+    <van-notice-bar
+      v-if="announcement"
+      left-icon="volume-o"
+      :text="`${announcement.title}：${announcement.content}`"
+      background="#fff7e8"
+      color="#ed6a0c"
+      class="home__notice"
+      scrollable
+    />
 
     <div class="home__quick">
       <div class="home__quick-item" @click="$router.push('/partners?sort=rating')">

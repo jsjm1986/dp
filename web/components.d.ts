@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     DynamicCard: typeof import('./src/components/DynamicCard.vue')['default']
     PartnerCard: typeof import('./src/components/PartnerCard.vue')['default']
+    ReportSheet: typeof import('./src/components/ReportSheet.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     VanActionSheet: typeof import('vant/es')['ActionSheet']
@@ -42,7 +43,9 @@ declare module 'vue' {
     VanRadioGroup: typeof import('vant/es')['RadioGroup']
     VanRate: typeof import('vant/es')['Rate']
     VanSearch: typeof import('vant/es')['Search']
+    VanStep: typeof import('vant/es')['Step']
     VanStepper: typeof import('vant/es')['Stepper']
+    VanSteps: typeof import('vant/es')['Steps']
     VanSwipe: typeof import('vant/es')['Swipe']
     VanSwipeItem: typeof import('vant/es')['SwipeItem']
     VanSwitch: typeof import('vant/es')['Switch']

@@ -26,6 +26,7 @@ const router = createRouter({
     { path: '/my-dynamics', component: () => import('../views/MyDynamics.vue'), meta: { auth: true } },
     { path: '/referral', component: () => import('../views/Referral.vue'), meta: { auth: true } },
     { path: '/wallet', component: () => import('../views/Wallet.vue'), meta: { auth: true } },
+    { path: '/notices', component: () => import('../views/Notices.vue'), meta: { auth: true } },
     { path: '/:pathMatch(.*)*', redirect: '/home' },
   ],
 });

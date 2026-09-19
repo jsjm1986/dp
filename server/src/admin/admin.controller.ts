@@ -14,6 +14,7 @@ import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'clas
 import { randomBytes } from 'crypto';
 import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { logBalance } from '../common/ledger.js';
+import { notify } from '../common/notify.js';
 import { toInt } from '../common/params.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -182,6 +183,9 @@ export class AdminController {
         auditStatus: p.auditStatus,
         status: p.status,
         verified: p.verified,
+        realName: p.realName,
+        idCard: p.idCard,
+        age: p.age,
         recommended: p.recommended,
         rating: p.rating,
         serviceCount: p.serviceCount,
@@ -195,13 +199,26 @@ export class AdminController {
   async approve(@Param('id') id: string) {
     const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'approved' } });
     if (!res.count) throw new BadRequestException('玩伴不存在');
+    const p = await this.prisma.partner.findUnique({ where: { id }, select: { userId: true } });
+    if (p) {
+      await notify(this.prisma, { userId: p.userId, type: 'audit', title: '入驻审核通过', content: '恭喜，你的玩伴入驻申请已通过，快去上线接单吧' });
+    }
     return { ok: true };
   }
 
   @Post('partners/:id/reject')
-  async reject(@Param('id') id: string) {
+  async reject(@Param('id') id: string, @Body() body: { reason?: string }) {
     const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'rejected' } });
     if (!res.count) throw new BadRequestException('玩伴不存在');
+    const p = await this.prisma.partner.findUnique({ where: { id }, select: { userId: true } });
+    if (p) {
+      await notify(this.prisma, {
+        userId: p.userId,
+        type: 'audit',
+        title: '入驻审核未通过',
+        content: `很抱歉，你的入驻申请未通过${body.reason ? `：${body.reason.slice(0, 80)}` : '，请完善资料后重新提交'}`,
+      });
+    }
     return { ok: true };
   }
 
@@ -322,6 +339,16 @@ export class AdminController {
       data: { status: 'done', handledAt: new Date() },
     });
     if (!res.count) throw new BadRequestException('该申请已处理');
+    const p = await this.prisma.partner.findUnique({ where: { id: w.partnerId }, select: { userId: true } });
+    if (p) {
+      await notify(this.prisma, {
+        userId: p.userId,
+        type: 'wallet',
+        title: '提现已打款',
+        content: `你的提现申请 ¥${Number(w.amount).toFixed(2)} 已处理打款`,
+        refId: w.id,
+      });
+    }
     return { ok: true };
   }
 
@@ -341,6 +368,16 @@ export class AdminController {
         data: { balance: { increment: w.amount } },
       });
       await logBalance(tx, { partnerId: w.partnerId, type: 'withdraw_refund', amount: Number(w.amount), refId: w.id, remark: '提现驳回返还' });
+      const p = await tx.partner.findUnique({ where: { id: w.partnerId }, select: { userId: true } });
+      if (p) {
+        await notify(tx, {
+          userId: p.userId,
+          type: 'wallet',
+          title: '提现已驳回',
+          content: `提现 ¥${Number(w.amount).toFixed(2)} 被驳回${body.remark ? `：${body.remark.slice(0, 80)}` : ''}，金额已退回余额`,
+          refId: w.id,
+        });
+      }
     });
     return { ok: true };
   }
@@ -527,6 +564,12 @@ export class AdminController {
       });
       return tx.user.findUniqueOrThrow({ where: { id } });
     });
+    await notify(this.prisma, {
+      userId: id,
+      type: 'wallet',
+      title: amount > 0 ? '余额到账' : '余额扣减',
+      content: `${amount > 0 ? '+' : ''}¥${amount.toFixed(2)}：${body.remark?.trim() || '平台调整'}`,
+    });
     return { balance: Number(updated.balance) };
   }
 
@@ -627,6 +670,23 @@ export class AdminController {
             await logBalance(tx, { userId: c.userId, type: 'refund', amount: Number(c.totalAmount), refId: c.id, remark: `主订单${reason}` });
           }
         }
+      }
+      await notify(tx, {
+        userId: order.userId,
+        type: 'order',
+        title: '订单已被平台处理',
+        content: `订单 ${order.orderNo} 已被平台${target === 'refunded' ? '取消并全额退款' : '取消'}：${reason}`,
+        refId: id,
+      });
+      const p = await tx.partner.findUnique({ where: { id: order.partnerId }, select: { userId: true } });
+      if (p) {
+        await notify(tx, {
+          userId: p.userId,
+          type: 'order',
+          title: '订单已被平台处理',
+          content: `订单 ${order.orderNo} 已被平台取消：${reason}`,
+          refId: id,
+        });
       }
     });
     return { ok: true, status: target };
@@ -765,6 +825,98 @@ export class AdminController {
       throw new BadRequestException('审核通过后才能上线');
     }
     await this.prisma.partner.update({ where: { id }, data: { status: body.status } });
+    return { ok: true };
+  }
+
+  /** ---------- 举报处理 ---------- */
+  @Get('reports')
+  async reports(@Query('page') page = '1', @Query('status') status?: string) {
+    const p = toInt(page, { def: 1, min: 1 }) ?? 1;
+    const where = status && ['pending', 'processed', 'rejected'].includes(status) ? { status } : {};
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.report.count({ where }),
+      this.prisma.report.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * 20,
+        take: 20,
+      }),
+    ]);
+    const reporters = await this.prisma.user.findMany({
+      where: { id: { in: rows.map((r) => r.userId) } },
+      select: { id: true, nickname: true, mobile: true },
+    });
+    const rMap = new Map(reporters.map((u) => [u.id, u]));
+    return {
+      total,
+      page: p,
+      pageSize: 20,
+      items: rows.map((r) => ({
+        id: r.id,
+        targetType: r.targetType,
+        targetId: r.targetId,
+        reason: r.reason,
+        detail: r.detail,
+        status: r.status,
+        remark: r.remark,
+        createdAt: r.createdAt,
+        reporter: rMap.get(r.userId) ?? null,
+      })),
+    };
+  }
+
+  @Post('reports/:id/handle')
+  async handleReport(@Param('id') id: string, @Body() body: { action: string; remark?: string }) {
+    if (!['processed', 'rejected'].includes(body.action)) throw new BadRequestException('处理动作无效');
+    const res = await this.prisma.report.updateMany({
+      where: { id, status: 'pending' },
+      data: { status: body.action, remark: body.remark?.trim()?.slice(0, 200), handledAt: new Date() },
+    });
+    if (!res.count) throw new BadRequestException('举报不存在或已处理');
+    const r = await this.prisma.report.findUniqueOrThrow({ where: { id } });
+    await notify(this.prisma, {
+      userId: r.userId,
+      type: 'system',
+      title: '举报处理结果',
+      content: `你的举报（${r.reason}）已${body.action === 'processed' ? '核实处理' : '驳回'}${body.remark ? `：${body.remark.slice(0, 60)}` : ''}`,
+      refId: r.id,
+    });
+    return { ok: true };
+  }
+
+  /** ---------- 平台公告 ---------- */
+  @Get('announcements')
+  async announcements() {
+    return this.prisma.announcement.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+  }
+
+  @Post('announcements')
+  async createAnnouncement(@Body() body: { title?: string; content?: string }) {
+    const title = body.title?.trim();
+    const content = body.content?.trim();
+    if (!title || title.length > 50) throw new BadRequestException('标题必填且不超过50字');
+    if (!content || content.length > 500) throw new BadRequestException('内容必填且不超过500字');
+    return this.prisma.announcement.create({ data: { title, content } });
+  }
+
+  @Put('announcements/:id')
+  async toggleAnnouncement(@Param('id') id: string, @Body() body: { enabled?: boolean; title?: string; content?: string }) {
+    const res = await this.prisma.announcement.updateMany({
+      where: { id },
+      data: {
+        ...(body.enabled !== undefined ? { enabled: !!body.enabled } : {}),
+        ...(body.title ? { title: body.title.trim().slice(0, 50) } : {}),
+        ...(body.content ? { content: body.content.trim().slice(0, 500) } : {}),
+      },
+    });
+    if (!res.count) throw new BadRequestException('公告不存在');
+    return { ok: true };
+  }
+
+  @Delete('announcements/:id')
+  async deleteAnnouncement(@Param('id') id: string) {
+    const res = await this.prisma.announcement.deleteMany({ where: { id } });
+    if (!res.count) throw new BadRequestException('公告不存在');
     return { ok: true };
   }
 }

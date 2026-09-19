@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Delete,
   Param,
   Post,
   Put,
@@ -116,6 +117,16 @@ class ApplyDto {
   @MaxLength(50)
   wechatId?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  realName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(18)
+  idCard?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(10)
@@ -207,6 +218,8 @@ export class PartnerSelfController {
       constellation: full.constellation,
       education: full.education,
       wechatId: full.wechatId,
+      realName: full.realName,
+      idCard: full.idCard,
       tags: JSON.parse(full.tags) as string[],
       photos: JSON.parse(full.photos) as string[],
       status: full.status,
@@ -405,9 +418,44 @@ export class PartnerSelfController {
       constellation: dto.constellation,
       education: dto.education,
       wechatId: dto.wechatId,
+      realName: dto.realName?.trim(),
+      idCard: dto.idCard?.trim(),
       tags: JSON.stringify(dto.tags ?? []),
       photos: JSON.stringify(dto.photos ?? []),
     };
+  }
+
+  /* ---------- 休息日管理 ---------- */
+
+  @Get('off-dates')
+  async offDates(@CurrentUser() userId: string) {
+    const p = await this.mustBePartner(userId);
+    const rows = await this.prisma.partnerOffDate.findMany({
+      where: { partnerId: p.id },
+      orderBy: { date: 'asc' },
+    });
+    return { dates: rows.map((r) => r.date) };
+  }
+
+  @Post('off-dates')
+  async addOffDate(@CurrentUser() userId: string, @Body() body: { date?: string }) {
+    const p = await this.mustBePartner(userId);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date ?? '')) throw new BadRequestException('日期格式应为 YYYY-MM-DD');
+    const count = await this.prisma.partnerOffDate.count({ where: { partnerId: p.id } });
+    if (count >= 60) throw new BadRequestException('最多设置60个休息日');
+    await this.prisma.partnerOffDate.upsert({
+      where: { partnerId_date: { partnerId: p.id, date: body.date! } },
+      create: { partnerId: p.id, date: body.date! },
+      update: {},
+    });
+    return { ok: true };
+  }
+
+  @Delete('off-dates/:date')
+  async removeOffDate(@CurrentUser() userId: string, @Param('date') date: string) {
+    const p = await this.mustBePartner(userId);
+    await this.prisma.partnerOffDate.deleteMany({ where: { partnerId: p.id, date } });
+    return { ok: true };
   }
 
   private async mustBePartner(userId: string) {

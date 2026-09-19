@@ -6,7 +6,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
-import { bjDayStart, logBalance, orderHours } from '../common/ledger.js';
+import { bjDateKey, bjDayStart, logBalance, orderHours } from '../common/ledger.js';
+import { notify } from '../common/notify.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CancelOrderDto, CreateOrderDto, ExtendOrderDto, PayOrderDto, ReviewDto } from './dto.js';
@@ -125,6 +126,11 @@ export class OrdersService implements OnModuleInit {
     // 下单与占券同一事务，条件更新防止并发重复用券；时段冲突在事务内复查（单连接串行写，天然防并发双订）
     const order = await this.prisma.$transaction(async (tx) => {
       const dayStart = bjDayStart(appointAt);
+      // 玩伴设置的休息日（北京时间日期）当天不可预约
+      const off = await tx.partnerOffDate.findUnique({
+        where: { partnerId_date: { partnerId: partner.id, date: bjDateKey(appointAt) } },
+      });
+      if (off) throw new BadRequestException('对方当天休息，请更换日期');
       const taken = await tx.order.findMany({
         where: {
           partnerId: partner.id,
@@ -247,6 +253,19 @@ export class OrdersService implements OnModuleInit {
       if (!pay.count) throw new BadRequestException('订单状态不可支付');
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     });
+    const partnerUser = await this.prisma.partner.findUnique({
+      where: { id: order.partnerId },
+      select: { userId: true },
+    });
+    if (partnerUser) {
+      await notify(this.prisma, {
+        userId: partnerUser.userId,
+        type: 'order',
+        title: '新订单待接单',
+        content: `订单 ${updated.orderNo} 已支付 ¥${Number(updated.totalAmount).toFixed(2)}，请及时接单`,
+        refId: id,
+      });
+    }
     if (DEMO_AUTO_FLOW) this.scheduleAutoFlow(id);
     return this.toDto(updated);
   }
@@ -284,6 +303,21 @@ export class OrdersService implements OnModuleInit {
       await this.cascadeChildren(tx, id, '主订单已取消');
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     });
+    if (target === ORDER_STATUS.REFUNDED) {
+      const partnerUser = await this.prisma.partner.findUnique({
+        where: { id: order.partnerId },
+        select: { userId: true },
+      });
+      if (partnerUser) {
+        await notify(this.prisma, {
+          userId: partnerUser.userId,
+          type: 'order',
+          title: '订单已被用户取消',
+          content: `订单 ${order.orderNo} 已被取消，退款 ¥${Number(order.totalAmount).toFixed(2)} 已原路退回`,
+          refId: id,
+        });
+      }
+    }
     return this.toDto(updated);
   }
 
@@ -460,6 +494,25 @@ export class OrdersService implements OnModuleInit {
       }
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     });
+    const userNotice: Record<typeof action, string | null> = {
+      accept: `玩伴已接单，订单 ${order.orderNo} 待服务`,
+      reject: `玩伴已拒单，订单 ${order.orderNo} 款项已原路退回`,
+      start: `订单 ${order.orderNo} 服务已开始`,
+      finish: `订单 ${order.orderNo} 已完成，快去评价吧`,
+    };
+    const text = userNotice[action];
+    if (text) {
+      await notify(this.prisma, { userId: order.userId, type: 'order', title: '订单进度更新', content: text, refId: id });
+    }
+    if (action === 'finish') {
+      await notify(this.prisma, {
+        userId: partner.userId,
+        type: 'wallet',
+        title: '完单入账',
+        content: `订单 ${order.orderNo} 完成，¥${Number(order.totalAmount).toFixed(2)} 已入账`,
+        refId: id,
+      });
+    }
     return this.toDto(updated);
   }
 
@@ -468,7 +521,7 @@ export class OrdersService implements OnModuleInit {
   /** 完单结算（在调用方事务内执行）：玩伴入账 + 服务数 + 分销佣金 */
   private async settleFinish(
     tx: Prisma.TransactionClient,
-    order: { id: string; userId: string; partnerId: string; totalAmount: unknown; commissionRate: number | null },
+    order: { id: string; orderNo: string; userId: string; partnerId: string; totalAmount: unknown; commissionRate: number | null },
   ) {
     await tx.partner.update({
       where: { id: order.partnerId },
@@ -508,6 +561,13 @@ export class OrdersService implements OnModuleInit {
       data: { balance: { increment: amount } },
     });
     await logBalance(tx, { userId: inviter.id, type: 'commission', amount, refId: order.id, remark: `邀请佣金 ${(rate * 100).toFixed(0)}%` });
+    await notify(tx, {
+      userId: inviter.id,
+      type: 'commission',
+      title: '佣金到账',
+      content: `下线订单 ${order.orderNo} 完成，佣金 ¥${amount.toFixed(2)} 已入余额`,
+      refId: order.id,
+    });
   }
 
   private scheduleAutoFlow(orderId: string) {
@@ -575,7 +635,7 @@ export class OrdersService implements OnModuleInit {
         status: ORDER_STATUS.PENDING_PAYMENT,
         createdAt: { lt: new Date(Date.now() - PAY_TIMEOUT_MS) },
       },
-      select: { id: true, userCouponId: true },
+      select: { id: true, orderNo: true, userId: true, userCouponId: true },
       take: 50,
     });
     for (const o of stale) {
@@ -588,6 +648,15 @@ export class OrdersService implements OnModuleInit {
           await tx.userCoupon.updateMany({
             where: { id: o.userCouponId, used: true },
             data: { used: false, usedAt: null, orderId: null },
+          });
+        }
+        if (res.count) {
+          await notify(tx, {
+            userId: o.userId,
+            type: 'order',
+            title: '订单超时取消',
+            content: `订单 ${o.orderNo} 超时未支付，已自动取消`,
+            refId: o.id,
           });
         }
       });
@@ -650,6 +719,8 @@ export class OrdersService implements OnModuleInit {
     cancelReason: string | null;
     urgedAt: Date | null;
     paidAt: Date | null;
+    acceptedAt: Date | null;
+    finishedAt: Date | null;
     createdAt: Date;
     items: Array<{ id: string; serviceId: string | null; name: string; price: unknown; unit: string; num: number; subtotal: unknown }>;
     partner: { id: string; city: string; userId: string; user: { nickname: string; avatar: string | null } };
@@ -689,6 +760,8 @@ export class OrdersService implements OnModuleInit {
       cancelReason: o.cancelReason,
       urgedAt: o.urgedAt,
       paidAt: o.paidAt,
+      acceptedAt: o.acceptedAt,
+      finishedAt: o.finishedAt,
       reviewed: !!o.review,
       createdAt: o.createdAt,
     };

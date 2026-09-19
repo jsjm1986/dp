@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { showConfirmDialog, showToast } from 'vant';
 import { api } from '../api';
 import { useUserStore } from '../stores/user';
+import ReportSheet from '../components/ReportSheet.vue';
 
 interface Msg {
   id: string;
@@ -58,6 +59,15 @@ function fmt(t: string) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+const menuOpen = ref(false);
+const reportOpen = ref(false);
+
+function onMenuSelect(action: { name: string }) {
+  menuOpen.value = false;
+  if (action.name === '举报对方') reportOpen.value = true;
+  else toggleBlock();
+}
+
 async function toggleBlock() {
   if (!blocked.value) {
     try {
@@ -86,9 +96,16 @@ onUnmounted(() => clearInterval(timer));
   <div class="chat">
     <van-nav-bar :title="peer?.nickname || '聊天'" left-arrow @click-left="$router.back()">
       <template #right>
-        <van-icon :name="blocked ? 'lock' : 'ellipsis'" size="18" @click="toggleBlock" />
+        <van-icon name="ellipsis" size="18" @click="menuOpen = true" />
       </template>
     </van-nav-bar>
+    <van-action-sheet
+      v-model:show="menuOpen"
+      :actions="[{ name: blocked ? '解除拉黑' : '拉黑对方' }, { name: '举报对方' }]"
+      cancel-text="取消"
+      @select="onMenuSelect"
+    />
+    <ReportSheet v-model:show="reportOpen" target-type="user" :target-id="peerId" />
 
     <div ref="listEl" class="chat__list">
       <div

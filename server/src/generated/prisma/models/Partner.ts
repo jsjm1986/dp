@@ -70,6 +70,8 @@ export type PartnerMinAggregateOutputType = {
   auditStatus: string | null
   verified: boolean | null
   recommended: boolean | null
+  realName: string | null
+  idCard: string | null
   balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
@@ -98,6 +100,8 @@ export type PartnerMaxAggregateOutputType = {
   auditStatus: string | null
   verified: boolean | null
   recommended: boolean | null
+  realName: string | null
+  idCard: string | null
   balance: runtime.Decimal | null
   serviceCount: number | null
   viewCount: number | null
@@ -126,6 +130,8 @@ export type PartnerCountAggregateOutputType = {
   auditStatus: number
   verified: number
   recommended: number
+  realName: number
+  idCard: number
   balance: number
   serviceCount: number
   viewCount: number
@@ -180,6 +186,8 @@ export type PartnerMinAggregateInputType = {
   auditStatus?: true
   verified?: true
   recommended?: true
+  realName?: true
+  idCard?: true
   balance?: true
   serviceCount?: true
   viewCount?: true
@@ -208,6 +216,8 @@ export type PartnerMaxAggregateInputType = {
   auditStatus?: true
   verified?: true
   recommended?: true
+  realName?: true
+  idCard?: true
   balance?: true
   serviceCount?: true
   viewCount?: true
@@ -236,6 +246,8 @@ export type PartnerCountAggregateInputType = {
   auditStatus?: true
   verified?: true
   recommended?: true
+  realName?: true
+  idCard?: true
   balance?: true
   serviceCount?: true
   viewCount?: true
@@ -351,6 +363,8 @@ export type PartnerGroupByOutputType = {
   auditStatus: string
   verified: boolean
   recommended: boolean
+  realName: string | null
+  idCard: string | null
   balance: runtime.Decimal
   serviceCount: number
   viewCount: number
@@ -402,6 +416,8 @@ export type PartnerWhereInput = {
   auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
   recommended?: Prisma.BoolFilter<"Partner"> | boolean
+  realName?: Prisma.StringNullableFilter<"Partner"> | string | null
+  idCard?: Prisma.StringNullableFilter<"Partner"> | string | null
   balance?: Prisma.DecimalFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
@@ -436,6 +452,8 @@ export type PartnerOrderByWithRelationInput = {
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   recommended?: Prisma.SortOrder
+  realName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idCard?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -473,6 +491,8 @@ export type PartnerWhereUniqueInput = Prisma.AtLeast<{
   auditStatus?: Prisma.StringFilter<"Partner"> | string
   verified?: Prisma.BoolFilter<"Partner"> | boolean
   recommended?: Prisma.BoolFilter<"Partner"> | boolean
+  realName?: Prisma.StringNullableFilter<"Partner"> | string | null
+  idCard?: Prisma.StringNullableFilter<"Partner"> | string | null
   balance?: Prisma.DecimalFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFilter<"Partner"> | number
   viewCount?: Prisma.IntFilter<"Partner"> | number
@@ -507,6 +527,8 @@ export type PartnerOrderByWithAggregationInput = {
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   recommended?: Prisma.SortOrder
+  realName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idCard?: Prisma.SortOrderInput | Prisma.SortOrder
   balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -543,6 +565,8 @@ export type PartnerScalarWhereWithAggregatesInput = {
   auditStatus?: Prisma.StringWithAggregatesFilter<"Partner"> | string
   verified?: Prisma.BoolWithAggregatesFilter<"Partner"> | boolean
   recommended?: Prisma.BoolWithAggregatesFilter<"Partner"> | boolean
+  realName?: Prisma.StringNullableWithAggregatesFilter<"Partner"> | string | null
+  idCard?: Prisma.StringNullableWithAggregatesFilter<"Partner"> | string | null
   balance?: Prisma.DecimalWithAggregatesFilter<"Partner"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
   viewCount?: Prisma.IntWithAggregatesFilter<"Partner"> | number
@@ -570,6 +594,8 @@ export type PartnerCreateInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -604,6 +630,8 @@ export type PartnerUncheckedCreateInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -636,6 +664,8 @@ export type PartnerUpdateInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -670,6 +700,8 @@ export type PartnerUncheckedUpdateInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -703,6 +735,8 @@ export type PartnerCreateManyInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -730,6 +764,8 @@ export type PartnerUpdateManyMutationInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -758,6 +794,8 @@ export type PartnerUncheckedUpdateManyInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -791,6 +829,8 @@ export type PartnerCountOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   recommended?: Prisma.SortOrder
+  realName?: Prisma.SortOrder
+  idCard?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -831,6 +871,8 @@ export type PartnerMaxOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   recommended?: Prisma.SortOrder
+  realName?: Prisma.SortOrder
+  idCard?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -859,6 +901,8 @@ export type PartnerMinOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   verified?: Prisma.SortOrder
   recommended?: Prisma.SortOrder
+  realName?: Prisma.SortOrder
+  idCard?: Prisma.SortOrder
   balance?: Prisma.SortOrder
   serviceCount?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -1037,6 +1081,8 @@ export type PartnerCreateWithoutUserInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1069,6 +1115,8 @@ export type PartnerUncheckedCreateWithoutUserInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1117,6 +1165,8 @@ export type PartnerUpdateWithoutUserInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1149,6 +1199,8 @@ export type PartnerUncheckedUpdateWithoutUserInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1181,6 +1233,8 @@ export type PartnerCreateWithoutServicesInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1214,6 +1268,8 @@ export type PartnerUncheckedCreateWithoutServicesInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1261,6 +1317,8 @@ export type PartnerUpdateWithoutServicesInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1294,6 +1352,8 @@ export type PartnerUncheckedUpdateWithoutServicesInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1325,6 +1385,8 @@ export type PartnerCreateWithoutOrdersInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1358,6 +1420,8 @@ export type PartnerUncheckedCreateWithoutOrdersInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1405,6 +1469,8 @@ export type PartnerUpdateWithoutOrdersInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1438,6 +1504,8 @@ export type PartnerUncheckedUpdateWithoutOrdersInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1469,6 +1537,8 @@ export type PartnerCreateWithoutReviewsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1502,6 +1572,8 @@ export type PartnerUncheckedCreateWithoutReviewsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1549,6 +1621,8 @@ export type PartnerUpdateWithoutReviewsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1582,6 +1656,8 @@ export type PartnerUncheckedUpdateWithoutReviewsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1613,6 +1689,8 @@ export type PartnerCreateWithoutFollowsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1646,6 +1724,8 @@ export type PartnerUncheckedCreateWithoutFollowsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1693,6 +1773,8 @@ export type PartnerUpdateWithoutFollowsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1726,6 +1808,8 @@ export type PartnerUncheckedUpdateWithoutFollowsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1757,6 +1841,8 @@ export type PartnerCreateWithoutWithdrawalsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1790,6 +1876,8 @@ export type PartnerUncheckedCreateWithoutWithdrawalsInput = {
   auditStatus?: string
   verified?: boolean
   recommended?: boolean
+  realName?: string | null
+  idCard?: string | null
   balance?: runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: number
   viewCount?: number
@@ -1837,6 +1925,8 @@ export type PartnerUpdateWithoutWithdrawalsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1870,6 +1960,8 @@ export type PartnerUncheckedUpdateWithoutWithdrawalsInput = {
   auditStatus?: Prisma.StringFieldUpdateOperationsInput | string
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   recommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  realName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   balance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   serviceCount?: Prisma.IntFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1969,6 +2061,8 @@ export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   auditStatus?: boolean
   verified?: boolean
   recommended?: boolean
+  realName?: boolean
+  idCard?: boolean
   balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -2004,6 +2098,8 @@ export type PartnerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   auditStatus?: boolean
   verified?: boolean
   recommended?: boolean
+  realName?: boolean
+  idCard?: boolean
   balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -2033,6 +2129,8 @@ export type PartnerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   auditStatus?: boolean
   verified?: boolean
   recommended?: boolean
+  realName?: boolean
+  idCard?: boolean
   balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -2062,6 +2160,8 @@ export type PartnerSelectScalar = {
   auditStatus?: boolean
   verified?: boolean
   recommended?: boolean
+  realName?: boolean
+  idCard?: boolean
   balance?: boolean
   serviceCount?: boolean
   viewCount?: boolean
@@ -2070,7 +2170,7 @@ export type PartnerSelectScalar = {
   createdAt?: boolean
 }
 
-export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "auditStatus" | "verified" | "recommended" | "balance" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
+export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "photos" | "voiceIntro" | "bio" | "age" | "height" | "weight" | "constellation" | "education" | "tags" | "city" | "district" | "latitude" | "longitude" | "status" | "auditStatus" | "verified" | "recommended" | "realName" | "idCard" | "balance" | "serviceCount" | "viewCount" | "rating" | "wechatId" | "createdAt", ExtArgs["result"]["partner"]>
 export type PartnerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   services?: boolean | Prisma.Partner$servicesArgs<ExtArgs>
@@ -2117,6 +2217,8 @@ export type $PartnerPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     auditStatus: string
     verified: boolean
     recommended: boolean
+    realName: string | null
+    idCard: string | null
     balance: runtime.Decimal
     serviceCount: number
     viewCount: number
@@ -2571,6 +2673,8 @@ export interface PartnerFieldRefs {
   readonly auditStatus: Prisma.FieldRef<"Partner", 'String'>
   readonly verified: Prisma.FieldRef<"Partner", 'Boolean'>
   readonly recommended: Prisma.FieldRef<"Partner", 'Boolean'>
+  readonly realName: Prisma.FieldRef<"Partner", 'String'>
+  readonly idCard: Prisma.FieldRef<"Partner", 'String'>
   readonly balance: Prisma.FieldRef<"Partner", 'Decimal'>
   readonly serviceCount: Prisma.FieldRef<"Partner", 'Int'>
   readonly viewCount: Prisma.FieldRef<"Partner", 'Int'>

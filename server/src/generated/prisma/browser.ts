@@ -122,3 +122,23 @@ export type Setting = Prisma.SettingModel
  * 
  */
 export type RechargeCard = Prisma.RechargeCardModel
+/**
+ * Model Notice
+ * 
+ */
+export type Notice = Prisma.NoticeModel
+/**
+ * Model Report
+ * 
+ */
+export type Report = Prisma.ReportModel
+/**
+ * Model Announcement
+ * 
+ */
+export type Announcement = Prisma.AnnouncementModel
+/**
+ * Model PartnerOffDate
+ * 
+ */
+export type PartnerOffDate = Prisma.PartnerOffDateModel

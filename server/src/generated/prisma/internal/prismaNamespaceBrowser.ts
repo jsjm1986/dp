@@ -71,7 +71,11 @@ export const ModelName = {
   Block: 'Block',
   Commission: 'Commission',
   Setting: 'Setting',
-  RechargeCard: 'RechargeCard'
+  RechargeCard: 'RechargeCard',
+  Notice: 'Notice',
+  Report: 'Report',
+  Announcement: 'Announcement',
+  PartnerOffDate: 'PartnerOffDate'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -125,6 +129,8 @@ export const PartnerScalarFieldEnum = {
   auditStatus: 'auditStatus',
   verified: 'verified',
   recommended: 'recommended',
+  realName: 'realName',
+  idCard: 'idCard',
   balance: 'balance',
   serviceCount: 'serviceCount',
   viewCount: 'viewCount',
@@ -382,6 +388,57 @@ export const RechargeCardScalarFieldEnum = {
 } as const
 
 export type RechargeCardScalarFieldEnum = (typeof RechargeCardScalarFieldEnum)[keyof typeof RechargeCardScalarFieldEnum]
+
+
+export const NoticeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  title: 'title',
+  content: 'content',
+  refId: 'refId',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type NoticeScalarFieldEnum = (typeof NoticeScalarFieldEnum)[keyof typeof NoticeScalarFieldEnum]
+
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  reason: 'reason',
+  detail: 'detail',
+  status: 'status',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  handledAt: 'handledAt'
+} as const
+
+export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const AnnouncementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  enabled: 'enabled',
+  createdAt: 'createdAt'
+} as const
+
+export type AnnouncementScalarFieldEnum = (typeof AnnouncementScalarFieldEnum)[keyof typeof AnnouncementScalarFieldEnum]
+
+
+export const PartnerOffDateScalarFieldEnum = {
+  id: 'id',
+  partnerId: 'partnerId',
+  date: 'date',
+  createdAt: 'createdAt'
+} as const
+
+export type PartnerOffDateScalarFieldEnum = (typeof PartnerOffDateScalarFieldEnum)[keyof typeof PartnerOffDateScalarFieldEnum]
 
 
 export const SortOrder = {

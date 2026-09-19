@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
-import { bjDayStart, orderHours } from '../common/ledger.js';
+import { bjDateKey, bjDayStart, orderHours } from '../common/ledger.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface PartnerQuery {
@@ -240,6 +240,11 @@ export class PartnersService {
     const day = date ? new Date(`${date}T00:00:00+08:00`) : new Date();
     if (Number.isNaN(day.getTime())) throw new BadRequestException('date 格式应为 YYYY-MM-DD');
     const start = bjDayStart(day);
+    const dateKey = date ?? bjDateKey(new Date());
+    const off = await this.prisma.partnerOffDate.findUnique({
+      where: { partnerId_date: { partnerId, date: dateKey } },
+    });
+    if (off) return { allDay: true, hours: [] };
     const orders = await this.prisma.order.findMany({
       where: {
         partnerId,

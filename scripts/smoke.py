@@ -360,10 +360,11 @@ def main():
     _, pwl = call("GET", "/partner/wallet", pw_tok, expect=200)
     check("partner.wallet-logs", "logs" in pwl and any(l["type"] == "withdraw" for l in pwl["logs"]))
 
-    # 分销环：uc 已绑 ua 为推荐人，ua 再绑 uc 应被拒（成环）
+    # 分销环：uc 已绑 ua 为推荐人，ua 再绑 uc 应被拒（成环）。字段必须是 code，
+    # 否则会被 DTO 校验 400 挡下，成环检测分支根本走不到
     _, refc2 = call("GET", "/user/referral", uc_tok, expect=200)
-    code, _ = call("POST", "/user/bind-inviter", ua_tok, {"inviteCode": refc2["inviteCode"]}, expect=400)
-    check("referral.cycle 400", code == 400)
+    code, r = call("POST", "/user/bind-inviter", ua_tok, {"code": refc2["inviteCode"]}, expect=400)
+    check("referral.cycle 400", code == 400 and "绑定" in r.get("message", ""), r.get("message", ""))
 
     # ---------- 动态 ----------
     code, d = call("POST", "/dynamics", ua_tok, {"content": f"冒烟动态{RUN}", "city": "上海"}, expect=201)

@@ -7,7 +7,7 @@
 | 端 | 技术 |
 |---|---|
 | 前端 `web/` | Vue 3 + TypeScript + Vant 4 + Vite + Pinia + Vue Router，移动端 H5（375px 设计稿，px→vw 自适应） |
-| 后端 `server/` | NestJS 11 + Prisma 7 + SQLite（better-sqlite3 驱动）+ JWT，REST API |
+| 后端 `server/` | NestJS 12 + Prisma 7 + SQLite（better-sqlite3 驱动）+ JWT，REST API |
 
 ## 启动
 

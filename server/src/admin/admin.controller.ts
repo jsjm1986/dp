@@ -515,16 +515,18 @@ export class AdminController {
     if (!amount || Math.abs(amount) > 100000) throw new BadRequestException('金额无效');
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
-    // 负数调整用条件更新防并发透支
-    const res = await this.prisma.user.updateMany({
-      where: { id, ...(amount < 0 ? { balance: { gte: -amount } } : {}) },
-      data: { balance: { increment: amount } },
+    // 负数调整用条件更新防并发透支；余额变动与流水同一事务（与全站资金路径口径一致）
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const res = await tx.user.updateMany({
+        where: { id, ...(amount < 0 ? { balance: { gte: -amount } } : {}) },
+        data: { balance: { increment: amount } },
+      });
+      if (!res.count) throw new BadRequestException('扣减后余额不能为负');
+      await tx.balanceLog.create({
+        data: { userId: id, type: 'adjust', amount, remark: body.remark?.trim() || '管理端调整' },
+      });
+      return tx.user.findUniqueOrThrow({ where: { id } });
     });
-    if (!res.count) throw new BadRequestException('扣减后余额不能为负');
-    await this.prisma.balanceLog.create({
-      data: { userId: id, type: 'adjust', amount, remark: body.remark?.trim() || '管理端调整' },
-    });
-    const updated = await this.prisma.user.findUniqueOrThrow({ where: { id } });
     return { balance: Number(updated.balance) };
   }
 

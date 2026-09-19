@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { showConfirmDialog, showToast } from 'vant';
+import { showToast } from 'vant';
 import { api, type Order } from '../api';
 import { useUserStore } from '../stores/user';
 import { ORDER_STATUS_TEXT } from '../utils/order';

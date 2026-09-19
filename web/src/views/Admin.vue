@@ -354,7 +354,7 @@ function onTabChange(name: string | number) {
           <div class="admin__stat"><b class="warn">¥{{ dash.pendingWithdrawalAmount.toFixed(0) }}</b><span>待提现({{ dash.pendingWithdrawals }})</span></div>
           <div class="admin__stat"><b>¥{{ dash.commissionTotal.toFixed(0) }}</b><span>已发佣金</span></div>
           <div class="admin__stat"><b>{{ dash.reviewCount }}</b><span>评价</span></div>
-          <div class="admin__stat"><b>{{ dash.couponClaimed }}</b><span>已用券</span></div>
+          <div class="admin__stat"><b>{{ dash.couponUsed }}</b><span>已用券</span></div>
           <div class="admin__stat"><b class="warn">{{ dash.disabledUsers }}</b><span>禁用用户</span></div>
         </div>
       </van-tab>

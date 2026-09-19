@@ -63,9 +63,10 @@ async function main() {
     }),
   });
 
-  // 清库：按外键依赖顺序删除全部业务表（Setting 配置保留）
+  // 清库：按外键依赖顺序删除全部业务表（Setting 配置保留；BalanceLog 无外键也一并清，
+  // 否则重灌后残留指向已删用户的脏流水）
   for (const t of [
-    'Message', 'Commission', 'UserCoupon', 'Withdrawal', 'RechargeCard',
+    'BalanceLog', 'Message', 'Commission', 'UserCoupon', 'Withdrawal', 'RechargeCard',
     'SmsCode', 'Block', 'OrderItem', 'Review', 'Order',
     'DynamicLike', 'DynamicComment', 'Dynamic', 'Follow',
     'PartnerService', 'Partner', 'User', 'Coupon', 'Banner',

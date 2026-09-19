@@ -74,7 +74,7 @@ export class DynamicsController {
         where: { OR: [{ userId }, { blockedId: userId }] },
       });
       const blocked = new Set(blocks.map((b) => (b.userId === userId ? b.blockedId : b.userId)));
-      if (blocked.size) where.userId = { ...(where.userId ?? {}), notIn: [...blocked] };
+      if (blocked.size) where.userId = { ...where.userId, notIn: [...blocked] };
     }
 
     const [total, rows] = await this.prisma.$transaction([

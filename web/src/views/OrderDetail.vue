@@ -40,15 +40,33 @@ async function pay() {
   }
 }
 
+const CANCEL_REASONS = ['时间有变，改天再约', '计划取消，不需要了', '信息填错，重新下单', '其他原因'];
+const showCancel = ref(false);
+const cancelReason = ref(CANCEL_REASONS[0]);
+
 async function cancel() {
-  try {
-    await showConfirmDialog({ title: '取消订单', message: '确认要取消该笔订单嘛？' });
-  } catch {
-    return;
-  }
-  order.value = await api.cancelOrder(id, '用户主动取消');
+  showCancel.value = true;
+}
+
+async function confirmCancel() {
+  showCancel.value = false;
+  order.value = await api.cancelOrder(id, cancelReason.value);
   showToast('已取消');
 }
+
+// 支付倒计时：30 分钟未支付自动取消（与后端 PAY_TIMEOUT_MS 对齐）
+const now = ref(Date.now());
+const PAY_TIMEOUT_MS = 30 * 60 * 1000;
+const payLeft = computed(() => {
+  if (order.value?.status !== 'pending_payment') return 0;
+  const left = new Date(order.value.createdAt).getTime() + PAY_TIMEOUT_MS - now.value;
+  return Math.max(0, left);
+});
+const payLeftText = computed(() => {
+  const m = Math.floor(payLeft.value / 60000);
+  const s = Math.floor((payLeft.value % 60000) / 1000);
+  return `${m}:${String(s).padStart(2, '0')}`;
+});
 
 async function urge() {
   try {
@@ -107,6 +125,7 @@ onMounted(() => {
   poller = setInterval(() => {
     const s = order.value?.status;
     if (s && !['done', 'cancelled', 'rejected', 'refunded'].includes(s)) load();
+    now.value = Date.now();
   }, 5000);
 });
 onUnmounted(() => poller && clearInterval(poller));
@@ -119,7 +138,7 @@ onUnmounted(() => poller && clearInterval(poller));
     <div class="od__status">
       <div class="od__status-text">{{ ORDER_STATUS_TEXT[order.status] || order.status }}</div>
       <div class="od__status-sub">
-        <template v-if="order.status === 'pending_payment'">请在30分钟内完成支付</template>
+        <template v-if="order.status === 'pending_payment'">请在 {{ payLeftText }} 内完成支付，超时自动取消</template>
         <template v-else-if="order.status === 'pending_accept'">等待玩伴确认接单</template>
         <template v-else-if="order.status === 'pending_service'">玩伴已接单，按约定时间见面</template>
         <template v-else-if="order.status === 'serving'">服务进行中，玩得开心</template>
@@ -235,6 +254,16 @@ onUnmounted(() => poller && clearInterval(poller));
         </van-radio-group>
         <div class="od__pay-amount">支付 <span class="price">¥{{ order.totalAmount.toFixed(0) }}</span></div>
         <div class="muted od__pay-hint">余额支付即时扣款；微信支付为模拟</div>
+      </div>
+    </van-dialog>
+
+    <van-dialog v-model:show="showCancel" title="取消订单" show-cancel-button confirm-button-text="确认取消" @confirm="confirmCancel">
+      <div class="od__pay">
+        <van-radio-group v-model="cancelReason">
+          <van-cell v-for="r in CANCEL_REASONS" :key="r" :title="r" clickable :border="false" @click="cancelReason = r">
+            <template #right-icon><van-radio :name="r" checked-color="#ff5a5f" /></template>
+          </van-cell>
+        </van-radio-group>
       </div>
     </van-dialog>
   </div>

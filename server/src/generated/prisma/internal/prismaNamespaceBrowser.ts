@@ -67,6 +67,7 @@ export const ModelName = {
   Coupon: 'Coupon',
   UserCoupon: 'UserCoupon',
   Withdrawal: 'Withdrawal',
+  BalanceLog: 'BalanceLog',
   Block: 'Block',
   Commission: 'Commission',
   Setting: 'Setting',
@@ -315,6 +316,7 @@ export const WithdrawalScalarFieldEnum = {
   id: 'id',
   partnerId: 'partnerId',
   amount: 'amount',
+  account: 'account',
   status: 'status',
   remark: 'remark',
   createdAt: 'createdAt',
@@ -322,6 +324,20 @@ export const WithdrawalScalarFieldEnum = {
 } as const
 
 export type WithdrawalScalarFieldEnum = (typeof WithdrawalScalarFieldEnum)[keyof typeof WithdrawalScalarFieldEnum]
+
+
+export const BalanceLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  partnerId: 'partnerId',
+  type: 'type',
+  amount: 'amount',
+  refId: 'refId',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type BalanceLogScalarFieldEnum = (typeof BalanceLogScalarFieldEnum)[keyof typeof BalanceLogScalarFieldEnum]
 
 
 export const BlockScalarFieldEnum = {

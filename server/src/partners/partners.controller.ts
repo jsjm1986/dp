@@ -47,6 +47,12 @@ export class PartnersController {
     return this.partners.detail(id, userId);
   }
 
+  /** 某日期已被占用的预约时段（前端置灰用） */
+  @Get(':id/busy')
+  busy(@Param('id') id: string, @Query('date') date?: string) {
+    return this.partners.busySlots(id, date);
+  }
+
   @Get(':id/reviews')
   reviews(
     @Param('id') id: string,

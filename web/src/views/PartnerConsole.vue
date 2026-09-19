@@ -16,6 +16,7 @@ const acting = ref('');
 const wallet = ref<Awaited<ReturnType<typeof api.partnerWallet>> | null>(null);
 const showWithdraw = ref(false);
 const withdrawAmount = ref<number | undefined>();
+const withdrawAccount = ref('');
 const withdrawing = ref(false);
 let poller: ReturnType<typeof setInterval> | null = null;
 
@@ -26,9 +27,10 @@ async function loadWallet() {
 async function withdraw() {
   const amount = Number(withdrawAmount.value);
   if (!amount || amount <= 0) return showToast('请输入提现金额');
+  if (!withdrawAccount.value.trim()) return showToast('请填写收款账号');
   withdrawing.value = true;
   try {
-    await api.partnerWithdraw(amount);
+    await api.partnerWithdraw(amount, withdrawAccount.value.trim());
     showWithdraw.value = false;
     withdrawAmount.value = undefined;
     showToast('提现申请已提交，等待平台审核');
@@ -46,6 +48,11 @@ const reviews = ref<Awaited<ReturnType<typeof api.partnerMyReviews>>>([]);
 const replyFor = ref<{ id: string; show: boolean; text: string }>({ id: '', show: false, text: '' });
 const replying = ref(false);
 const reviewsOpen = ref<string[]>([]);
+const logsOpen = ref<string[]>([]);
+const LOG_TYPE_TEXT: Record<string, string> = {
+  income: '完单入账', withdraw: '提现申请', withdraw_refund: '提现驳回返还',
+  pay: '订单支付', refund: '订单退款', commission: '邀请佣金', recharge: '余额充值', card: '充值卡兑换', adjust: '平台调整',
+};
 
 async function loadReviews() {
   reviews.value = await api.partnerMyReviews();
@@ -99,19 +106,37 @@ async function loadOrders() {
   }
 }
 
+const REJECT_REASONS = ['时间冲突，无法赴约', '身体不适，暂时无法接单', '服务范围不匹配', '其他原因'];
+const showReject = ref(false);
+const rejectReason = ref(REJECT_REASONS[0]);
+const rejectTarget = ref<PartnerOrder | null>(null);
+
 async function act(o: PartnerOrder, action: 'accept' | 'reject' | 'start' | 'finish') {
   if (action === 'reject') {
-    try {
-      await showConfirmDialog({ title: '拒绝订单', message: '拒绝后订单将关闭并全额退款给用户，确认拒绝？' });
-    } catch {
-      return;
-    }
+    rejectTarget.value = o;
+    rejectReason.value = REJECT_REASONS[0];
+    showReject.value = true;
+    return;
   }
   acting.value = o.id;
   try {
     await api.partnerOrderAct(o.id, action);
     const msg = { accept: '已接单', reject: '已拒绝', start: '服务已开始', finish: '服务已完成' }[action];
     showToast(msg);
+    await Promise.all([loadOrders(), loadStats()]);
+  } finally {
+    acting.value = '';
+  }
+}
+
+async function confirmReject() {
+  const o = rejectTarget.value;
+  if (!o) return;
+  showReject.value = false;
+  acting.value = o.id;
+  try {
+    await api.partnerOrderAct(o.id, 'reject', rejectReason.value);
+    showToast('已拒绝，款项将全额退回用户');
     await Promise.all([loadOrders(), loadStats()]);
   } finally {
     acting.value = '';
@@ -206,6 +231,22 @@ onUnmounted(() => poller && clearInterval(poller));
       </div>
     </div>
 
+    <div v-if="wallet?.logs.length" class="card pc__withdrawals">
+      <van-collapse v-model="logsOpen">
+        <van-collapse-item title="收支明细" name="1" :label="`${wallet.logs.length}条`">
+          <div v-for="l in wallet.logs" :key="l.id" class="pc__withdrawal">
+            <div>
+              <span>{{ LOG_TYPE_TEXT[l.type] || l.type }}</span>
+              <div class="muted pc__withdrawal-remark">{{ l.remark || '' }}</div>
+            </div>
+            <span :style="{ color: l.amount >= 0 ? '#07c160' : '#2c3e50', fontWeight: 600 }">
+              {{ l.amount >= 0 ? '+' : '' }}{{ l.amount.toFixed(2) }}
+            </span>
+          </div>
+        </van-collapse-item>
+      </van-collapse>
+    </div>
+
     <div class="card pc__reviews">
       <van-collapse v-model="reviewsOpen">
         <van-collapse-item title="收到的评价" name="1" :label="`${reviews.length}条`">
@@ -290,7 +331,24 @@ onUnmounted(() => poller && clearInterval(poller));
           label="金额"
           :placeholder="`可提 ¥${(wallet?.balance ?? 0).toFixed(2)}`"
         />
-        <div class="muted pc__withdraw-hint">提交后平台审核打款，拒绝将退回余额</div>
+        <van-field
+          v-model="withdrawAccount"
+          label="收款账号"
+          placeholder="支付宝/微信/银行卡号"
+          maxlength="60"
+        />
+        <div class="muted pc__withdraw-hint">提交后平台审核打款至该账号，拒绝将退回余额</div>
+      </div>
+    </van-dialog>
+
+    <van-dialog v-model:show="showReject" title="拒绝订单" show-cancel-button confirm-button-text="确认拒绝" @confirm="confirmReject">
+      <div class="pc__withdraw-form">
+        <div class="muted" style="padding:4px 16px 8px">拒绝后订单将关闭并全额退款给用户</div>
+        <van-radio-group v-model="rejectReason">
+          <van-cell v-for="r in REJECT_REASONS" :key="r" :title="r" clickable :border="false" @click="rejectReason = r">
+            <template #right-icon><van-radio :name="r" checked-color="#ff5a5f" /></template>
+          </van-cell>
+        </van-radio-group>
       </div>
     </van-dialog>
   </div>

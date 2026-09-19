@@ -53,16 +53,30 @@ function fmtDate(d: Date) {
 // 可选时段：10:00-23:00 整点；选今天时过滤掉不足 1 小时提前量的时段
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 10);
 const isToday = computed(() => appointAt.value === fmtDate(new Date()));
+// 玩伴当日已被预约的时段（含待支付占位，服务端为准）
+const busyHours = ref<number[]>([]);
+const busyAllDay = ref(false);
 const slots = computed(() => {
-  if (!appointAt.value) return HOURS;
+  if (!appointAt.value || busyAllDay.value) return [];
   const minHour = new Date(Date.now() + 3600_000).getHours() + 1;
-  return isToday.value ? HOURS.filter((h) => h >= minHour) : HOURS;
+  const open = isToday.value ? HOURS.filter((h) => h >= minHour) : HOURS;
+  return open.filter((h) => !busyHours.value.includes(h));
 });
+
+async function loadBusy() {
+  busyAllDay.value = false; busyHours.value = [];
+  if (!appointAt.value) return;
+  try {
+    const r = await api.partnerBusy(partnerId, appointAt.value);
+    busyAllDay.value = r.allDay; busyHours.value = r.hours;
+  } catch { /* 查询失败不阻塞下单，由服务端兜底校验 */ }
+}
 
 function onCalendarConfirm(values: Date[]) {
   appointAt.value = fmtDate(values[0]);
   appointHour.value = null;
   showCalendar.value = false;
+  loadBusy();
 }
 
 async function submit() {
@@ -128,7 +142,9 @@ onMounted(async () => {
     <div class="card oc__block">
       <van-cell title="预约日期" :value="appointAt || '请选择'" is-link @click="showCalendar = true" />
       <div v-if="appointAt" class="oc__slots">
-        <div v-if="!slots.length" class="muted oc__slots-empty">今天已无可约时段，请改约明天</div>
+        <div v-if="!slots.length" class="muted oc__slots-empty">
+          {{ busyAllDay ? '该日期玩伴已被全天预约，请换一天' : '该日期已无可约时段，请换一天' }}
+        </div>
         <div
           v-for="h in slots"
           :key="h"

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
+import { bjDayStart, orderHours } from '../common/ledger.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface PartnerQuery {
@@ -232,6 +233,30 @@ export class PartnersService {
   async unfollow(userId: string, partnerId: string) {
     await this.prisma.follow.deleteMany({ where: { userId, partnerId } });
     return { followed: false };
+  }
+
+  /** 指定日期已被占用的预约小时（北京时间口径，含待支付占位；「天」服务返回 allDay） */
+  async busySlots(partnerId: string, date?: string) {
+    const day = date ? new Date(`${date}T00:00:00+08:00`) : new Date();
+    if (Number.isNaN(day.getTime())) throw new BadRequestException('date 格式应为 YYYY-MM-DD');
+    const start = bjDayStart(day);
+    const orders = await this.prisma.order.findMany({
+      where: {
+        partnerId,
+        appointAt: { gte: start, lt: new Date(start.getTime() + 86400_000) },
+        status: { in: ['pending_payment', 'pending_accept', 'pending_service', 'serving'] },
+      },
+      select: { appointAt: true, items: { select: { unit: true, num: true } } },
+      take: 100,
+    });
+    const hours = new Set<number>();
+    let allDay = false;
+    for (const o of orders) {
+      const h = orderHours(o.appointAt, o.items);
+      if (h === null) { allDay = true; break; }
+      h.forEach((x) => hours.add(x));
+    }
+    return { allDay, hours: [...hours].sort((a, b) => a - b) };
   }
 
   private toCard(

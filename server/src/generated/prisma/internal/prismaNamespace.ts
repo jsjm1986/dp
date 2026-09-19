@@ -413,6 +413,7 @@ export const ModelName = {
   Coupon: 'Coupon',
   UserCoupon: 'UserCoupon',
   Withdrawal: 'Withdrawal',
+  BalanceLog: 'BalanceLog',
   Block: 'Block',
   Commission: 'Commission',
   Setting: 'Setting',
@@ -432,7 +433,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message" | "coupon" | "userCoupon" | "withdrawal" | "block" | "commission" | "setting" | "rechargeCard"
+    modelProps: "user" | "partner" | "partnerService" | "order" | "orderItem" | "review" | "dynamic" | "dynamicLike" | "dynamicComment" | "follow" | "banner" | "smsCode" | "message" | "coupon" | "userCoupon" | "withdrawal" | "balanceLog" | "block" | "commission" | "setting" | "rechargeCard"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1620,6 +1621,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    BalanceLog: {
+      payload: Prisma.$BalanceLogPayload<ExtArgs>
+      fields: Prisma.BalanceLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BalanceLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BalanceLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        findFirst: {
+          args: Prisma.BalanceLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BalanceLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        findMany: {
+          args: Prisma.BalanceLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>[]
+        }
+        create: {
+          args: Prisma.BalanceLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        createMany: {
+          args: Prisma.BalanceLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BalanceLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>[]
+        }
+        delete: {
+          args: Prisma.BalanceLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        update: {
+          args: Prisma.BalanceLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.BalanceLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BalanceLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BalanceLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.BalanceLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BalanceLogPayload>
+        }
+        aggregate: {
+          args: Prisma.BalanceLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBalanceLog>
+        }
+        groupBy: {
+          args: Prisma.BalanceLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BalanceLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BalanceLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BalanceLogCountAggregateOutputType> | number
+        }
+      }
+    }
     Block: {
       payload: Prisma.$BlockPayload<ExtArgs>
       fields: Prisma.BlockFieldRefs
@@ -2181,6 +2256,7 @@ export const WithdrawalScalarFieldEnum = {
   id: 'id',
   partnerId: 'partnerId',
   amount: 'amount',
+  account: 'account',
   status: 'status',
   remark: 'remark',
   createdAt: 'createdAt',
@@ -2188,6 +2264,20 @@ export const WithdrawalScalarFieldEnum = {
 } as const
 
 export type WithdrawalScalarFieldEnum = (typeof WithdrawalScalarFieldEnum)[keyof typeof WithdrawalScalarFieldEnum]
+
+
+export const BalanceLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  partnerId: 'partnerId',
+  type: 'type',
+  amount: 'amount',
+  refId: 'refId',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type BalanceLogScalarFieldEnum = (typeof BalanceLogScalarFieldEnum)[keyof typeof BalanceLogScalarFieldEnum]
 
 
 export const BlockScalarFieldEnum = {
@@ -2464,6 +2554,7 @@ export type GlobalOmitConfig = {
   coupon?: Prisma.CouponOmit
   userCoupon?: Prisma.UserCouponOmit
   withdrawal?: Prisma.WithdrawalOmit
+  balanceLog?: Prisma.BalanceLogOmit
   block?: Prisma.BlockOmit
   commission?: Prisma.CommissionOmit
   setting?: Prisma.SettingOmit

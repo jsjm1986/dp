@@ -6,6 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
+import { bjDayStart, logBalance, orderHours } from '../common/ledger.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CancelOrderDto, CreateOrderDto, ExtendOrderDto, PayOrderDto, ReviewDto } from './dto.js';
@@ -121,8 +122,23 @@ export class OrdersService implements OnModuleInit {
       if (r > 0) commissionRate = r;
     }
 
-    // 下单与占券同一事务，条件更新防止并发重复用券
+    // 下单与占券同一事务，条件更新防止并发重复用券；时段冲突在事务内复查（单连接串行写，天然防并发双订）
     const order = await this.prisma.$transaction(async (tx) => {
+      const dayStart = bjDayStart(appointAt);
+      const taken = await tx.order.findMany({
+        where: {
+          partnerId: partner.id,
+          appointAt: { gte: dayStart, lt: new Date(dayStart.getTime() + 86400_000) },
+          status: { in: [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING] },
+        },
+        select: { appointAt: true, items: { select: { unit: true, num: true } } },
+      });
+      const wanted = orderHours(appointAt, items);
+      const clash = taken.some((o) => {
+        const h = orderHours(o.appointAt, o.items);
+        return h === null || wanted === null || h.some((hr) => wanted.includes(hr));
+      });
+      if (clash) throw new BadRequestException('该时段已被预约，请更换时间');
       if (userCouponId) {
         const claim = await tx.userCoupon.updateMany({
           where: { id: userCouponId, userId, used: false },
@@ -222,6 +238,7 @@ export class OrdersService implements OnModuleInit {
           data: { balance: { decrement: total } },
         });
         if (!res.count) throw new BadRequestException('余额不足');
+        await logBalance(tx, { userId, type: 'pay', amount: -total, refId: id, remark: `订单支付` });
       }
       const pay = await tx.order.updateMany({
         where: { id, status: ORDER_STATUS.PENDING_PAYMENT },
@@ -256,6 +273,7 @@ export class OrdersService implements OnModuleInit {
           where: { id: userId },
           data: { balance: { increment: order.totalAmount } },
         });
+        await logBalance(tx, { userId, type: 'refund', amount: Number(order.totalAmount), refId: id, remark: '取消退款' });
       }
       if (order.userCouponId) {
         await tx.userCoupon.update({
@@ -389,13 +407,14 @@ export class OrdersService implements OnModuleInit {
     return rows.map((o) => ({ ...this.toDto(o), customer: o.user }));
   }
 
-  async partnerAct(userId: string, id: string, action: 'accept' | 'reject' | 'start' | 'finish') {
+  async partnerAct(userId: string, id: string, action: 'accept' | 'reject' | 'start' | 'finish', reason?: string) {
     const partner = await this.mustBePartner(userId);
     if (partner.auditStatus === 'rejected') {
       throw new ForbiddenException('入驻审核已被拒绝，无法操作订单');
     }
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order || order.partnerId !== partner.id) throw new NotFoundException('订单不存在');
+    if (action === 'reject' && reason) assertClean(reason, '拒单原因');
 
     const transition: Record<typeof action, { from: string[]; to: string }> = {
       accept: { from: [ORDER_STATUS.PENDING_ACCEPT], to: ORDER_STATUS.PENDING_SERVICE },
@@ -415,7 +434,7 @@ export class OrdersService implements OnModuleInit {
           status: t.to,
           ...(action === 'accept' ? { acceptedAt: new Date() } : {}),
           ...(action === 'finish' ? { finishedAt: new Date() } : {}),
-          ...(action === 'reject' ? { cancelReason: '玩伴拒单' } : {}),
+          ...(action === 'reject' ? { cancelReason: reason?.trim() || '玩伴拒单' } : {}),
         },
       });
       if (!transitioned.count) throw new BadRequestException('订单状态已变化，请刷新后重试');
@@ -426,6 +445,7 @@ export class OrdersService implements OnModuleInit {
             where: { id: order.userId },
             data: { balance: { increment: order.totalAmount } },
           });
+          await logBalance(tx, { userId: order.userId, type: 'refund', amount: Number(order.totalAmount), refId: id, remark: '玩伴拒单退款' });
         }
         if (order.userCouponId) {
           await tx.userCoupon.update({
@@ -457,6 +477,7 @@ export class OrdersService implements OnModuleInit {
         balance: { increment: Number(order.totalAmount) },
       },
     });
+    await logBalance(tx, { partnerId: order.partnerId, type: 'income', amount: Number(order.totalAmount), refId: order.id, remark: '完单入账' });
     // 分销：下线完成订单，推荐人按比例拿佣金入余额；佣金按订单唯一防重复结算
     const buyer = await tx.user.findUnique({
       where: { id: order.userId },
@@ -486,6 +507,7 @@ export class OrdersService implements OnModuleInit {
       where: { id: inviter.id },
       data: { balance: { increment: amount } },
     });
+    await logBalance(tx, { userId: inviter.id, type: 'commission', amount, refId: order.id, remark: `邀请佣金 ${(rate * 100).toFixed(0)}%` });
   }
 
   private scheduleAutoFlow(orderId: string) {
@@ -593,6 +615,7 @@ export class OrdersService implements OnModuleInit {
             where: { id: c.userId },
             data: { balance: { increment: c.totalAmount } },
           });
+          await logBalance(tx, { userId: c.userId, type: 'refund', amount: Number(c.totalAmount), refId: c.id, remark: reason });
         }
       }
     }

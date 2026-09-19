@@ -122,6 +122,11 @@ export type UserCoupon = Prisma.UserCouponModel
  */
 export type Withdrawal = Prisma.WithdrawalModel
 /**
+ * Model BalanceLog
+ * 
+ */
+export type BalanceLog = Prisma.BalanceLogModel
+/**
  * Model Block
  * 
  */

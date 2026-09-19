@@ -272,6 +272,7 @@ model Withdrawal {
   id        String   @id @default(cuid())
   partnerId String
   amount    Decimal
+  account   String? // 收款账号（支付宝/微信）
   status    String   @default("pending")
   remark    String?
   createdAt DateTime @default(now())
@@ -280,6 +281,21 @@ model Withdrawal {
   partner Partner @relation(fields: [partnerId], references: [id])
 
   @@index([partnerId])
+}
+
+// ---------- 余额流水（User/Partner 共用，脱钩无外键，删数据不丢账） ----------
+model BalanceLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  partnerId String?
+  type      String // recharge/card/pay/refund/commission/adjust/income/withdraw/withdraw_refund
+  amount    Decimal // 有符号：正入负出
+  refId     String? // 关联订单/卡/提现单
+  remark    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([partnerId, createdAt])
 }
 
 // ---------- 拉黑 ----------

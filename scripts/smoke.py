@@ -196,10 +196,11 @@ def main():
     check("commission.settled", ref2["totalCommission"] > 0, f"¥{ref2['totalCommission']}")
 
     # ---------- 玩伴提现 ----------
-    code, w = call("POST", "/partner/withdraw", pw_tok, {"amount": 10}, expect=201)
+    code, w = call("POST", "/partner/withdraw", pw_tok, {"amount": 10, "account": "alipay:pw@test.com"}, expect=201)
     check("partner.withdraw", code == 201)
     wds = call("GET", "/admin/withdrawals?status=pending", admin_tok)[1]
     mine_wd = next((x for x in wds if x["id"] == w["id"]), None)
+    check("withdraw.account", mine_wd is not None and mine_wd.get("account") == "alipay:pw@test.com", mine_wd and mine_wd.get("account"))
     if mine_wd:
         call("POST", f"/admin/withdrawals/{w['id']}/approve", admin_tok, expect=201)
     check("admin.withdrawal-approve", mine_wd is not None)
@@ -303,6 +304,24 @@ def main():
     code, _ = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=201)
     check("order.extend-ok", code == 201)
 
+    # 时段冲突：o6 占用 2030-01-06 10-11 点，重叠下单应 400；空闲时段可下单
+    code, busy = call("GET", f"/partners/{pid2}/busy?date=2030-01-06", ua_tok, expect=200)
+    check("partner.busy-slots", busy["allDay"] or len(busy["hours"]) > 0, busy)
+    code, _ = call("POST", "/orders", ub_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc3["id"], "num": 2}],
+        "appointAt": "2030-01-06T10:00:00.000Z",
+    }, expect=400)
+    check("order.busy-conflict 400", code == 400)
+    code, o7 = call("POST", "/orders", ub_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc3["id"], "num": 2}],
+        "appointAt": "2030-01-06T15:00:00.000Z",
+    }, expect=201)
+    check("order.free-slot-ok", code == 201)
+    if code == 201:
+        call("POST", f"/orders/{o7['id']}/cancel", ub_tok, {"reason": "测试"}, expect=201)
+
     # 评价回复：敏感词拦截 + 正常回复
     code, revs = call("GET", "/partner/reviews", pw_tok, expect=200)
     rv = next((r for r in revs if r["content"] == "冒烟好评" and not r["reply"]), None)
@@ -333,6 +352,13 @@ def main():
         check("order.cascade-child-cancelled", cd["status"] == "cancelled", cd["status"])
     else:
         check("order.extend-grandchild 400", False, "extend failed")
+
+    # 钱包流水：支付/退款均有账本记录
+    _, wl = call("GET", "/user/wallet", ub_tok, expect=200)
+    wl_types = {l["type"] for l in wl["items"]}
+    check("wallet.logs", {"pay", "refund"} <= wl_types, sorted(wl_types))
+    _, pwl = call("GET", "/partner/wallet", pw_tok, expect=200)
+    check("partner.wallet-logs", "logs" in pwl and any(l["type"] == "withdraw" for l in pwl["logs"]))
 
     # 分销环：uc 已绑 ua 为推荐人，ua 再绑 uc 应被拒（成环）
     _, refc2 = call("GET", "/user/referral", uc_tok, expect=200)

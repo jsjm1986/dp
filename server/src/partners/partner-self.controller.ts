@@ -25,6 +25,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { logBalance } from '../common/ledger.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -141,6 +142,11 @@ class WithdrawDto {
   @Min(1)
   @Max(100000)
   amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  account?: string; // 收款账号（支付宝/微信/银行卡）
 }
 
 @Controller('partner')
@@ -323,23 +329,34 @@ export class PartnerSelfController {
     return { ok: true };
   }
 
-  /** 钱包：余额 + 提现记录 */
+  /** 钱包：余额 + 收支流水 + 提现记录 */
   @Get('wallet')
   async wallet(@CurrentUser() userId: string) {
     const p = await this.mustBePartner(userId);
-    const withdrawals = await this.prisma.withdrawal.findMany({
-      where: { partnerId: p.id },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const [withdrawals, logs] = await this.prisma.$transaction([
+      this.prisma.withdrawal.findMany({
+        where: { partnerId: p.id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.balanceLog.findMany({
+        where: { partnerId: p.id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
     return {
       balance: Number(p.balance),
       withdrawals: withdrawals.map((w) => ({
         id: w.id,
         amount: Number(w.amount),
+        account: w.account,
         status: w.status,
         remark: w.remark,
         createdAt: w.createdAt,
+      })),
+      logs: logs.map((l) => ({
+        id: l.id, type: l.type, amount: Number(l.amount), remark: l.remark, createdAt: l.createdAt,
       })),
     };
   }
@@ -351,6 +368,8 @@ export class PartnerSelfController {
     if (p.auditStatus !== 'approved') throw new BadRequestException('审核通过后才能提现');
     const amount = Math.round(dto.amount * 100) / 100;
     if (!amount || amount <= 0) throw new BadRequestException('金额无效');
+    const account = dto.account?.trim();
+    if (account) assertClean(account, '收款账号');
     const w = await this.prisma.$transaction(async (tx) => {
       const pending = await tx.withdrawal.count({
         where: { partnerId: p.id, status: 'pending' },
@@ -361,7 +380,9 @@ export class PartnerSelfController {
         data: { balance: { decrement: amount } },
       });
       if (!deducted.count) throw new BadRequestException('余额不足');
-      return tx.withdrawal.create({ data: { partnerId: p.id, amount } });
+      const created = await tx.withdrawal.create({ data: { partnerId: p.id, amount, account } });
+      await logBalance(tx, { partnerId: p.id, type: 'withdraw', amount: -amount, refId: created.id, remark: '提现申请' });
+      return created;
     });
     return { id: w.id, status: w.status };
   }

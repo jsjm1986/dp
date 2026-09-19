@@ -1,7 +1,8 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { AuthService } from '../auth/auth.service.js';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { logBalance } from '../common/ledger.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -205,9 +206,13 @@ export class UsersController {
   @Post('recharge')
   async recharge(@CurrentUser() userId: string, @Body() dto: RechargeDto) {
     if (IS_PROD) throw new BadRequestException('演示充值未开启');
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: { balance: { increment: dto.amount } },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({
+        where: { id: userId },
+        data: { balance: { increment: dto.amount } },
+      });
+      await logBalance(tx, { userId, type: 'recharge', amount: dto.amount, remark: '模拟充值' });
+      return u;
     });
     return { balance: Number(user.balance) };
   }
@@ -234,13 +239,39 @@ export class UsersController {
         data: { usedById: userId, usedAt: new Date() },
       });
       if (claim.count === 0) throw new BadRequestException('该卡已被使用');
-      return tx.user.update({
+      const u = await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: card.amount } },
       });
+      await logBalance(tx, { userId, type: 'card', amount: Number(card.amount), refId: card.id, remark: `充值卡 ${card.code}` });
+      return u;
     });
     redeemFails.delete(userId);
     return { balance: Number(user.balance), amount: Number(card.amount) };
+  }
+
+  /** 钱包：余额 + 收支流水分页 */
+  @Get('wallet')
+  async wallet(@CurrentUser() userId: string, @Query('page') page?: string) {
+    const p = Math.max(1, Number(page) || 1);
+    const size = 20;
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.balanceLog.count({ where: { userId } }),
+      this.prisma.balanceLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * size,
+        take: size,
+      }),
+    ]);
+    return {
+      balance: Number(user.balance),
+      total,
+      items: items.map((l) => ({
+        id: l.id, type: l.type, amount: Number(l.amount), remark: l.remark, createdAt: l.createdAt,
+      })),
+    };
   }
 
   @Put('profile')

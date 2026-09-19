@@ -532,7 +532,7 @@ function onTabChange(name: string | number) {
               <van-image round width="36" height="36" :src="w.partner.avatar || ''" />
               <div class="admin__wd-info">
                 <div><b>{{ w.partner.nickname }}</b> <span class="muted">{{ w.partner.mobile }}</span></div>
-                <div class="muted">{{ fmt(w.createdAt) }}</div>
+                <div class="muted">{{ fmt(w.createdAt) }}<template v-if="w.account"> · 收款:{{ w.account }}</template></div>
               </div>
               <div class="admin__wd-amount">¥{{ w.amount.toFixed(2) }}</div>
             </div>

@@ -9,6 +9,7 @@ const store = useUserStore();
 const router = useRouter();
 const editing = ref(false);
 const nickname = ref('');
+const gender = ref<'male' | 'female'>('female');
 const uploadingAvatar = ref(false);
 const unread = ref(0);
 const showRecharge = ref(false);
@@ -60,12 +61,13 @@ onMounted(() => {
 
 function openEdit() {
   nickname.value = store.user?.nickname ?? '';
+  gender.value = (store.user?.gender as 'male' | 'female') || 'female';
   editing.value = true;
 }
 
 async function saveName() {
   if (!nickname.value.trim()) return;
-  store.user = await api.updateProfile({ nickname: nickname.value.trim() });
+  store.user = await api.updateProfile({ nickname: nickname.value.trim(), gender: gender.value });
   editing.value = false;
 }
 
@@ -103,9 +105,9 @@ async function logout() {
     </div>
 
     <div class="card mine__wallet">
-      <div class="mine__wallet-item" @click="showRecharge = true">
+      <div class="mine__wallet-item" @click="router.push('/wallet')">
         <div class="mine__wallet-num">¥{{ (store.user?.balance ?? 0).toFixed(2) }}</div>
-        <div class="muted">余额 · 点我充值</div>
+        <div class="muted">余额 · 收支明细</div>
       </div>
       <div class="mine__wallet-item" @click="router.push('/follows')">
         <div class="mine__wallet-num">❤</div>
@@ -153,8 +155,16 @@ async function logout() {
       <van-button round block plain type="danger" @click="logout">退出登录</van-button>
     </div>
 
-    <van-dialog v-model:show="editing" title="修改昵称" show-cancel-button @confirm="saveName">
-      <van-field v-model="nickname" placeholder="输入新昵称" maxlength="30" />
+    <van-dialog v-model:show="editing" title="修改资料" show-cancel-button @confirm="saveName">
+      <van-field v-model="nickname" label="昵称" placeholder="输入新昵称" maxlength="30" />
+      <van-field label="性别">
+        <template #input>
+          <van-radio-group v-model="gender" direction="horizontal">
+            <van-radio name="female" checked-color="#ff5a5f">女</van-radio>
+            <van-radio name="male" checked-color="#ff5a5f">男</van-radio>
+          </van-radio-group>
+        </template>
+      </van-field>
     </van-dialog>
 
     <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button :confirm-button-loading="recharging" @confirm="recharge">

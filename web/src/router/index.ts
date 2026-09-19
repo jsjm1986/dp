@@ -25,6 +25,8 @@ const router = createRouter({
     { path: '/coupons', component: () => import('../views/Coupons.vue'), meta: { auth: true } },
     { path: '/my-dynamics', component: () => import('../views/MyDynamics.vue'), meta: { auth: true } },
     { path: '/referral', component: () => import('../views/Referral.vue'), meta: { auth: true } },
+    { path: '/wallet', component: () => import('../views/Wallet.vue'), meta: { auth: true } },
+    { path: '/:pathMatch(.*)*', redirect: '/home' },
   ],
 });
 

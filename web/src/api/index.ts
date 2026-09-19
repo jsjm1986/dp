@@ -98,6 +98,14 @@ export interface Order {
   children?: Array<{ id: string; orderNo: string; status: string; totalAmount: number; items: Array<{ name: string; num: number }>; createdAt: string }>;
 }
 
+export interface BalanceLogItem {
+  id: string;
+  type: 'recharge' | 'card' | 'pay' | 'refund' | 'commission' | 'adjust' | 'income' | 'withdraw' | 'withdraw_refund';
+  amount: number;
+  remark: string | null;
+  createdAt: string;
+}
+
 export interface Dynamic {
   id: string;
   content: string;
@@ -197,11 +205,18 @@ export const api = {
   partnerStats: () => http.get<PartnerStats>('/partner/stats'),
   partnerOrders: (status?: string) =>
     http.get<Array<Order & { customer: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/partner/orders', { params: { status } }),
-  partnerOrderAct: (id: string, action: 'accept' | 'reject' | 'start' | 'finish') =>
-    http.post<Order>(`/partner/orders/${id}/${action}`),
+  partnerOrderAct: (id: string, action: 'accept' | 'reject' | 'start' | 'finish', reason?: string) =>
+    http.post<Order>(`/partner/orders/${id}/${action}`, { reason }),
   partnerWallet: () =>
-    http.get<{ balance: number; withdrawals: Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string }> }>('/partner/wallet'),
-  partnerWithdraw: (amount: number) => http.post<{ id: string; status: string }>('/partner/withdraw', { amount }),
+    http.get<{
+      balance: number;
+      withdrawals: Array<{ id: string; amount: number; account: string | null; status: string; remark: string | null; createdAt: string }>;
+      logs: BalanceLogItem[];
+    }>('/partner/wallet'),
+  partnerWithdraw: (amount: number, account?: string) => http.post<{ id: string; status: string }>('/partner/withdraw', { amount, account }),
+  partnerBusy: (id: string, date: string) => http.get<{ allDay: boolean; hours: number[] }>(`/partners/${id}/busy`, { params: { date } }),
+  userWallet: (page = 1) =>
+    http.get<{ balance: number; total: number; items: BalanceLogItem[] }>('/user/wallet', { params: { page } }),
 
   dynamics: (page = 1, tab?: string) => http.get<{ total: number; items: Dynamic[] }>('/dynamics', { params: { page, tab } }),
   createDynamic: (data: { content: string; images?: string[]; city?: string }) => http.post<{ id: string }>('/dynamics', data),
@@ -210,6 +225,7 @@ export const api = {
   comments: (id: string) => http.get<CommentRow[]>(`/dynamics/${id}/comments`),
   comment: (id: string, content: string) =>
     http.post<CommentRow & { commentCount: number }>(`/dynamics/${id}/comments`, { content }),
+  deleteComment: (id: string) => http.delete(`/dynamics/comments/${id}`),
   blockUser: (id: string) => http.post<{ blocked: boolean }>(`/user/block/${id}`),
   unblockUser: (id: string) => http.delete<{ blocked: boolean }>(`/user/block/${id}`),
   myBlocks: () => http.get<Array<{ id: string; nickname: string; avatar: string | null }>>('/user/blocks'),
@@ -277,7 +293,7 @@ export const api = {
     data.id ? http.put(`/admin/banners/${data.id}`, data) : http.post('/admin/banners', data),
   adminDeleteBanner: (id: string) => http.delete(`/admin/banners/${id}`),
   adminWithdrawals: (status = 'pending') =>
-    http.get<Array<{ id: string; amount: number; status: string; remark: string | null; createdAt: string; handledAt: string | null; partner: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/admin/withdrawals', { params: { status } }),
+    http.get<Array<{ id: string; amount: number; account: string | null; status: string; remark: string | null; createdAt: string; handledAt: string | null; partner: { id: string; nickname: string; avatar: string | null; mobile: string } }>>('/admin/withdrawals', { params: { status } }),
   adminApproveWithdrawal: (id: string) => http.post(`/admin/withdrawals/${id}/approve`),
   adminRejectWithdrawal: (id: string, remark?: string) => http.post(`/admin/withdrawals/${id}/reject`, { remark }),
   adminSettings: () =>

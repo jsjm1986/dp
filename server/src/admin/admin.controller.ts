@@ -13,6 +13,7 @@ import {
 import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { randomBytes } from 'crypto';
 import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { logBalance } from '../common/ledger.js';
 import { toInt } from '../common/params.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -298,6 +299,7 @@ export class AdminController {
     return rows.map((w) => ({
       id: w.id,
       amount: Number(w.amount),
+      account: w.account,
       status: w.status,
       remark: w.remark,
       createdAt: w.createdAt,
@@ -338,6 +340,7 @@ export class AdminController {
         where: { id: w.partnerId },
         data: { balance: { increment: w.amount } },
       });
+      await logBalance(tx, { partnerId: w.partnerId, type: 'withdraw_refund', amount: Number(w.amount), refId: w.id, remark: '提现驳回返还' });
     });
     return { ok: true };
   }
@@ -518,6 +521,9 @@ export class AdminController {
       data: { balance: { increment: amount } },
     });
     if (!res.count) throw new BadRequestException('扣减后余额不能为负');
+    await this.prisma.balanceLog.create({
+      data: { userId: id, type: 'adjust', amount, remark: body.remark?.trim() || '管理端调整' },
+    });
     const updated = await this.prisma.user.findUniqueOrThrow({ where: { id } });
     return { balance: Number(updated.balance) };
   }
@@ -590,6 +596,7 @@ export class AdminController {
           where: { id: order.userId },
           data: { balance: { increment: order.totalAmount } },
         });
+        await logBalance(tx, { userId: order.userId, type: 'refund', amount: Number(order.totalAmount), refId: id, remark: reason });
       }
       if (order.userCouponId) {
         await tx.userCoupon.update({
@@ -615,6 +622,7 @@ export class AdminController {
               where: { id: c.userId },
               data: { balance: { increment: c.totalAmount } },
             });
+            await logBalance(tx, { userId: c.userId, type: 'refund', amount: Number(c.totalAmount), refId: c.id, remark: `主订单${reason}` });
           }
         }
       }

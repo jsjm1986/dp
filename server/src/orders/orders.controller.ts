@@ -75,8 +75,8 @@ export class OrdersController {
   }
 
   @Post('partner/orders/:id/reject')
-  reject(@CurrentUser() userId: string, @Param('id') id: string) {
-    return this.orders.partnerAct(userId, id, 'reject');
+  reject(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto?: { reason?: string }) {
+    return this.orders.partnerAct(userId, id, 'reject', dto?.reason);
   }
 
   @Post('partner/orders/:id/start')

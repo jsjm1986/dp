@@ -10,17 +10,19 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { randomBytes } from 'crypto';
 import { AdminGuard, CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import { logBalance } from '../common/ledger.js';
-import { notify } from '../common/notify.js';
+import { bjDayStart, logBalance } from '../common/ledger.js';
+import { notify, type PendingNotice } from '../common/notify.js';
 import { toInt } from '../common/params.js';
 import { getSensitiveWords, setSensitiveWords } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class BannerDto {
   @IsString()
+  @MaxLength(300)
+  @Matches(/^\/uploads\//, { message: '图片请使用站内上传' })
   image: string;
 
   @IsOptional()
@@ -63,6 +65,107 @@ class CouponDto {
   days: number;
 }
 
+/** 通用文本原因/备注（reject/handleReport/forceCancel/adjustBalance 等共用） */
+class ReasonDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  reason?: string;
+}
+
+class RemarkDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  remark?: string;
+}
+
+class ReportHandleDto {
+  @IsString()
+  @IsIn(['processed', 'rejected'])
+  action: 'processed' | 'rejected';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  remark?: string;
+}
+
+class AnnouncementDto {
+  @IsString()
+  @MaxLength(50)
+  title: string;
+
+  @IsString()
+  @MaxLength(500)
+  content: string;
+}
+
+class AnnouncementUpdateDto {
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  content?: string;
+}
+
+class VerifyDto {
+  @IsBoolean()
+  verified: boolean;
+}
+
+class RecommendDto {
+  @IsBoolean()
+  recommended: boolean;
+}
+
+class DisabledDto {
+  @IsBoolean()
+  disabled: boolean;
+}
+
+class AdjustBalanceDto {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  remark?: string;
+}
+
+class RoleDto {
+  @IsString()
+  @IsIn(['user', 'admin'])
+  role: 'user' | 'admin';
+}
+
+class PartnerStatusDto {
+  @IsString()
+  @IsIn(['available', 'rest'])
+  status: 'available' | 'rest';
+}
+
+class RechargeCardDto {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(1)
+  @Max(100000)
+  amount: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  count: number;
+}
+
 const userBrief = { id: true, mobile: true, nickname: true, avatar: true, city: true, role: true, disabled: true, createdAt: true } as const;
 
 @Controller('admin')
@@ -73,8 +176,8 @@ export class AdminController {
   /** 运营仪表盘 */
   @Get('dashboard')
   async dashboard() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 「今日」按北京时间口径，与下单/休息日逻辑一致
+    const today = bjDayStart(new Date());
     const [
       userCount, partnerApproved, partnerPending, orderCount, todayOrders,
       doneAgg, dynamicCount, messageCount, pendingAccept, serving,
@@ -184,7 +287,8 @@ export class AdminController {
         status: p.status,
         verified: p.verified,
         realName: p.realName,
-        idCard: p.idCard,
+        // 身份证号列表页脱敏展示（明文仅用于审核核对，不在批量接口输出）
+        idCard: p.idCard ? p.idCard.replace(/^(.{4}).+(.{2})$/, '$1************$2') : null,
         age: p.age,
         recommended: p.recommended,
         rating: p.rating,
@@ -197,8 +301,16 @@ export class AdminController {
 
   @Post('partners/:id/approve')
   async approve(@Param('id') id: string) {
-    const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'approved' } });
-    if (!res.count) throw new BadRequestException('玩伴不存在');
+    // 仅 pending 状态可审，条件更新保证重复点击不重复发通知
+    const res = await this.prisma.partner.updateMany({
+      where: { id, auditStatus: 'pending' },
+      data: { auditStatus: 'approved' },
+    });
+    if (!res.count) {
+      const exists = await this.prisma.partner.findUnique({ where: { id }, select: { id: true } });
+      if (!exists) throw new BadRequestException('玩伴不存在');
+      throw new BadRequestException('该申请已处理过');
+    }
     const p = await this.prisma.partner.findUnique({ where: { id }, select: { userId: true } });
     if (p) {
       await notify(this.prisma, { userId: p.userId, type: 'audit', title: '入驻审核通过', content: '恭喜，你的玩伴入驻申请已通过，快去上线接单吧' });
@@ -207,24 +319,31 @@ export class AdminController {
   }
 
   @Post('partners/:id/reject')
-  async reject(@Param('id') id: string, @Body() body: { reason?: string }) {
-    const res = await this.prisma.partner.updateMany({ where: { id }, data: { auditStatus: 'rejected' } });
-    if (!res.count) throw new BadRequestException('玩伴不存在');
+  async reject(@Param('id') id: string, @Body() body: ReasonDto) {
+    const res = await this.prisma.partner.updateMany({
+      where: { id, auditStatus: 'pending' },
+      data: { auditStatus: 'rejected' },
+    });
+    if (!res.count) {
+      const exists = await this.prisma.partner.findUnique({ where: { id }, select: { id: true } });
+      if (!exists) throw new BadRequestException('玩伴不存在');
+      throw new BadRequestException('该申请已处理过');
+    }
     const p = await this.prisma.partner.findUnique({ where: { id }, select: { userId: true } });
     if (p) {
       await notify(this.prisma, {
         userId: p.userId,
         type: 'audit',
         title: '入驻审核未通过',
-        content: `很抱歉，你的入驻申请未通过${body.reason ? `：${body.reason.slice(0, 80)}` : '，请完善资料后重新提交'}`,
+        content: `很抱歉，你的入驻申请未通过${body.reason?.trim() ? `：${body.reason.trim().slice(0, 80)}` : '，请完善资料后重新提交'}`,
       });
     }
     return { ok: true };
   }
 
   @Put('partners/:id/verify')
-  async verify(@Param('id') id: string, @Body() body: { verified: boolean }) {
-    const res = await this.prisma.partner.updateMany({ where: { id }, data: { verified: !!body.verified } });
+  async verify(@Param('id') id: string, @Body() body: VerifyDto) {
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { verified: body.verified } });
     if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
@@ -353,14 +472,16 @@ export class AdminController {
   }
 
   @Post('withdrawals/:id/reject')
-  async rejectWithdrawal(@Param('id') id: string, @Body() body: { remark?: string }) {
+  async rejectWithdrawal(@Param('id') id: string, @Body() body: RemarkDto) {
     const w = await this.prisma.withdrawal.findUnique({ where: { id } });
     if (!w) throw new BadRequestException('申请不存在');
-    // 条件更新+同事务退款，防并发重复退款
+    const remark = body.remark?.trim().slice(0, 80) || undefined;
+    // 条件更新+同事务退款，防并发重复退款；通知在提交后发送
+    let notifyUserId: string | undefined;
     await this.prisma.$transaction(async (tx) => {
       const res = await tx.withdrawal.updateMany({
         where: { id, status: 'pending' },
-        data: { status: 'rejected', remark: body.remark, handledAt: new Date() },
+        data: { status: 'rejected', remark, handledAt: new Date() },
       });
       if (!res.count) throw new BadRequestException('该申请已处理');
       await tx.partner.update({
@@ -369,16 +490,17 @@ export class AdminController {
       });
       await logBalance(tx, { partnerId: w.partnerId, type: 'withdraw_refund', amount: Number(w.amount), refId: w.id, remark: '提现驳回返还' });
       const p = await tx.partner.findUnique({ where: { id: w.partnerId }, select: { userId: true } });
-      if (p) {
-        await notify(tx, {
-          userId: p.userId,
-          type: 'wallet',
-          title: '提现已驳回',
-          content: `提现 ¥${Number(w.amount).toFixed(2)} 被驳回${body.remark ? `：${body.remark.slice(0, 80)}` : ''}，金额已退回余额`,
-          refId: w.id,
-        });
-      }
+      notifyUserId = p?.userId;
     });
+    if (notifyUserId) {
+      await notify(this.prisma, {
+        userId: notifyUserId,
+        type: 'wallet',
+        title: '提现已驳回',
+        content: `提现 ¥${Number(w.amount).toFixed(2)} 被驳回${remark ? `：${remark}` : ''}，金额已退回余额`,
+        refId: w.id,
+      });
+    }
     return { ok: true };
   }
 
@@ -525,19 +647,18 @@ export class AdminController {
 
   /** ---------- 用户禁用/启用 ---------- */
   @Put('users/:id/disabled')
-  async toggleUserDisabled(@Param('id') id: string, @Body() body: { disabled: boolean }) {
+  async toggleUserDisabled(@Param('id') id: string, @Body() body: DisabledDto) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
     if (user.role === 'admin') throw new BadRequestException('不能禁用管理员');
-    await this.prisma.user.update({ where: { id }, data: { disabled: !!body.disabled } });
+    await this.prisma.user.update({ where: { id }, data: { disabled: body.disabled } });
     return { ok: true };
   }
 
   /** 用户角色变更（不能改自己） */
   @Put('users/:id/role')
-  async setUserRole(@CurrentUser() adminId: string, @Param('id') id: string, @Body() body: { role: string }) {
+  async setUserRole(@CurrentUser() adminId: string, @Param('id') id: string, @Body() body: RoleDto) {
     if (id === adminId) throw new BadRequestException('不能修改自己的角色');
-    if (!['user', 'admin'].includes(body.role)) throw new BadRequestException('非法角色');
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
     if (user.role === 'admin') throw new BadRequestException('不能修改其他管理员的角色');
@@ -547,8 +668,8 @@ export class AdminController {
 
   /** 余额调整（正负均可，调整后不得低于 0） */
   @Post('users/:id/balance')
-  async adjustBalance(@Param('id') id: string, @Body() body: { amount: number; remark?: string }) {
-    const amount = Math.round(Number(body.amount) * 100) / 100;
+  async adjustBalance(@Param('id') id: string, @Body() body: AdjustBalanceDto) {
+    const amount = Math.round(body.amount * 100) / 100;
     if (!amount || Math.abs(amount) > 100000) throw new BadRequestException('金额无效');
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new BadRequestException('用户不存在');
@@ -621,7 +742,7 @@ export class AdminController {
 
   /** 管理员强制取消/仲裁退款：未支付→取消，已支付(含服务中)→全额退款；级联处理加钟子订单 */
   @Post('orders/:id/cancel')
-  async forceCancelOrder(@Param('id') id: string, @Body() body: { reason?: string }) {
+  async forceCancelOrder(@Param('id') id: string, @Body() body: ReasonDto) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new BadRequestException('订单不存在');
     const reason = body.reason?.trim() || '管理员取消';
@@ -630,6 +751,7 @@ export class AdminController {
       throw new BadRequestException('该状态不可取消（已完成订单请线下处理）');
     }
     const target = order.status === 'pending_payment' ? 'cancelled' : 'refunded';
+    const pendingNotices: PendingNotice[] = [];
     await this.prisma.$transaction(async (tx) => {
       const res = await tx.order.updateMany({
         where: { id, status: order.status },
@@ -671,7 +793,7 @@ export class AdminController {
           }
         }
       }
-      await notify(tx, {
+      pendingNotices.push({
         userId: order.userId,
         type: 'order',
         title: '订单已被平台处理',
@@ -680,7 +802,7 @@ export class AdminController {
       });
       const p = await tx.partner.findUnique({ where: { id: order.partnerId }, select: { userId: true } });
       if (p) {
-        await notify(tx, {
+        pendingNotices.push({
           userId: p.userId,
           type: 'order',
           title: '订单已被平台处理',
@@ -689,6 +811,7 @@ export class AdminController {
         });
       }
     });
+    for (const n of pendingNotices) await notify(this.prisma, n);
     return { ok: true, status: target };
   }
 
@@ -746,10 +869,9 @@ export class AdminController {
 
   /** ---------- 充值卡 ---------- */
   @Post('recharge-cards')
-  async createRechargeCards(@Body() body: { amount: number; count: number }) {
-    const amount = Math.round(Number(body.amount) * 100) / 100;
-    const count = Math.min(Math.max(Math.floor(Number(body.count) || 1), 1), 500);
-    if (!amount || amount <= 0 || amount > 100000) throw new BadRequestException('面额无效');
+  async createRechargeCards(@Body() body: RechargeCardDto) {
+    const amount = Math.round(body.amount * 100) / 100;
+    const count = Math.min(Math.max(Math.floor(body.count), 1), 500);
     const batch = `B${Date.now().toString(36).toUpperCase()}`;
     // 64bit 随机卡密；整批唯一约束碰撞时重新生成（最多 3 次）
     let cards: { code: string }[] = [];
@@ -810,15 +932,14 @@ export class AdminController {
 
   /** ---------- 玩伴推荐位/强制下线 ---------- */
   @Put('partners/:id/recommend')
-  async recommendPartner(@Param('id') id: string, @Body() body: { recommended: boolean }) {
-    const res = await this.prisma.partner.updateMany({ where: { id }, data: { recommended: !!body.recommended } });
+  async recommendPartner(@Param('id') id: string, @Body() body: RecommendDto) {
+    const res = await this.prisma.partner.updateMany({ where: { id }, data: { recommended: body.recommended } });
     if (!res.count) throw new BadRequestException('玩伴不存在');
     return { ok: true };
   }
 
   @Put('partners/:id/status')
-  async setPartnerStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    if (!['available', 'rest'].includes(body.status)) throw new BadRequestException('非法状态');
+  async setPartnerStatus(@Param('id') id: string, @Body() body: PartnerStatusDto) {
     const partner = await this.prisma.partner.findUnique({ where: { id }, select: { auditStatus: true } });
     if (!partner) throw new BadRequestException('玩伴不存在');
     if (body.status === 'available' && partner.auditStatus !== 'approved') {
@@ -866,11 +987,11 @@ export class AdminController {
   }
 
   @Post('reports/:id/handle')
-  async handleReport(@Param('id') id: string, @Body() body: { action: string; remark?: string }) {
-    if (!['processed', 'rejected'].includes(body.action)) throw new BadRequestException('处理动作无效');
+  async handleReport(@Param('id') id: string, @Body() body: ReportHandleDto) {
+    const remark = body.remark?.trim().slice(0, 200);
     const res = await this.prisma.report.updateMany({
       where: { id, status: 'pending' },
-      data: { status: body.action, remark: body.remark?.trim()?.slice(0, 200), handledAt: new Date() },
+      data: { status: body.action, remark, handledAt: new Date() },
     });
     if (!res.count) throw new BadRequestException('举报不存在或已处理');
     const r = await this.prisma.report.findUniqueOrThrow({ where: { id } });
@@ -878,7 +999,7 @@ export class AdminController {
       userId: r.userId,
       type: 'system',
       title: '举报处理结果',
-      content: `你的举报（${r.reason}）已${body.action === 'processed' ? '核实处理' : '驳回'}${body.remark ? `：${body.remark.slice(0, 60)}` : ''}`,
+      content: `你的举报（${r.reason}）已${body.action === 'processed' ? '核实处理' : '驳回'}${remark ? `：${remark.slice(0, 60)}` : ''}`,
       refId: r.id,
     });
     return { ok: true };
@@ -891,22 +1012,26 @@ export class AdminController {
   }
 
   @Post('announcements')
-  async createAnnouncement(@Body() body: { title?: string; content?: string }) {
-    const title = body.title?.trim();
-    const content = body.content?.trim();
-    if (!title || title.length > 50) throw new BadRequestException('标题必填且不超过50字');
-    if (!content || content.length > 500) throw new BadRequestException('内容必填且不超过500字');
+  async createAnnouncement(@Body() body: AnnouncementDto) {
+    const title = body.title.trim();
+    const content = body.content.trim();
+    if (!title || !content) throw new BadRequestException('标题与内容必填');
     return this.prisma.announcement.create({ data: { title, content } });
   }
 
   @Put('announcements/:id')
-  async toggleAnnouncement(@Param('id') id: string, @Body() body: { enabled?: boolean; title?: string; content?: string }) {
+  async toggleAnnouncement(@Param('id') id: string, @Body() body: AnnouncementUpdateDto) {
+    const title = body.title?.trim();
+    const content = body.content?.trim();
+    if ((body.title !== undefined && !title) || (body.content !== undefined && !content)) {
+      throw new BadRequestException('标题与内容不能为空');
+    }
     const res = await this.prisma.announcement.updateMany({
       where: { id },
       data: {
-        ...(body.enabled !== undefined ? { enabled: !!body.enabled } : {}),
-        ...(body.title ? { title: body.title.trim().slice(0, 50) } : {}),
-        ...(body.content ? { content: body.content.trim().slice(0, 500) } : {}),
+        ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
+        ...(title ? { title } : {}),
+        ...(content ? { content } : {}),
       },
     });
     if (!res.count) throw new BadRequestException('公告不存在');

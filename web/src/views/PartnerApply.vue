@@ -75,7 +75,8 @@ async function submit() {
     };
     if (editMode.value) {
       await api.updatePartnerProfile(payload);
-      showToast('资料已更新');
+      // 服务端会把审核状态打回 pending——必须明确告知，否则用户以为资料立即生效
+      showToast('资料已更新，需重新审核后生效');
       router.back();
     } else {
       await api.partnerApply(payload);

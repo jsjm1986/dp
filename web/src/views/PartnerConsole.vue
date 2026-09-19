@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { api, type Order, type PartnerStats } from '../api';
+import { bjDateKey, bjTodayStart } from '../utils/bjtime';
 import { ORDER_STATUS_TEXT } from '../utils/order';
 
 type PartnerOrder = Order & { customer: { id: string; nickname: string; avatar: string | null; mobile: string } };
@@ -25,6 +26,7 @@ async function loadWallet() {
 }
 
 async function withdraw() {
+  if (withdrawing.value) return;
   const amount = Number(withdrawAmount.value);
   if (!amount || amount <= 0) return showToast('请输入提现金额');
   if (!withdrawAccount.value.trim()) return showToast('请填写收款账号');
@@ -52,20 +54,17 @@ const logsOpen = ref<string[]>([]);
 const offOpen = ref<string[]>([]);
 const offDates = ref<string[]>([]);
 const calendarOpen = ref(false);
-const minDate = new Date();
-const maxDate = new Date(Date.now() + 90 * 86400_000);
+// 休息日按北京时间口径（与后端 PartnerOffDate.date 一致）
+const minDate = bjTodayStart();
+const maxDate = new Date(minDate.getTime() + 90 * 86400_000);
 
 async function loadOffDates() {
   offDates.value = (await api.partnerOffDates()).dates;
 }
 
-function toDateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
 async function addOff(d: Date) {
   calendarOpen.value = false;
-  const key = toDateKey(d);
+  const key = bjDateKey(d);
   await api.addOffDate(key);
   if (!offDates.value.includes(key)) offDates.value.push(key);
   offDates.value.sort();
@@ -91,6 +90,7 @@ function openReply(id: string) {
 }
 
 async function submitReply() {
+  if (replying.value) return;
   if (!replyFor.value.text.trim()) return showToast('请输入回复内容');
   replying.value = true;
   try {
@@ -365,11 +365,11 @@ onUnmounted(() => poller && clearInterval(poller));
       </template>
     </div>
 
-    <van-dialog v-model:show="replyFor.show" title="回复评价" show-cancel-button :confirm-button-loading="replying" @confirm="submitReply">
+    <van-dialog v-model:show="replyFor.show" title="回复评价" show-cancel-button @confirm="submitReply">
       <van-field v-model="replyFor.text" type="textarea" rows="3" maxlength="300" placeholder="回复用户这条评价" />
     </van-dialog>
 
-    <van-dialog v-model:show="showWithdraw" title="申请提现" show-cancel-button :confirm-button-loading="withdrawing" @confirm="withdraw">
+    <van-dialog v-model:show="showWithdraw" title="申请提现" show-cancel-button @confirm="withdraw">
       <div class="pc__withdraw-form">
         <van-field
           v-model.number="withdrawAmount"

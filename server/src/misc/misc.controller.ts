@@ -10,19 +10,24 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { randomUUID } from 'crypto';
 import { mkdirSync, writeFileSync } from 'fs';
-import { extname, join } from 'path';
+import { dirname, extname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.guard.js';
+import { checkRate } from '../common/rate.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-const UPLOAD_DIR = join(process.cwd(), 'uploads');
+// 以模块位置定位上传目录，不依赖启动 cwd（与 main.ts 静态目录保持一致）
+const UPLOAD_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../uploads');
 // SVG 可携带脚本造成存储型 XSS（同源 /uploads 静态服务），只允许位图
 const ALLOWED = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-const MAGIC: Array<{ ext: string[]; bytes: number[] }> = [
+const MAGIC: Array<{ ext: string[]; bytes: number[]; offset?: number }> = [
   { ext: ['.jpg', '.jpeg'], bytes: [0xff, 0xd8, 0xff] },
   { ext: ['.png'], bytes: [0x89, 0x50, 0x4e, 0x47] },
-  { ext: ['.webp'], bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF....WEBP
+  { ext: ['.webp'], bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF
   { ext: ['.gif'], bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF8
 ];
+// WEBP 还需偏移 8 处的 fourcc，否则任意 RIFF 容器（WAV/polyglot）可通过
+const WEBP_FOURCC = [0x57, 0x45, 0x42, 0x50];
 
 @Controller()
 export class MiscController {
@@ -92,13 +97,20 @@ export class MiscController {
   @Post('uploads')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024 } }))
-  upload(@UploadedFile() file?: { originalname: string; buffer: Buffer }) {
+  upload(@CurrentUser() userId: string, @UploadedFile() file?: { originalname: string; buffer: Buffer }) {
     if (!file) throw new BadRequestException('缺少文件');
+    // 每用户上传频限，防磁盘灌满
+    if (!checkRate(`upload:${userId}`, 30, 3600_000)) {
+      throw new BadRequestException('上传过于频繁，请稍后再试');
+    }
     const ext = extname(file.originalname).toLowerCase();
     if (!ALLOWED.includes(ext)) throw new BadRequestException('不支持的文件类型');
     // 魔数校验：防止改扩展名上传伪装文件
     const sig = MAGIC.find((m) => m.ext.includes(ext));
     if (sig && !sig.bytes.every((b, i) => file.buffer[i] === b)) {
+      throw new BadRequestException('文件内容与类型不符');
+    }
+    if (ext === '.webp' && !WEBP_FOURCC.every((b, i) => file.buffer[8 + i] === b)) {
       throw new BadRequestException('文件内容与类型不符');
     }
     mkdirSync(UPLOAD_DIR, { recursive: true });

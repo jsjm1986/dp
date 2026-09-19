@@ -1,9 +1,10 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { IsIn, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { AuthService } from '../auth/auth.service.js';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { logBalance } from '../common/ledger.js';
 import { toInt } from '../common/params.js';
+import { checkRate } from '../common/rate.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -39,7 +40,7 @@ class BindInviterDto {
 }
 
 class RechargeDto {
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(1)
   @Max(10000)
   amount: number;
@@ -61,6 +62,7 @@ class ReportDto {
   targetId: string;
 
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
   reason: string;
 
@@ -247,10 +249,13 @@ export class UsersController {
     }
     const code = dto.code.trim().toUpperCase();
     if (!code) throw new BadRequestException('请输入卡密');
-    const card = await this.prisma.rechargeCard.findUnique({ where: { code } });
-    if (!card) {
+    const countFail = () => {
       if (!rec || now >= rec.resetAt) redeemFails.set(userId, { count: 1, resetAt: now + 10 * 60 * 1000 });
       else rec.count += 1;
+    };
+    const card = await this.prisma.rechargeCard.findUnique({ where: { code } });
+    if (!card) {
+      countFail();
       throw new BadRequestException('卡密无效');
     }
     const user = await this.prisma.$transaction(async (tx) => {
@@ -258,7 +263,10 @@ export class UsersController {
         where: { code, usedById: null },
         data: { usedById: userId, usedAt: new Date() },
       });
-      if (claim.count === 0) throw new BadRequestException('该卡已被使用');
+      if (claim.count === 0) {
+        countFail(); // 已用卡码也计入频限，口径一致
+        throw new BadRequestException('该卡已被使用');
+      }
       const u = await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: card.amount } },
@@ -302,6 +310,10 @@ export class UsersController {
       assertClean(dto.nickname, '昵称');
     }
     if (dto.city) assertClean(dto.city, '城市');
+    // 头像仅允许本站上传路径，防外域资源注入
+    if (dto.avatar !== undefined && dto.avatar !== '' && !dto.avatar.startsWith('/uploads/')) {
+      throw new BadRequestException('头像请使用站内上传');
+    }
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: dto,
@@ -425,9 +437,16 @@ export class UsersController {
       if (!t) throw new BadRequestException('对象不存在');
       if (t.userId === userId) throw new BadRequestException('不能举报自己');
     } else {
-      const t = await this.prisma.order.findUnique({ where: { id: dto.targetId }, select: { userId: true } });
+      // order：仅订单买卖任一方可举报（买方本人 或 该订单的玩伴）
+      const t = await this.prisma.order.findUnique({ where: { id: dto.targetId }, select: { userId: true, partnerId: true } });
       if (!t) throw new BadRequestException('对象不存在');
+      const myPartner = await this.prisma.partner.findUnique({ where: { userId }, select: { id: true } });
+      if (t.userId !== userId && myPartner?.id !== t.partnerId) {
+        throw new BadRequestException('只能举报与自己相关的订单');
+      }
     }
+    // 频限：防举报刷库
+    if (!checkRate(`report:${userId}`, 20, 3600_000)) throw new BadRequestException('举报过于频繁，请稍后再试');
     // 同目标防重复举报（未处理时）
     const dup = await this.prisma.report.findFirst({
       where: { userId, targetType: dto.targetType, targetId: dto.targetId, status: 'pending' },

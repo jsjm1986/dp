@@ -301,8 +301,33 @@ def main():
     call("POST", f"/partner/orders/{o6['id']}/accept", pw_tok, expect=201)
     code, _ = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 1}]}, expect=400)
     check("order.extend-minNum 400", code == 400)
-    code, _ = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=201)
+    code, child0 = call("POST", f"/orders/{o6['id']}/extend", ub_tok, {"items": [{"serviceId": svc3["id"], "num": 2}]}, expect=201)
     check("order.extend-ok", code == 201)
+    # 加钟子单可支付（regression：子单继承父单 appointAt，曾因此永远无法支付）
+    if code == 201:
+        code, _ = call("POST", f"/orders/{child0['id']}/pay", ub_tok, {"method": "balance"}, expect=201)
+        check("order.extend-child-pay", code == 201)
+        if code == 201:
+            call("POST", f"/orders/{child0['id']}/cancel", ub_tok, {"reason": "回归清理"}, expect=201)
+
+    # 跨零点时段冲突：23:00 起 3 小时的单占用次日 0-2 点，次日凌晨下单应 400
+    code, omid = call("POST", "/orders", ub_tok, {
+        "partnerId": pid2,
+        "items": [{"serviceId": svc3["id"], "num": 3}],
+        "appointAt": "2030-01-07T23:00:00.000+08:00",
+    }, expect=201)
+    if code == 201:
+        call("POST", f"/orders/{omid['id']}/pay", ub_tok, {"method": "balance"}, expect=201)
+        call("POST", f"/partner/orders/{omid['id']}/accept", pw_tok, expect=201)
+        code, _ = call("POST", "/orders", ub_tok, {
+            "partnerId": pid2,
+            "items": [{"serviceId": svc3["id"], "num": 1}],
+            "appointAt": "2030-01-08T01:00:00.000+08:00",
+        }, expect=400)
+        check("order.cross-midnight-clash 400", code == 400)
+        code, busy3 = call("GET", f"/partners/{pid2}/busy?date=2030-01-08", ua_tok, expect=200)
+        check("busy.cross-midnight", 0 in busy3["hours"] and 1 in busy3["hours"], busy3["hours"][:6])
+        call("POST", f"/orders/{omid['id']}/cancel", ub_tok, {"reason": "回归清理"}, expect=201)
 
     # 时段冲突：o6 占用 2030-01-06 10-11 点，重叠下单应 400；空闲时段可下单
     code, busy = call("GET", f"/partners/{pid2}/busy?date=2030-01-06", ua_tok, expect=200)
@@ -460,7 +485,10 @@ def main():
     _, ann = call("POST", "/admin/announcements", admin_tok, {"title": "冒烟公告", "content": "测试公告内容"}, expect=201)
     check("announcement.create", "id" in ann)
     _, home2 = call("GET", "/home", expect=200)
-    check("announcement.home", home2.get("announcement", {}).get("title") == "冒烟公告")
+    check("announcement.home", (home2.get("announcement") or {}).get("title") == "冒烟公告")
+    # 公告空标题校验（update 路径曾可写入空白标题）
+    code, _ = call("PUT", f"/admin/announcements/{ann['id']}", admin_tok, {"title": "   "}, expect=400)
+    check("announcement.empty-title 400", code == 400)
     call("PUT", f"/admin/announcements/{ann['id']}", admin_tok, {"enabled": False}, expect=200)
     _, home3 = call("GET", "/home", expect=200)
     check("announcement.off", (home3.get("announcement") or {}).get("id") != ann["id"])
@@ -469,7 +497,7 @@ def main():
     # 休息日：玩伴设 2030-01-08 休息 → busy 全天占用 → 当天下单 400
     OFFD, OFF_APPOINT = "2030-01-08", "2030-01-08T02:00:00.000Z"  # 北京10点
     call("POST", "/partner/off-dates", pw_tok, {"date": OFFD}, expect=201)
-    _, busy2 = call("GET", f"/partners/{pid2}/busy?date={OFFD}", expect=200)
+    _, busy2 = call("GET", f"/partners/{pid2}/busy?date={OFFD}", ua_tok, expect=200)
     check("offdate.busy-allday", busy2["allDay"] is True, busy2)
     _, psvc = call("GET", "/partner/profile", pw_tok, expect=200)
     off_items = [{"serviceId": psvc["services"][0]["id"], "num": psvc["services"][0]["miniNum"]}]
@@ -485,6 +513,37 @@ def main():
     call("POST", f"/admin/partners/{pid2}/approve", admin_tok, expect=201)
     _, pn = call("GET", "/user/notices", pw_tok, expect=200)
     check("notice.audit-approved", any("审核通过" in n["title"] for n in pn["items"]))
+    # 重复审核幂等：再次通过应 400（曾会重复发通知）
+    code, _ = call("POST", f"/admin/partners/{pid2}/approve", admin_tok, expect=400)
+    check("admin.approve-dup 400", code == 400)
+
+    # ---------- 安全回归 ----------
+    # busy 接口需登录（曾完全匿名，可枚举玩伴档期/休息日）
+    code, _ = call("GET", f"/partners/{pid2}/busy?date=2030-01-09", expect=401)
+    check("busy.auth-required 401", code == 401)
+    # busy dateKey 归一：畸形日期串被拒（带空格曾可绕过休息日比对）
+    call("POST", "/partner/off-dates", pw_tok, {"date": "2030-01-09"}, expect=201)
+    code, _ = call("GET", f"/partners/{pid2}/busy?date=2030-01-09%20", ua_tok, expect=400)
+    check("busy.malformed-date 400", code == 400)
+    _, busy4 = call("GET", f"/partners/{pid2}/busy?date=2030-01-09", ua_tok, expect=200)
+    check("busy.offdate-allday", busy4["allDay"] is True, busy4)
+    call("DELETE", "/partner/off-dates/2030-01-09", pw_tok, expect=200)
+    # 休息日非法/过去日期校验
+    code, _ = call("POST", "/partner/off-dates", pw_tok, {"date": "2030-02-30"}, expect=400)
+    check("offdate.invalid-date 400", code == 400)
+    code, _ = call("POST", "/partner/off-dates", pw_tok, {"date": "2020-01-01"}, expect=400)
+    check("offdate.past-date 400", code == 400)
+    # 举报订单仅限当事方（uc 与 o6 订单无关应被拒）
+    code, r = call("POST", "/user/reports", uc_tok, {"targetType": "order", "targetId": o6["id"], "reason": "测试"}, expect=400)
+    check("report.order-foreign 400", code == 400)
+    # 拉黑下单阻断：ua 拉黑玩伴账号后不能再下单
+    _, pd2 = call("GET", f"/partners/{pid2}", ua_tok, expect=200)
+    call("POST", f"/user/block/{pd2['userId']}", ua_tok, expect=201)
+    code, r = call("POST", "/orders", ua_tok, {"partnerId": pid2, "items": off_items, "appointAt": "2030-01-10T10:00:00.000Z"}, expect=400)
+    check("order.blocked 400", code == 400, r.get("message", ""))
+    call("DELETE", f"/user/block/{pd2['userId']}", ua_tok, expect=200)
+    # 玩伴详情不再泄漏经纬度
+    check("partner.no-coords", "latitude" not in pd2 and "longitude" not in pd2)
 
     print(f"\n=== {len(PASS)} passed, {len(FAIL)} failed ===")
     for f in FAIL:

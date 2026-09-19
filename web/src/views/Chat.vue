@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { showConfirmDialog, showToast } from 'vant';
 import { api } from '../api';
@@ -80,6 +80,18 @@ async function toggleBlock() {
   blocked.value = res.blocked;
   showToast(res.blocked ? '已拉黑' : '已解除');
 }
+
+// 会话切换（/chat/A → /chat/B 组件复用）：清空旧会话数据并重载，防串号
+watch(peerId, async () => {
+  items.value = [];
+  peer.value = null;
+  blocked.value = false;
+  try {
+    const blocks = await api.myBlocks();
+    blocked.value = blocks.some((b) => b.id === peerId.value);
+  } catch { /* ignore */ }
+  await load(true);
+});
 
 onMounted(async () => {
   load(true);

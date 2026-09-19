@@ -6,8 +6,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
-import { bjDateKey, bjDayStart, logBalance, orderHours } from '../common/ledger.js';
-import { notify } from '../common/notify.js';
+import { bjDateKey, bjDayStart, logBalance, orderRange } from '../common/ledger.js';
+import { notify, type PendingNotice } from '../common/notify.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CancelOrderDto, CreateOrderDto, ExtendOrderDto, PayOrderDto, ReviewDto } from './dto.js';
@@ -68,6 +68,16 @@ export class OrdersService implements OnModuleInit {
     }
     if (partner.status === 'rest') throw new BadRequestException('对方休息中，暂不可预约');
     if (partner.userId === userId) throw new BadRequestException('不能预约自己');
+    // 任一方向拉黑即不可下单（与私信/详情可见性口径一致）
+    const blocked = await this.prisma.block.findFirst({
+      where: {
+        OR: [
+          { userId, blockedId: partner.userId },
+          { userId: partner.userId, blockedId: userId },
+        ],
+      },
+    });
+    if (blocked) throw new BadRequestException('无法预约该玩伴');
     const appointAt = new Date(dto.appointAt);
     if (appointAt.getTime() <= Date.now()) {
       throw new BadRequestException('预约时间必须晚于当前时间');
@@ -91,6 +101,7 @@ export class OrdersService implements OnModuleInit {
     });
     const goodsAmount = round2(items.reduce((sum, i) => sum + i.subtotal, 0));
     if (dto.remark) assertClean(dto.remark, '备注');
+    if (dto.address) assertClean(dto.address, '地址');
 
     // 优惠券抵扣
     let discount = 0;
@@ -119,8 +130,8 @@ export class OrdersService implements OnModuleInit {
     let commissionRate: number | undefined;
     if (buyer?.inviterId) {
       const rateRow = await this.prisma.setting.findUnique({ where: { key: 'commissionRate' } });
-      const r = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
-      if (r > 0) commissionRate = r;
+      // 0 也要快照：避免结算时回退到「当前费率」支付下单时未约定的佣金
+      commissionRate = Math.min(Math.max(Number(rateRow?.value ?? 5), 0), 50) / 100;
     }
 
     // 下单与占券同一事务，条件更新防止并发重复用券；时段冲突在事务内复查（单连接串行写，天然防并发双订）
@@ -131,18 +142,23 @@ export class OrdersService implements OnModuleInit {
         where: { partnerId_date: { partnerId: partner.id, date: bjDateKey(appointAt) } },
       });
       if (off) throw new BadRequestException('对方当天休息，请更换日期');
+      // 查询窗口向前扩一天：前一晚跨零点的订单也占用今日时段；
+      // 待支付单只在支付有效期内占位——已超时但未清扫的单不封锁档期
       const taken = await tx.order.findMany({
         where: {
           partnerId: partner.id,
-          appointAt: { gte: dayStart, lt: new Date(dayStart.getTime() + 86400_000) },
-          status: { in: [ORDER_STATUS.PENDING_PAYMENT, ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING] },
+          appointAt: { gte: new Date(dayStart.getTime() - 86400_000), lt: new Date(dayStart.getTime() + 2 * 86400_000) },
+          OR: [
+            { status: { in: [ORDER_STATUS.PENDING_ACCEPT, ORDER_STATUS.PENDING_SERVICE, ORDER_STATUS.SERVING] } },
+            { status: ORDER_STATUS.PENDING_PAYMENT, createdAt: { gte: new Date(Date.now() - PAY_TIMEOUT_MS) } },
+          ],
         },
         select: { appointAt: true, items: { select: { unit: true, num: true } } },
       });
-      const wanted = orderHours(appointAt, items);
+      const wanted = orderRange(appointAt, items);
       const clash = taken.some((o) => {
-        const h = orderHours(o.appointAt, o.items);
-        return h === null || wanted === null || h.some((hr) => wanted.includes(hr));
+        const r = orderRange(o.appointAt, o.items);
+        return r.start < wanted.end && wanted.start < r.end;
       });
       if (clash) throw new BadRequestException('该时段已被预约，请更换时间');
       if (userCouponId) {
@@ -195,13 +211,18 @@ export class OrdersService implements OnModuleInit {
   }
 
   async detail(userId: string, id: string) {
-    await this.expireStalePayments({ id });
-    const order = await this.prisma.order.findUnique({ where: { id }, include: ORDER_INCLUDE });
-    if (!order) throw new NotFoundException('订单不存在');
-    if (order.userId !== userId) {
+    // 先鉴权再做懒过期副作用：避免任意登录用户触发他人订单的过期取消
+    const pre = await this.prisma.order.findUnique({
+      where: { id },
+      select: { userId: true, partnerId: true },
+    });
+    if (!pre) throw new NotFoundException('订单不存在');
+    if (pre.userId !== userId) {
       const partner = await this.prisma.partner.findUnique({ where: { userId } });
-      if (partner?.id !== order.partnerId) throw new ForbiddenException('无权查看');
+      if (partner?.id !== pre.partnerId) throw new ForbiddenException('无权查看');
     }
+    await this.expireStalePayments({ id });
+    const order = await this.prisma.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     const children = await this.prisma.order.findMany({
       where: { parentId: id },
       orderBy: { createdAt: 'asc' },
@@ -231,7 +252,8 @@ export class OrdersService implements OnModuleInit {
         await this.expireStalePayments({ id });
         throw new BadRequestException('订单已超时取消，请重新下单');
       }
-      if (order.appointAt.getTime() <= Date.now()) {
+      // 加钟子单继承父单 appointAt（通常已在过去），豁免该校验
+      if (!order.parentId && order.appointAt.getTime() <= Date.now()) {
         throw new BadRequestException('预约时间已过，无法支付');
       }
     }
@@ -330,8 +352,12 @@ export class OrdersService implements OnModuleInit {
     }
     const partner = await this.prisma.partner.findUniqueOrThrow({
       where: { id: order.partnerId },
-      include: { services: true },
+      include: { services: true, user: { select: { disabled: true } } },
     });
+    // 复查玩伴状态：下单后玩伴可能已被禁用/打回审核
+    if (partner.auditStatus !== 'approved' || partner.user.disabled) {
+      throw new BadRequestException('玩伴暂不可服务');
+    }
     const svcMap = new Map(partner.services.map((s) => [s.id, s]));
     const items = dto.items.map((it) => {
       const svc = svcMap.get(it.serviceId);
@@ -364,6 +390,7 @@ export class OrdersService implements OnModuleInit {
         remark: `加钟（关联订单 ${order.orderNo}）`,
         totalAmount,
         parentId: order.id,
+        commissionRate: order.commissionRate ? Number(order.commissionRate) : undefined,
         items: { create: items },
       });
       return tx.order.findUniqueOrThrow({ where: { id: created.id }, include: ORDER_INCLUDE });
@@ -461,6 +488,7 @@ export class OrdersService implements OnModuleInit {
       throw new BadRequestException('当前状态不允许该操作');
     }
     // 状态变更与副作用（退款/退券/完单结算）同一事务；条件更新防并发重复操作
+    const pendingNotices: PendingNotice[] = [];
     const updated = await this.prisma.$transaction(async (tx) => {
       const transitioned = await tx.order.updateMany({
         where: { id, status: { in: t.from } },
@@ -490,10 +518,12 @@ export class OrdersService implements OnModuleInit {
         await this.cascadeChildren(tx, id, '主订单被拒单');
       }
       if (action === 'finish') {
-        await this.settleFinish(tx, order);
+        await this.settleFinish(tx, order, pendingNotices);
       }
       return tx.order.findUniqueOrThrow({ where: { id }, include: ORDER_INCLUDE });
     });
+    // 事务提交后再发通知：通知失败不拖垮已完成的业务事务
+    for (const n of pendingNotices) await notify(this.prisma, n);
     const userNotice: Record<typeof action, string | null> = {
       accept: `玩伴已接单，订单 ${order.orderNo} 待服务`,
       reject: `玩伴已拒单，订单 ${order.orderNo} 款项已原路退回`,
@@ -518,10 +548,11 @@ export class OrdersService implements OnModuleInit {
 
   /* ---------------- internals ---------------- */
 
-  /** 完单结算（在调用方事务内执行）：玩伴入账 + 服务数 + 分销佣金 */
+  /** 完单结算（在调用方事务内执行）：玩伴入账 + 服务数 + 分销佣金；佣金通知收集到 notices 由调用方在提交后发送 */
   private async settleFinish(
     tx: Prisma.TransactionClient,
     order: { id: string; orderNo: string; userId: string; partnerId: string; totalAmount: unknown; commissionRate: number | null },
+    notices: PendingNotice[],
   ) {
     await tx.partner.update({
       where: { id: order.partnerId },
@@ -561,7 +592,7 @@ export class OrdersService implements OnModuleInit {
       data: { balance: { increment: amount } },
     });
     await logBalance(tx, { userId: inviter.id, type: 'commission', amount, refId: order.id, remark: `邀请佣金 ${(rate * 100).toFixed(0)}%` });
-    await notify(tx, {
+    notices.push({
       userId: inviter.id,
       type: 'commission',
       title: '佣金到账',
@@ -590,6 +621,7 @@ export class OrdersService implements OnModuleInit {
             finish: ORDER_STATUS.DONE,
           }[step.action];
           // 条件更新保证手动操作优先；自动流转与完单结算同一事务
+          const pendingNotices: PendingNotice[] = [];
           await this.prisma.$transaction(async (tx) => {
             const order = await tx.order.findUnique({ where: { id: orderId } });
             if (!order || order.status !== expected) return;
@@ -602,9 +634,10 @@ export class OrdersService implements OnModuleInit {
               },
             });
             if (step.action === 'finish') {
-              await this.settleFinish(tx, order);
+              await this.settleFinish(tx, order, pendingNotices);
             }
           });
+          for (const n of pendingNotices) await notify(this.prisma, n);
         } catch {
           /* demo flow best-effort */
         }
@@ -638,6 +671,7 @@ export class OrdersService implements OnModuleInit {
       select: { id: true, orderNo: true, userId: true, userCouponId: true },
       take: 50,
     });
+    const pendingNotices: PendingNotice[] = [];
     for (const o of stale) {
       await this.prisma.$transaction(async (tx) => {
         const res = await tx.order.updateMany({
@@ -651,7 +685,7 @@ export class OrdersService implements OnModuleInit {
           });
         }
         if (res.count) {
-          await notify(tx, {
+          pendingNotices.push({
             userId: o.userId,
             type: 'order',
             title: '订单超时取消',
@@ -660,6 +694,7 @@ export class OrdersService implements OnModuleInit {
           });
         }
       });
+      for (const n of pendingNotices) await notify(this.prisma, n);
     }
   }
 
@@ -769,9 +804,7 @@ export class OrdersService implements OnModuleInit {
 }
 
 function genOrderNo() {
-  const t = new Date();
-  const ymd = [t.getFullYear(), t.getMonth() + 1, t.getDate()]
-    .map((n) => String(n).padStart(2, '0'))
-    .join('');
+  // 订单号日期前缀按北京时间，与业务口径一致
+  const ymd = bjDateKey(new Date()).replace(/-/g, '');
   return `DP${ymd}${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`;
 }

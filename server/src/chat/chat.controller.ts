@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { checkRate } from '../common/rate.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -109,6 +110,7 @@ export class ChatController {
   /** 发消息 */
   @Post('send')
   async send(@CurrentUser('id') uid: string, @Body() dto: SendMessageDto) {
+    if (!checkRate(`msg:${uid}`, 60, 600_000)) throw new BadRequestException('发送过于频繁，请稍后再试');
     if (dto.peerId === uid) throw new BadRequestException('不能和自己聊天');
     const content = dto.content.trim();
     if (!content) throw new BadRequestException('消息内容不能为空');

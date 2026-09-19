@@ -47,8 +47,9 @@ export class PartnersController {
     return this.partners.detail(id, userId);
   }
 
-  /** 某日期已被占用的预约时段（前端置灰用） */
+  /** 某日期已被占用的预约时段（前端置灰用，需登录防匿名枚举档期） */
   @Get(':id/busy')
+  @UseGuards(JwtAuthGuard)
   busy(@Param('id') id: string, @Query('date') date?: string) {
     return this.partners.busySlots(id, date);
   }

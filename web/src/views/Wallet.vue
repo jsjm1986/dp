@@ -44,6 +44,7 @@ async function load(p = 1) {
 }
 
 async function recharge() {
+  if (recharging.value) return;
   recharging.value = true;
   try {
     const r = await api.recharge(rechargeAmount.value);
@@ -120,7 +121,7 @@ onMounted(() => load(1));
       </div>
     </div>
 
-    <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button :confirm-button-loading="recharging" @confirm="recharge">
+    <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button @confirm="recharge">
       <div class="wt__recharge">
         <div
           v-for="a in [50, 100, 200, 500]"

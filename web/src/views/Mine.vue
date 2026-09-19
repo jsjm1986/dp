@@ -20,6 +20,7 @@ const cardCode = ref('');
 const redeeming = ref(false);
 
 async function recharge() {
+  if (recharging.value) return;
   recharging.value = true;
   try {
     const res = await api.recharge(rechargeAmount.value);
@@ -175,7 +176,7 @@ async function logout() {
       </van-field>
     </van-dialog>
 
-    <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button :confirm-button-loading="recharging" @confirm="recharge">
+    <van-dialog v-model:show="showRecharge" title="余额充值（模拟）" show-cancel-button @confirm="recharge">
       <div class="mine__recharge">
         <div
           v-for="a in [50, 100, 200, 500]"

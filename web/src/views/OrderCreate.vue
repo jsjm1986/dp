@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { api, type PartnerDetail } from '../api';
+import { bjDateKey, bjHour, bjTodayStart } from '../utils/bjtime';
 
 const route = useRoute();
 const router = useRouter();
@@ -43,22 +44,21 @@ function pickCoupon(c: (typeof coupons.value)[number] | null) {
   pickedCoupon.value = c;
   showCoupons.value = false;
 }
-const minDate = new Date();
-const maxDate = new Date(Date.now() + 30 * 86400_000);
+const minDate = bjTodayStart();
+const maxDate = new Date(minDate.getTime() + 30 * 86400_000);
 
-function fmtDate(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// 日历选中值→北京时间日期串（与后端 bjDateKey 口径一致，不随设备时区漂移）
+const fmtDate = bjDateKey;
 
-// 可选时段：10:00-23:00 整点；选今天时过滤掉不足 1 小时提前量的时段
+// 可选时段：10:00-23:00 整点；选今天时过滤掉不足 1 小时提前量的时段（北京时间口径）
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 10);
-const isToday = computed(() => appointAt.value === fmtDate(new Date()));
+const isToday = computed(() => appointAt.value === bjDateKey(new Date()));
 // 玩伴当日已被预约的时段（含待支付占位，服务端为准）
 const busyHours = ref<number[]>([]);
 const busyAllDay = ref(false);
 const slots = computed(() => {
   if (!appointAt.value || busyAllDay.value) return [];
-  const minHour = new Date(Date.now() + 3600_000).getHours() + 1;
+  const minHour = bjHour(new Date(Date.now() + 3600_000)) + 1;
   const open = isToday.value ? HOURS.filter((h) => h >= minHour) : HOURS;
   return open.filter((h) => !busyHours.value.includes(h));
 });
@@ -72,8 +72,8 @@ async function loadBusy() {
   } catch { /* 查询失败不阻塞下单，由服务端兜底校验 */ }
 }
 
-function onCalendarConfirm(values: Date[]) {
-  appointAt.value = fmtDate(values[0]);
+function onCalendarConfirm(d: Date) {
+  appointAt.value = fmtDate(d);
   appointHour.value = null;
   showCalendar.value = false;
   loadBusy();
@@ -84,7 +84,8 @@ async function submit() {
   if (!appointAt.value) return showToast('请选择预约日期');
   if (appointHour.value == null) return showToast('请选择预约时段');
   if (!slots.value.length) return showToast('今天已无可约时段，请改约明天');
-  const appointDate = new Date(`${appointAt.value}T${String(appointHour.value).padStart(2, '0')}:00:00`);
+  // 显式 +08:00：预约时刻即北京时间整点，与设备时区无关
+  const appointDate = new Date(`${appointAt.value}T${String(appointHour.value).padStart(2, '0')}:00:00+08:00`);
   if (appointDate.getTime() <= Date.now()) return showToast('预约时间已过，请重新选择');
   if (!agreed.value) return showToast('请先阅读并同意《平台交易规则》');
   submitting.value = true;

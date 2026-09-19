@@ -20,14 +20,16 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { CurrentUser, JwtAuthGuard } from '../auth/jwt-auth.guard.js';
-import { logBalance } from '../common/ledger.js';
+import { bjDateKey, bjDayStart, logBalance } from '../common/ledger.js';
 import { assertClean } from '../common/sensitive.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 class ServiceItemDto {
@@ -40,7 +42,7 @@ class ServiceItemDto {
   @MaxLength(100)
   desc?: string;
 
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(99999)
   price: number;
@@ -125,6 +127,7 @@ class ApplyDto {
   @IsOptional()
   @IsString()
   @MaxLength(18)
+  @Matches(/^\d{17}[\dXx]$/, { message: '身份证号格式不正确' })
   idCard?: string;
 
   @IsArray()
@@ -194,10 +197,18 @@ export class PartnerSelfController {
       });
       return { id: partner.id };
     }
-    const partner = await this.prisma.partner.create({
-      data: { userId, ...data, services },
-    });
-    return { id: partner.id };
+    try {
+      const partner = await this.prisma.partner.create({
+        data: { userId, ...data, services },
+      });
+      return { id: partner.id };
+    } catch (e) {
+      // 并发双交撞 userId 唯一约束 → 友好提示而非 500
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new BadRequestException('你已是玩伴，请在资料页修改信息');
+      }
+      throw e;
+    }
   }
 
   @Get('profile')
@@ -279,8 +290,7 @@ export class PartnerSelfController {
   @Get('stats')
   async stats(@CurrentUser() userId: string) {
     const p = await this.mustBePartner(userId);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = bjDayStart(new Date());
     const [pending, todayOrders, doneAgg, followers] = await this.prisma.$transaction([
       this.prisma.order.count({ where: { partnerId: p.id, status: 'pending_accept' } }),
       this.prisma.order.count({ where: { partnerId: p.id, createdAt: { gte: today } } }),
@@ -400,13 +410,23 @@ export class PartnerSelfController {
     return { id: w.id, status: w.status };
   }
 
-  /** 构建持久化字段 + 文本内容敏感词校验（bio/标签/服务名/城市） */
+  /** 构建持久化字段 + 文本内容敏感词校验（所有对外展示文本均覆盖） */
   private buildPartnerData(dto: ApplyDto) {
+    assertClean(dto.city, '城市');
+    if (dto.district) assertClean(dto.district, '区域');
     if (dto.bio) assertClean(dto.bio, '个人简介');
+    if (dto.constellation) assertClean(dto.constellation, '星座');
+    if (dto.education) assertClean(dto.education, '学历');
+    if (dto.wechatId) assertClean(dto.wechatId, '微信号');
+    if (dto.realName) assertClean(dto.realName, '真实姓名');
     for (const t of dto.tags ?? []) assertClean(t, '标签');
     for (const s of dto.services) {
       assertClean(s.name, '服务名称');
       if (s.desc) assertClean(s.desc, '服务描述');
+    }
+    // 图片仅允许本站上传路径，防外域资源注入
+    for (const u of dto.photos ?? []) {
+      if (!u.startsWith('/uploads/')) throw new BadRequestException('相册图片请使用站内上传');
     }
     return {
       city: dto.city,
@@ -440,13 +460,22 @@ export class PartnerSelfController {
   @Post('off-dates')
   async addOffDate(@CurrentUser() userId: string, @Body() body: { date?: string }) {
     const p = await this.mustBePartner(userId);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date ?? '')) throw new BadRequestException('日期格式应为 YYYY-MM-DD');
-    const count = await this.prisma.partnerOffDate.count({ where: { partnerId: p.id } });
-    if (count >= 60) throw new BadRequestException('最多设置60个休息日');
-    await this.prisma.partnerOffDate.upsert({
-      where: { partnerId_date: { partnerId: p.id, date: body.date! } },
-      create: { partnerId: p.id, date: body.date! },
-      update: {},
+    const date = typeof body?.date === 'string' ? body.date : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new BadRequestException('日期格式应为 YYYY-MM-DD');
+    // 校验是真实存在的北京日期（挡 2030-02-30 这类）且不允许过去日期
+    const dayStart = bjDayStart(new Date(`${date}T00:00:00+08:00`));
+    if (bjDateKey(dayStart) !== date || date < bjDateKey(new Date())) {
+      throw new BadRequestException('日期无效或已过期');
+    }
+    // 计数与写入同一事务，防并发超限
+    await this.prisma.$transaction(async (tx) => {
+      const count = await tx.partnerOffDate.count({ where: { partnerId: p.id } });
+      if (count >= 60) throw new BadRequestException('最多设置60个休息日');
+      await tx.partnerOffDate.upsert({
+        where: { partnerId_date: { partnerId: p.id, date } },
+        create: { partnerId: p.id, date },
+        update: {},
+      });
     });
     return { ok: true };
   }

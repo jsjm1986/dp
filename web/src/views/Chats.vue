@@ -11,7 +11,7 @@ interface Conv {
 
 const router = useRouter();
 const list = ref<Conv[]>([]);
-const loading = ref(false);
+const loading = ref(true);
 let timer: ReturnType<typeof setInterval> | undefined;
 
 async function load() {

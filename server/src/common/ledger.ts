@@ -39,12 +39,17 @@ export function bjDateKey(d: Date) {
   return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
 }
 
-/** 订单占用的小时段集合（北京时间）：appointAt 起按 items 展开；含「天」返回 null 表示全天占用 */
-export function orderHours(appointAt: Date, items: Array<{ unit: string; num: number }>): number[] | null {
-  if (items.some((i) => i.unit === '天')) return null;
-  const start = bjHour(appointAt);
+/**
+ * 订单占用的绝对时间区间 [start, end)（ms）。
+ * 「天」类 → 该北京日全天；「小时」按 num 展开；其他单位默认占 1 小时。
+ * 用区间重叠做冲突判断可正确处理跨零点订单（23 点起 3 小时会占次日 0-2 点）。
+ */
+export function orderRange(appointAt: Date, items: Array<{ unit: string; num: number }>): { start: number; end: number } {
+  const t = appointAt.getTime();
+  if (items.some((i) => i.unit === '天')) {
+    const dayStart = bjDayStart(appointAt).getTime();
+    return { start: dayStart, end: dayStart + 86400_000 };
+  }
   const span = items.reduce((m, i) => (i.unit === '小时' ? Math.max(m, i.num) : m), 1);
-  const hours: number[] = [];
-  for (let h = start; h < Math.min(start + span, 24); h++) hours.push(h);
-  return hours;
+  return { start: t, end: t + span * 3600_000 };
 }

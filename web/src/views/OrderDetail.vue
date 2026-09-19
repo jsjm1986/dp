@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { api, type Order } from '../api';
@@ -8,7 +8,7 @@ import { ORDER_STATUS_TEXT } from '../utils/order';
 
 const route = useRoute();
 const router = useRouter();
-const id = route.params.id as string;
+const id = computed(() => route.params.id as string);
 const store = useUserStore();
 const order = ref<Order | null>(null);
 const paying = ref(false);
@@ -21,18 +21,19 @@ const extending = ref(false);
 // 催单冷却 60s（与后端限制一致），不是永久禁用
 const urgeCooling = computed(() => {
   const t = order.value?.urgedAt;
-  return !!t && Date.now() - new Date(t).getTime() < 60_000;
+  return !!t && now.value - new Date(t).getTime() < 60_000;
 });
 let poller: ReturnType<typeof setInterval> | null = null;
 
 async function load() {
-  order.value = await api.order(id);
+  order.value = await api.order(id.value);
 }
 
 async function pay() {
+  if (paying.value) return;
   paying.value = true;
   try {
-    order.value = await api.payOrder(id, payMethod.value);
+    order.value = await api.payOrder(id.value, payMethod.value);
     showPay.value = false;
     showToast('支付成功，等待玩伴接单');
   } finally {
@@ -50,7 +51,7 @@ async function cancel() {
 
 async function confirmCancel() {
   showCancel.value = false;
-  order.value = await api.cancelOrder(id, cancelReason.value);
+  order.value = await api.cancelOrder(id.value, cancelReason.value);
   showToast('已取消');
 }
 
@@ -70,7 +71,7 @@ const payLeftText = computed(() => {
 
 async function urge() {
   try {
-    await api.urgeOrder(id);
+    await api.urgeOrder(id.value);
     showToast('已通知玩伴尽快处理');
     load();
   } catch {
@@ -79,11 +80,11 @@ async function urge() {
 }
 
 function review() {
-  router.push(`/review/${id}`);
+  router.push(`/review/${id.value}`);
 }
 
 function chat() {
-  router.push(`/chat/${order.value!.partner.userId}?orderId=${id}`);
+  router.push(`/chat/${order.value!.partner.userId}?orderId=${id.value}`);
 }
 
 async function openExtend() {
@@ -100,7 +101,7 @@ async function submitExtend() {
   if (!items.length) return showToast('请选择加钟项目');
   extending.value = true;
   try {
-    const child = await api.extendOrder(id, items);
+    const child = await api.extendOrder(id.value, items);
     showExtend.value = false;
     showToast('加钟订单已创建，请支付');
     router.push(`/order/${child.id}`);
@@ -130,6 +131,8 @@ const timeline = computed(() => {
   steps.push({ label: '提交订单', time: fmt(o.createdAt) });
   return steps;
 });
+
+watch(id, () => load());
 
 onMounted(() => {
   load();
@@ -263,7 +266,7 @@ onUnmounted(() => poller && clearInterval(poller));
       <van-button block round type="primary" :loading="extending" @click="submitExtend">提交加钟订单</van-button>
     </van-popup>
 
-    <van-dialog v-model:show="showPay" title="选择支付方式" show-cancel-button :confirm-button-loading="paying" confirm-button-text="确认支付" @confirm="pay">
+    <van-dialog v-model:show="showPay" title="选择支付方式" show-cancel-button confirm-button-text="确认支付" @confirm="pay">
       <div class="od__pay">
         <van-radio-group v-model="payMethod">
           <van-cell clickable :border="false" :disabled="(store.user?.balance ?? 0) < order.totalAmount" @click="payMethod = 'balance'">

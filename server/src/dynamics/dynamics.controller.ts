@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ArrayMaxSize, IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CurrentUser, JwtAuthGuard, OptionalAuthGuard } from '../auth/jwt-auth.guard.js';
+import { checkRate } from '../common/rate.js';
 import { assertClean } from '../common/sensitive.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -117,12 +118,16 @@ export class DynamicsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@CurrentUser() userId: string, @Body() dto: CreateDynamicDto) {
+    if (!checkRate(`dyn:${userId}`, 10, 3600_000)) throw new BadRequestException('发布过于频繁，请稍后再试');
     const content = dto.content.trim();
     if (!content && !(dto.images ?? []).length) {
       throw new BadRequestException('动态内容不能为空');
     }
     if (content) assertClean(content);
     if (dto.city) assertClean(dto.city, '城市');
+    for (const u of dto.images ?? []) {
+      if (!u.startsWith('/uploads/')) throw new BadRequestException('图片请使用站内上传');
+    }
     const d = await this.prisma.dynamic.create({
       data: { userId, content, images: JSON.stringify(dto.images ?? []), city: dto.city },
     });
@@ -164,8 +169,11 @@ export class DynamicsController {
   @Post(':id/like')
   @UseGuards(JwtAuthGuard)
   async like(@CurrentUser() userId: string, @Param('id') id: string) {
-    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true, userId: true } });
-    if (!d) throw new NotFoundException('动态不存在');
+    const d = await this.prisma.dynamic.findUnique({
+      where: { id },
+      select: { id: true, userId: true, user: { select: { disabled: true } } },
+    });
+    if (!d || d.user.disabled) throw new NotFoundException('动态不存在');
     await this.assertNotBlocked(userId, d.userId);
     await this.prisma.dynamicLike.upsert({
       where: { dynamicId_userId: { dynamicId: id, userId } },
@@ -191,6 +199,12 @@ export class DynamicsController {
   @Get(':id/comments')
   @UseGuards(OptionalAuthGuard)
   async comments(@CurrentUser() userId: string | undefined, @Param('id') id: string) {
+    // 作者被禁用的动态不可见（与 feed 过滤口径一致）
+    const d = await this.prisma.dynamic.findUnique({
+      where: { id },
+      select: { user: { select: { disabled: true } } },
+    });
+    if (!d || d.user.disabled) throw new NotFoundException('动态不存在');
     const where: any = { dynamicId: id, user: { is: { disabled: false } } };
     if (userId) {
       const blocks = await this.prisma.block.findMany({
@@ -217,10 +231,14 @@ export class DynamicsController {
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async comment(@CurrentUser() userId: string, @Param('id') id: string, @Body() dto: CommentDto) {
+    if (!checkRate(`cmt:${userId}`, 30, 3600_000)) throw new BadRequestException('评论过于频繁，请稍后再试');
     const content = dto.content.trim();
     if (!content) throw new BadRequestException('评论内容不能为空');
-    const d = await this.prisma.dynamic.findUnique({ where: { id }, select: { id: true, userId: true } });
-    if (!d) throw new NotFoundException('动态不存在');
+    const d = await this.prisma.dynamic.findUnique({
+      where: { id },
+      select: { id: true, userId: true, user: { select: { disabled: true } } },
+    });
+    if (!d || d.user.disabled) throw new NotFoundException('动态不存在');
     await this.assertNotBlocked(userId, d.userId);
     assertClean(content, '评论');
     const c = await this.prisma.dynamicComment.create({

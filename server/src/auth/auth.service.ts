@@ -1,5 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { randomInt } from 'crypto';
+import { Prisma } from '../generated/prisma/client.js';
+import { checkRate } from '../common/rate.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const SMS_TTL_MS = 5 * 60 * 1000;
@@ -17,13 +20,17 @@ export class AuthService {
   ) {}
 
   async sendSms(mobile: string) {
-    // 60s 内重复发码复用未过期验证码，防刷码/爆破
+    // 60s 内重复发码复用未过期验证码，防刷码/爆破；同号每日上限 10 条（接真实短信后的资费保护）
+    if (!checkRate(`sms:${mobile}`, 10, 24 * 3600_000)) {
+      throw new BadRequestException('今日验证码获取次数已达上限');
+    }
     const recent = await this.prisma.smsCode.findFirst({
       where: { mobile, used: false, expiresAt: { gt: new Date() }, createdAt: { gt: new Date(Date.now() - 60_000) } },
       orderBy: { createdAt: 'desc' },
     });
     if (recent) return IS_PROD ? { ok: true } : { devCode: recent.code };
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    // CSPRNG 验证码
+    const code = String(randomInt(100000, 1000000));
     // 作废旧验证码，防止多码并存爆破
     await this.prisma.$transaction([
       this.prisma.smsCode.updateMany({ where: { mobile, used: false }, data: { used: true } }),
@@ -63,9 +70,16 @@ export class AuthService {
         });
         if (inviter && !inviter.disabled) inviterId = inviter.id;
       }
-      user = await this.prisma.user.create({
-        data: { mobile, nickname: `用户${mobile.slice(-4)}`, inviterId },
-      });
+      try {
+        user = await this.prisma.user.create({
+          data: { mobile, nickname: `用户${mobile.slice(-4)}`, inviterId },
+        });
+      } catch (e) {
+        // 并发首登撞 mobile 唯一约束：重查后继续登录
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          user = await this.prisma.user.findUniqueOrThrow({ where: { mobile } });
+        } else throw e;
+      }
     }
     if (user.disabled) throw new UnauthorizedException('账号已被禁用，请联系客服');
     const partner = await this.prisma.partner.findUnique({

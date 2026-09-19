@@ -24,6 +24,7 @@ const commentText = ref('');
 const sendingComment = ref(false);
 
 async function load(reset = false) {
+  if (loading.value && !reset) return;
   if (reset) {
     page.value = 1;
     items.value = [];

@@ -72,16 +72,19 @@ const auditMap: Record<string, { text: string; color: string }> = {
 };
 
 // 分页状态：每页 20 条（充值卡 30）
-const pages = reactive({ orders: 1, users: 1, dynamics: 1, reviews: 1, cards: 1 });
-const totals = reactive({ orders: 0, users: 0, dynamics: 0, reviews: 0, cards: 0 });
+const pages = reactive({ orders: 1, users: 1, dynamics: 1, reviews: 1, cards: 1, partners: 1 });
+const totals = reactive({ orders: 0, users: 0, dynamics: 0, reviews: 0, cards: 0, partners: 0 });
 function resetAndLoad(key: keyof typeof pages) {
   pages[key] = 1;
-  ({ orders: loadOrders, users: loadUsers, dynamics: loadDynamics, reviews: loadReviews, cards: loadCards })[key]();
+  ({ orders: loadOrders, users: loadUsers, dynamics: loadDynamics, reviews: loadReviews, cards: loadCards, partners: loadPartners })[key]();
 }
 function pageOf(total: number, size = 20) { return Math.max(1, Math.ceil(total / size)); }
 
 async function loadDash() { dash.value = await api.adminDashboard(); }
-async function loadPartners() { partners.value = (await api.adminPartners(partnerTab.value)).items; }
+async function loadPartners() {
+  const r = await api.adminPartners(partnerTab.value, pages.partners);
+  partners.value = r.items; totals.partners = r.total;
+}
 async function loadOrders() {
   const r = await api.adminOrders(pages.orders, orderStatus.value || undefined, orderKeyword.value || undefined);
   orders.value = r.items; totals.orders = r.total;
@@ -412,7 +415,7 @@ function onTabChange(name: string | number) {
 
       <!-- 玩伴审核 -->
       <van-tab title="玩伴" name="partners">
-        <van-tabs v-model:active="partnerTab" type="card" @change="loadPartners">
+        <van-tabs v-model:active="partnerTab" type="card" @change="pages.partners = 1; loadPartners()">
           <van-tab title="待审核" name="pending" />
           <van-tab title="已通过" name="approved" />
           <van-tab title="已拒绝" name="rejected" />
@@ -460,6 +463,11 @@ function onTabChange(name: string | number) {
             </div>
           </div>
           <van-empty v-if="!partners.length" description="暂无记录" image-size="70" />
+          <div v-if="totals.partners > 20" class="admin__pager">
+            <van-button size="mini" round :disabled="pages.partners <= 1" @click="pages.partners--; loadPartners()">上一页</van-button>
+            <span class="muted">{{ pages.partners }} / {{ pageOf(totals.partners) }}</span>
+            <van-button size="mini" round :disabled="pages.partners >= pageOf(totals.partners)" @click="pages.partners++; loadPartners()">下一页</van-button>
+          </div>
         </div>
       </van-tab>
 

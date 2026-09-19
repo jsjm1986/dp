@@ -19,6 +19,7 @@ const TYPE_META: Record<string, { icon: string; color: string }> = {
 };
 
 async function load() {
+  if (loading.value) return;
   loading.value = true;
   try {
     const res = await api.notices(page.value);
@@ -45,11 +46,11 @@ function open(n: NoticeItem) {
     api.readNotices(n.id).catch(() => {});
   }
   if (n.type === 'order' && n.refId) router.push(`/order/${n.refId}`);
+  else if (n.type === 'wallet' || n.type === 'commission') router.push('/wallet');
 }
 
-onMounted(async () => {
-  await load();
-  // 进入页面即全部已读（列表式浏览）
+onMounted(() => {
+  // 进入页面即全部已读（列表式浏览）；首屏由 van-list @load 触发
   api.readNotices().catch(() => {});
 });
 </script>

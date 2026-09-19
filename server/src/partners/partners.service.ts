@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
-import { bjDateKey, bjDayStart, orderHours } from '../common/ledger.js';
+import { bjDateKey, bjDayStart, orderRange } from '../common/ledger.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+
+const PAY_TIMEOUT_MS = 30 * 60 * 1000;
 
 export interface PartnerQuery {
   city?: string;
@@ -140,8 +142,7 @@ export class PartnersService {
       tags: JSON.parse(p.tags) as string[],
       city: p.city,
       district: p.district,
-      latitude: p.latitude,
-      longitude: p.longitude,
+      // 经纬度仅用于服务端距离计算，不对客户端暴露（PII）
       status: p.status,
       verified: p.verified,
       serviceCount: p.serviceCount,
@@ -235,21 +236,36 @@ export class PartnersService {
     return { followed: false };
   }
 
-  /** 指定日期已被占用的预约小时（北京时间口径，含待支付占位；「天」服务返回 allDay） */
+  /** 指定日期已被占用的预约小时（北京时间口径；「天」服务/休息日返回 allDay） */
   async busySlots(partnerId: string, date?: string) {
+    // 仅已审核玩伴的档期可查询，避免泄漏未过审者的休息日表
+    const partner = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      select: { auditStatus: true, user: { select: { disabled: true } } },
+    });
+    if (!partner || partner.auditStatus !== 'approved' || partner.user.disabled) {
+      throw new NotFoundException('玩伴不存在');
+    }
     const day = date ? new Date(`${date}T00:00:00+08:00`) : new Date();
     if (Number.isNaN(day.getTime())) throw new BadRequestException('date 格式应为 YYYY-MM-DD');
     const start = bjDayStart(day);
-    const dateKey = date ?? bjDateKey(new Date());
+    // dateKey 必须用归一化后的值，不能用原始入参（'2026-01-08 ' 之类可绕过休息日比对）
+    const dateKey = bjDateKey(start);
     const off = await this.prisma.partnerOffDate.findUnique({
       where: { partnerId_date: { partnerId, date: dateKey } },
     });
     if (off) return { allDay: true, hours: [] };
+    const dayStartMs = start.getTime();
+    const dayEndMs = dayStartMs + 86400_000;
+    // 向前扩一天：前一日跨零点的订单也占用今日时段；待支付单只在支付有效期内占位
     const orders = await this.prisma.order.findMany({
       where: {
         partnerId,
-        appointAt: { gte: start, lt: new Date(start.getTime() + 86400_000) },
-        status: { in: ['pending_payment', 'pending_accept', 'pending_service', 'serving'] },
+        appointAt: { gte: new Date(dayStartMs - 86400_000), lt: new Date(dayEndMs + 86400_000) },
+        OR: [
+          { status: { in: ['pending_accept', 'pending_service', 'serving'] } },
+          { status: 'pending_payment', createdAt: { gte: new Date(Date.now() - PAY_TIMEOUT_MS) } },
+        ],
       },
       select: { appointAt: true, items: { select: { unit: true, num: true } } },
       take: 100,
@@ -257,9 +273,13 @@ export class PartnersService {
     const hours = new Set<number>();
     let allDay = false;
     for (const o of orders) {
-      const h = orderHours(o.appointAt, o.items);
-      if (h === null) { allDay = true; break; }
-      h.forEach((x) => hours.add(x));
+      const r = orderRange(o.appointAt, o.items);
+      // 「天」类占用整天
+      if (o.items.some((i) => i.unit === '天')) { allDay = true; break; }
+      for (let h = 0; h < 24; h++) {
+        const hs = dayStartMs + h * 3600_000;
+        if (r.start < hs + 3600_000 && hs < r.end) hours.add(h);
+      }
     }
     return { allDay, hours: [...hours].sort((a, b) => a - b) };
   }

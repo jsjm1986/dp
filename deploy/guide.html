@@ -2,47 +2,62 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>城市搭子 · 测试引导页</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #2c3e50; line-height: 1.6; padding-bottom: 60px; }
-  .hero { background: linear-gradient(135deg, #ff5a5f, #ff8a5c); color: #fff; padding: 36px 20px 28px; }
-  .hero h1 { font-size: 26px; margin-bottom: 6px; }
-  .hero p { opacity: .9; font-size: 14px; }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
-  .card { background: #fff; border-radius: 14px; padding: 20px; margin-top: 18px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
-  .card h2 { font-size: 17px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-  .card h2::before { content: ""; width: 4px; height: 16px; background: #ff5a5f; border-radius: 2px; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; color: #999; font-weight: normal; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
-  td { padding: 10px 8px; border-bottom: 1px solid #f7f7f7; }
-  tr:last-child td { border-bottom: none; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #2c3e50; line-height: 1.6; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .hero { background: linear-gradient(135deg, #ff5a5f, #ff8a5c); color: #fff; padding: calc(28px + env(safe-area-inset-top)) 18px 26px; }
+  .hero h1 { font-size: 23px; margin-bottom: 5px; }
+  .hero p { opacity: .9; font-size: 13px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px; }
+  .card { background: #fff; border-radius: 14px; padding: 18px 16px; margin-top: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+  .card h2 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card h2::before { content: ""; width: 4px; height: 15px; background: #ff5a5f; border-radius: 2px; flex: none; }
   .mono { font-family: ui-monospace, Menlo, monospace; background: #f5f6fa; padding: 2px 7px; border-radius: 5px; font-size: 13px; }
-  .copy { cursor: pointer; color: #ff5a5f; font-size: 12px; margin-left: 6px; user-select: none; }
-  .copy:active { opacity: .6; }
-  .btn { display: inline-block; background: #ff5a5f; color: #fff; text-decoration: none; padding: 10px 22px; border-radius: 22px; font-size: 14px; margin: 4px 6px 4px 0; }
-  .btn.ghost { background: #fff; color: #ff5a5f; border: 1px solid #ff5a5f; }
-  .entry { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
-  .entry-box { border: 1px solid #f0e6e6; border-radius: 12px; padding: 16px; }
+  .btn { display: block; background: #ff5a5f; color: #fff; text-decoration: none; text-align: center; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 500; }
+  .btn:active { opacity: .85; }
+  .entry { display: flex; flex-direction: column; gap: 10px; }
+  .entry-box { border: 1px solid #f0e6e6; border-radius: 12px; padding: 14px; }
   .entry-box b { font-size: 15px; }
-  .entry-box .desc { font-size: 13px; color: #888; margin: 6px 0 12px; min-height: 38px; }
+  .entry-box .desc { font-size: 13px; color: #888; margin: 4px 0 12px; }
+  /* 账号列表：移动端卡片式 */
+  .acct { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+  .acct:last-child { border-bottom: none; }
+  .acct-role { font-size: 13px; color: #999; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .acct-role b { color: #2c3e50; font-size: 14px; }
+  .acct-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .acct-val { font-family: ui-monospace, Menlo, monospace; font-size: 15px; letter-spacing: .3px; }
+  .acct-sub { font-size: 12px; color: #aaa; margin-top: 4px; }
+  .copy { flex: none; font-size: 13px; color: #ff5a5f; border: 1px solid #ffd0d2; padding: 4px 14px; border-radius: 14px; user-select: none; }
+  .copy:active { background: #fff3f3; }
   ul { padding-left: 18px; font-size: 14px; }
   li { margin: 4px 0; }
   .flow { counter-reset: step; }
-  .flow li { list-style: none; position: relative; padding-left: 30px; margin: 10px 0; }
+  .flow li { list-style: none; position: relative; padding-left: 30px; margin: 10px 0; font-size: 14px; }
   .flow li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 1px; width: 20px; height: 20px; background: #ff5a5f; color: #fff; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; }
   .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; background: #fff3f3; color: #ff5a5f; margin-left: 6px; vertical-align: middle; }
   .warn { background: #fffbe8; border: 1px solid #ffe58f; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #8a6d3b; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
-  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } td { font-size: 13px; } }
-  .footer { text-align: center; color: #bbb; font-size: 12px; margin-top: 28px; }
+  .feat-title { font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+  .feat-title:first-child { margin-top: 0; }
+  .footer { text-align: center; color: #bbb; font-size: 12px; margin-top: 24px; }
+  details { font-size: 14px; }
+  details + details { border-top: 1px solid #f5f5f5; }
+  summary { padding: 12px 0; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  summary::after { content: "›"; color: #ccc; font-size: 18px; transition: transform .2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  details ul { padding-bottom: 10px; }
+  /* 桌面端微调 */
+  @media (min-width: 641px) {
+    .entry { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .hero h1 { font-size: 26px; }
+  }
 </style>
 </head>
 <body>
 <div class="hero">
   <h1>城市搭子 · 测试引导页</h1>
-  <p>移动端 H5 平台 · 三端合一 · 演示环境数据可随时重置</p>
+  <p>移动端 H5 平台 · 三端合一 · 演示数据可随时重置</p>
 </div>
 
 <div class="wrap">
@@ -67,113 +82,135 @@
         <a class="btn" href="http://101.36.115.219:6001/admin">管理后台</a>
       </div>
     </div>
-    <p style="margin-top:12px;font-size:13px;color:#999">三个端是同一个网址，登录不同角色账号看到不同功能。手机浏览器打开体验最佳，PC 上可用浏览器开发者工具切手机视图。</p>
+    <p style="margin-top:12px;font-size:12px;color:#999">三个端同一网址，登录不同角色账号看到不同功能。手机浏览器直接打开即可。</p>
   </div>
 
   <!-- 账号 -->
   <div class="card">
-    <h2>测试账号</h2>
-    <table>
-      <tr><th>角色</th><th>手机号</th><th>验证码/密码</th><th>说明</th></tr>
-      <tr>
-        <td>万能验证码</td>
-        <td>任意手机号</td>
-        <td><span class="mono">888888</span><span class="copy" data-copy="888888">复制</span></td>
-        <td>免发短信，新号自动注册</td>
-      </tr>
-      <tr>
-        <td>管理员</td>
-        <td><span class="mono">13800138000</span><span class="copy" data-copy="13800138000">复制</span></td>
-        <td><span class="mono">888888</span></td>
-        <td>登录后「我的 → 管理后台」</td>
-      </tr>
-      <tr>
-        <td>玩伴 ×7</td>
-        <td><span class="mono">13800001000</span> ~ <span class="mono">13800001006</span></td>
-        <td><span class="mono">888888</span></td>
-        <td>已审核通过，直接进工作台</td>
-      </tr>
-      <tr>
-        <td>普通用户</td>
-        <td>任意其他手机号</td>
-        <td><span class="mono">888888</span></td>
-        <td>如 <span class="mono">13900000001</span>，登录即注册</td>
-      </tr>
-    </table>
+    <h2>测试账号（点「复制」直接使用）</h2>
+
+    <div class="acct">
+      <div class="acct-role"><b>万能验证码</b>人人可用</div>
+      <div class="acct-row">
+        <span class="acct-val">888888</span>
+        <span class="copy" data-copy="888888">复制</span>
+      </div>
+      <div class="acct-sub">任意手机号 + 888888 直接登录，免发短信，新号自动注册</div>
+    </div>
+
+    <div class="acct">
+      <div class="acct-role"><b>管理员</b>管理后台</div>
+      <div class="acct-row">
+        <span class="acct-val">13800138000</span>
+        <span class="copy" data-copy="13800138000">复制</span>
+      </div>
+      <div class="acct-sub">验证码 888888 · 登录后「我的 → 管理后台」</div>
+    </div>
+
+    <div class="acct">
+      <div class="acct-role"><b>玩伴 ×7</b>已审核</div>
+      <div class="acct-row">
+        <span class="acct-val">13800001000 ~ 1006</span>
+        <span class="copy" data-copy="13800001000">复制首个</span>
+      </div>
+      <div class="acct-sub">验证码 888888 · 苏晚/陆垚等 · 登录后「我的 → 玩伴工作台」</div>
+    </div>
+
+    <div class="acct">
+      <div class="acct-role"><b>普通用户</b>自助注册</div>
+      <div class="acct-row">
+        <span class="acct-val">13900000001</span>
+        <span class="copy" data-copy="13900000001">复制</span>
+      </div>
+      <div class="acct-sub">换任意未注册手机号即可创建新账号</div>
+    </div>
   </div>
 
-  <!-- 测试剧本 -->
+  <!-- 测试剧本（手风琴） -->
   <div class="card">
     <h2>推荐测试路径</h2>
 
-    <p style="font-size:14px;margin-bottom:8px"><b>① 完整交易闭环</b><span class="tag">约 3 分钟</span></p>
-    <ul class="flow">
-      <li>新手机号 + <span class="mono">888888</span> 登录 → 我的 → 余额 → 输入充值卡密（找管理员要，或让管理员直接调余额）</li>
-      <li>首页选玩伴 → 进详情 → 选服务下单 → 选日期时段 → 余额支付</li>
-      <li>订单页观察自动流转：10 秒接单 → 30 秒服务中 → 90 秒完成</li>
-      <li>完成后写评价（可带图评分）</li>
-    </ul>
+    <details open>
+      <summary>① 完整交易闭环<span class="tag">约3分钟</span></summary>
+      <ul class="flow">
+        <li>新手机号 + <span class="mono">888888</span> 登录 → 我的 → 余额 → 输入充值卡密（管理端生成，或让管理员直接调余额）</li>
+        <li>首页选玩伴 → 进详情 → 选服务下单 → 选日期时段 → 余额支付</li>
+        <li>订单页观察自动流转：10 秒接单 → 30 秒服务中 → 90 秒完成</li>
+        <li>完成后写评价（评分+图文）</li>
+      </ul>
+    </details>
 
-    <p style="font-size:14px;margin:16px 0 8px"><b>② 玩伴视角</b></p>
-    <ul class="flow">
-      <li>用玩伴账号登录（<span class="mono">13800001000</span>~<span class="mono">06</span>）</li>
-      <li>我的 → 玩伴工作台：接单/拒单、上下线切换、联系客户</li>
-      <li>钱包 → 提现 → 切换管理员账号审核打款</li>
-    </ul>
+    <details>
+      <summary>② 玩伴视角</summary>
+      <ul class="flow">
+        <li>用玩伴账号登录（<span class="mono">13800001000</span>~<span class="mono">06</span>）</li>
+        <li>我的 → 玩伴工作台：接单/拒单、上下线切换、联系客户</li>
+        <li>钱包 → 提现 → 切管理员账号审核打款</li>
+      </ul>
+    </details>
 
-    <p style="font-size:14px;margin:16px 0 8px"><b>③ 分销返佣</b></p>
-    <ul class="flow">
-      <li>账号 A：我的 → 推广中心 → 复制邀请码</li>
-      <li>账号 B：注册时在登录页填 A 的邀请码（或推广中心手动绑定）</li>
-      <li>B 下单完成 → A 的推广中心看到佣金到账（比例在管理端「设置」调）</li>
-    </ul>
+    <details>
+      <summary>③ 分销返佣</summary>
+      <ul class="flow">
+        <li>账号 A：我的 → 推广中心 → 复制邀请码</li>
+        <li>账号 B：注册时在登录页填 A 的邀请码（或推广中心手动绑定）</li>
+        <li>B 下单完成 → A 的推广中心看到佣金到账（比例在管理端「设置」调）</li>
+      </ul>
+    </details>
 
-    <p style="font-size:14px;margin:16px 0 8px"><b>④ 管理端巡检</b></p>
-    <ul class="flow">
-      <li>管理员登录 → 管理后台 → 数据页看 15 项指标</li>
-      <li>玩伴页：审核新申请、设推荐位、强制下线</li>
-      <li>订单页：搜订单号、强制取消（自动退款退券）</li>
-      <li>充值卡页：生成卡密 → 复制给用户兑换</li>
-    </ul>
+    <details>
+      <summary>④ 管理端巡检</summary>
+      <ul class="flow">
+        <li>管理员登录 → 管理后台 → 数据页看 15 项指标</li>
+        <li>玩伴页：审核新申请、设推荐位、强制下线</li>
+        <li>订单页：搜订单号、强制取消（自动退款退券）</li>
+        <li>充值卡页：生成卡密 → 复制给用户兑换</li>
+      </ul>
+    </details>
 
-    <p style="font-size:14px;margin:16px 0 8px"><b>⑤ 社交功能</b></p>
-    <ul class="flow">
-      <li>动态页发布动态 → 另一账号点赞/评论/关注</li>
-      <li>玩伴详情页 →「私聊」发消息 → 消息 tab 看会话和未读</li>
-      <li>聊天页右上角可拉黑，验证双向屏蔽</li>
-    </ul>
+    <details>
+      <summary>⑤ 社交功能</summary>
+      <ul class="flow">
+        <li>动态页发布动态 → 另一账号点赞/评论/关注</li>
+        <li>玩伴详情页 →「私聊」发消息 → 消息 tab 看会话和未读</li>
+        <li>聊天页右上角可拉黑，验证双向屏蔽</li>
+      </ul>
+    </details>
   </div>
 
-  <!-- 功能清单 -->
+  <!-- 功能清单（手风琴） -->
   <div class="card">
     <h2>功能清单</h2>
-    <div class="grid2">
-      <div>
-        <p style="font-size:14px"><b>用户端</b></p>
-        <ul>
-          <li>玩伴浏览：推荐/最新/评分排序、搜索、详情（相册/服务/评价/动态）</li>
-          <li>下单：多服务项、时间段选择、优惠券抵扣、余额/模拟支付</li>
-          <li>订单：催单、取消退款、服务中加钟（子订单）、再来一单</li>
-          <li>评价：评分+图文，玩伴可回复</li>
-          <li>社交：动态发布/点赞/评论、关注流、私信聊天、拉黑</li>
-          <li>钱包：余额、充值卡兑换、账单来源（充值/消费/退款/佣金/提现）</li>
-          <li>分销：邀请码绑定、佣金明细、下线列表</li>
-        </ul>
-      </div>
-      <div>
-        <p style="font-size:14px"><b>玩伴端 + 管理端</b></p>
-        <ul>
-          <li>入驻申请 → 平台审核 → 改资料自动回炉再审</li>
-          <li>工作台：接单/拒单、上下线、服务与相册管理</li>
-          <li>收益：完单入账、提现申请、驳回原因可见</li>
-          <li>看板：用户/订单/GMV/佣金/提现 15 项指标</li>
-          <li>运营：玩伴推荐位、强制下线、订单仲裁退款、评价动态删除</li>
-          <li>用户：搜索、禁用（登录拦截）、角色委派、余额调整</li>
-          <li>营销：优惠券模板、充值卡批量生成、Banner 轮播</li>
-          <li>系统：佣金比例、敏感词库（热更新）</li>
-        </ul>
-      </div>
-    </div>
+    <details>
+      <summary>用户端</summary>
+      <ul>
+        <li>玩伴浏览：推荐/最新/评分排序、搜索、详情（相册/服务/评价/动态）</li>
+        <li>下单：多服务项、时间段选择、优惠券抵扣、余额/模拟支付</li>
+        <li>订单：催单、取消退款、服务中加钟（子订单）、再来一单</li>
+        <li>评价：评分+图文，玩伴可回复</li>
+        <li>社交：动态发布/点赞/评论、关注流、私信聊天、拉黑</li>
+        <li>钱包：余额、充值卡兑换、佣金/退款/提现流水</li>
+        <li>分销：邀请码绑定、佣金明细、下线列表</li>
+      </ul>
+    </details>
+    <details>
+      <summary>玩伴端</summary>
+      <ul>
+        <li>入驻申请 → 平台审核 → 改资料自动回炉再审</li>
+        <li>工作台：接单/拒单、上下线、服务与相册管理</li>
+        <li>收益：完单入账、提现申请、驳回原因可见</li>
+      </ul>
+    </details>
+    <details>
+      <summary>管理端</summary>
+      <ul>
+        <li>看板：用户/订单/GMV/佣金/提现 15 项指标</li>
+        <li>运营：玩伴推荐位、强制下线、订单仲裁退款、评价动态删除</li>
+        <li>用户：搜索、禁用（登录拦截）、角色委派、余额调整</li>
+        <li>营销：优惠券模板、充值卡批量生成、Banner 轮播</li>
+        <li>系统：佣金比例、敏感词库（热更新）</li>
+      </ul>
+    </details>
   </div>
 
   <!-- 提示 -->
@@ -193,8 +230,14 @@
   document.querySelectorAll('.copy').forEach(function (el) {
     el.addEventListener('click', function () {
       var text = el.getAttribute('data-copy');
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function () { el.textContent = '已复制'; setTimeout(function () { el.textContent = '复制'; }, 1200); });
+      var done = function () { el.textContent = '已复制'; setTimeout(function () { el.textContent = '复制'; }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta); done();
       }
     });
   });
